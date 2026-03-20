@@ -3,20 +3,46 @@ import Sidebar from "./components/Sidebar.jsx";
 import Overview from "./pages/Overview.jsx";
 import ProjectDetail from "./pages/ProjectDetail.jsx";
 import AgentList from "./pages/AgentList.jsx";
+import AgentDetail from "./pages/AgentDetail.jsx";
 import CreateProject from "./pages/CreateProject.jsx";
 import Approvals from "./pages/Approvals.jsx";
+import Inbox from "./pages/Inbox.jsx";
+import Activity from "./pages/Activity.jsx";
+import Issues from "./pages/Issues.jsx";
+import IssueDetail from "./pages/IssueDetail.jsx";
 
 export default function App() {
   const [page, setPage] = useState("overview");
   const [selectedProject, setSelectedProject] = useState(null);
+  const [selectedAgent, setSelectedAgent] = useState(null);
+  const [issueContext, setIssueContext] = useState(null); // { projectSlug, issueId }
   const [refreshKey, setRefreshKey] = useState(0);
 
   const navigate = useCallback((target, data) => {
     if (target === "project" && data) {
       setSelectedProject(data);
+      setSelectedAgent(null);
+      setIssueContext(null);
       setPage("project");
+    } else if (target === "agent-detail" && data) {
+      setSelectedAgent(data);
+      setSelectedProject(null);
+      setIssueContext(null);
+      setPage("agent-detail");
+    } else if (target === "issues" && data) {
+      setSelectedProject(data);
+      setSelectedAgent(null);
+      setIssueContext(null);
+      setPage("issues");
+    } else if (target === "issue-detail" && data) {
+      setSelectedProject(data.projectSlug);
+      setSelectedAgent(null);
+      setIssueContext(data);
+      setPage("issue-detail");
     } else {
       setSelectedProject(null);
+      setSelectedAgent(null);
+      setIssueContext(null);
       setPage(target);
     }
     setRefreshKey((k) => k + 1);
@@ -32,9 +58,24 @@ export default function App() {
             {page === "project" && selectedProject && (
               <ProjectDetail projectId={selectedProject} navigate={navigate} />
             )}
-            {page === "agents" && <AgentList />}
+            {page === "agents" && <AgentList navigate={navigate} />}
+            {page === "agent-detail" && selectedAgent && (
+              <AgentDetail agentId={selectedAgent} navigate={navigate} />
+            )}
             {page === "create-project" && <CreateProject navigate={navigate} />}
             {page === "approvals" && <Approvals navigate={navigate} />}
+            {page === "inbox" && <Inbox navigate={navigate} />}
+            {page === "activity" && <Activity navigate={navigate} />}
+            {page === "issues" && selectedProject && (
+              <Issues projectSlug={selectedProject} navigate={navigate} />
+            )}
+            {page === "issue-detail" && issueContext && (
+              <IssueDetail
+                projectSlug={issueContext.projectSlug}
+                issueId={issueContext.issueId}
+                navigate={navigate}
+              />
+            )}
           </main>
         </div>
       </div>

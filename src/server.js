@@ -1461,6 +1461,520 @@ app.get("/mc/api/projects", requireSetupAuth, (_req, res) => {
   return res.json({ projects });
 });
 
+// Unified inbox — aggregates approvals, budget warnings, stale tasks, recent standups
+app.get("/mc/api/inbox", requireSetupAuth, (_req, res) => {
+  const projectsDir = path.join(STATE_DIR, "shared", "projects");
+  if (!fs.existsSync(projectsDir)) {
+    return res.json({ items: [], counts: { approvals: 0, budget: 0, tasks: 0, standups: 0, total: 0 } });
+  }
+
+  const items = [];
+  const projects = fs.readdirSync(projectsDir, { withFileTypes: true }).filter((e) => e.isDirectory());
+  const now = Date.now();
+  const threeDays = 3 * 24 * 60 * 60 * 1000;
+  const today = new Date().toISOString().split("T")[0];
+  const yesterday = new Date(now - 24 * 60 * 60 * 1000).toISOString().split("T")[0];
+
+  for (const proj of projects) {
+    const projDir = path.join(projectsDir, proj.name);
+
+    // A. Pending Approvals
+    const pendingDir = path.join(projDir, "approvals", "pending");
+    if (fs.existsSync(pendingDir)) {
+      const files = fs.readdirSync(pendingDir).filter((f) => f.endsWith(".json"));
+      for (const file of files) {
+        try {
+          const data = JSON.parse(fs.readFileSync(path.join(pendingDir, file), "utf8"));
+          if (data.status === "resolved") continue;
+          items.push({
+            type: "approval",
+            project: proj.name,
+            id: data.id || file,
+            title: data.what || "Pending approval",
+            subtitle: data.why || null,
+            requester: data.requester || "unknown",
+            gate: data.gate || "unknown",
+            timestamp: data.created || new Date().toISOString(),
+            data,
+          });
+        } catch { /* skip */ }
+      }
+    }
+
+    // B. Budget Warnings — read costs/ and PROJECT.md
+    const costsDir = path.join(projDir, "costs");
+    const projectMdPath = path.join(projDir, "PROJECT.md");
+    if (fs.existsSync(costsDir) && fs.existsSync(projectMdPath)) {
+      try {
+        const projectRaw = fs.readFileSync(projectMdPath, "utf8");
+        const budgetMatch = projectRaw.match(/\*\*Budget:\*\*\s*\$(\d+)/);
+        if (budgetMatch) {
+          const budget = parseInt(budgetMatch[1]);
+          let totalSpend = 0;
+          const costFiles = fs.readdirSync(costsDir).filter((f) => f.endsWith(".json"));
+          for (const cf of costFiles) {
+            try {
+              const costData = JSON.parse(fs.readFileSync(path.join(costsDir, cf), "utf8"));
+              totalSpend += costData.amount || costData.cost || 0;
+            } catch { /* skip */ }
+          }
+          const pct = budget > 0 ? Math.round((totalSpend / budget) * 100) : 0;
+          if (pct >= 80) {
+            items.push({
+              type: "budget",
+              project: proj.name,
+              id: `budget-${proj.name}`,
+              title: pct >= 100
+                ? `Budget exceeded: $${totalSpend} / $${budget} (${pct}%)`
+                : `Budget warning: $${totalSpend} / $${budget} (${pct}%)`,
+              subtitle: null,
+              severity: pct >= 100 ? "critical" : "warning",
+              percent: pct,
+              spent: totalSpend,
+              budget,
+              timestamp: new Date().toISOString(),
+            });
+          }
+        }
+      } catch { /* skip */ }
+    }
+
+    // C. Stale Tasks — issues in_progress > 3 days
+    const issuesDir = path.join(projDir, "issues");
+    if (fs.existsSync(issuesDir)) {
+      const issueFiles = fs.readdirSync(issuesDir).filter((f) => f.endsWith(".json"));
+      for (const issueFile of issueFiles) {
+        try {
+          const issue = JSON.parse(fs.readFileSync(path.join(issuesDir, issueFile), "utf8"));
+          if (issue.status !== "in_progress") continue;
+          const updated = issue.updated || issue.created || issue.started;
+          if (!updated) continue;
+          const elapsed = now - new Date(updated).getTime();
+          if (elapsed > threeDays) {
+            const daysStale = Math.floor(elapsed / (24 * 60 * 60 * 1000));
+            items.push({
+              type: "stale_task",
+              project: proj.name,
+              id: issue.id || issueFile,
+              title: issue.title || issueFile.replace(".json", ""),
+              subtitle: `Assigned to ${issue.assignee || "unassigned"} — in progress for ${daysStale} days`,
+              assignee: issue.assignee || null,
+              daysStale,
+              timestamp: updated,
+            });
+          }
+        } catch { /* skip */ }
+      }
+    }
+
+    // D. Recent Standups — today/yesterday
+    const standupsDir = path.join(projDir, "standups");
+    if (fs.existsSync(standupsDir)) {
+      const standupFiles = fs.readdirSync(standupsDir).filter((f) => f.endsWith(".md"));
+      for (const sf of standupFiles) {
+        const dateMatch = sf.match(/(\d{4}-\d{2}-\d{2})/);
+        if (!dateMatch) continue;
+        const fileDate = dateMatch[1];
+        if (fileDate !== today && fileDate !== yesterday) continue;
+        try {
+          const content = fs.readFileSync(path.join(standupsDir, sf), "utf8");
+          const lines = content.split("\n").filter((l) => l.trim());
+          const preview = lines.slice(0, 2).join(" ").slice(0, 120);
+          // Try to extract lead from PROJECT.md
+          let lead = null;
+          if (fs.existsSync(projectMdPath)) {
+            const raw = fs.readFileSync(projectMdPath, "utf8");
+            const leadMatch = raw.match(/\*\*Lead:\*\*\s*(\S+)/);
+            lead = leadMatch?.[1] || null;
+          }
+          items.push({
+            type: "standup",
+            project: proj.name,
+            id: `standup-${proj.name}-${fileDate}`,
+            title: `Standup from ${proj.name}`,
+            subtitle: preview,
+            lead,
+            date: fileDate,
+            timestamp: new Date(fileDate + "T09:00:00Z").toISOString(),
+          });
+        } catch { /* skip */ }
+      }
+    }
+  }
+
+  // Sort by recency
+  items.sort((a, b) => (b.timestamp || "").localeCompare(a.timestamp || ""));
+
+  const counts = {
+    approvals: items.filter((i) => i.type === "approval").length,
+    budget: items.filter((i) => i.type === "budget").length,
+    tasks: items.filter((i) => i.type === "stale_task").length,
+    standups: items.filter((i) => i.type === "standup").length,
+  };
+  counts.total = counts.approvals + counts.budget + counts.tasks + counts.standups;
+
+  return res.json({ items, counts });
+});
+
+// Global activity feed — aggregates activity across all projects
+app.get("/mc/api/activity", requireSetupAuth, (req, res) => {
+  const projectsDir = path.join(STATE_DIR, "shared", "projects");
+  if (!fs.existsSync(projectsDir)) {
+    return res.json({ events: [] });
+  }
+
+  const limit = Math.min(parseInt(req.query.limit) || 50, 200);
+  const filterProject = req.query.project || null;
+  const filterAgent = req.query.agent || null;
+
+  const events = [];
+  const projects = fs.readdirSync(projectsDir, { withFileTypes: true }).filter((e) => e.isDirectory());
+
+  for (const proj of projects) {
+    if (filterProject && proj.name !== filterProject) continue;
+    const projDir = path.join(projectsDir, proj.name);
+
+    // Read activity.log
+    const activityLog = path.join(projDir, "activity.log");
+    if (fs.existsSync(activityLog)) {
+      try {
+        const lines = fs.readFileSync(activityLog, "utf8").split("\n").filter(Boolean);
+        for (const line of lines.slice(-200)) {
+          try {
+            const entry = JSON.parse(line);
+            if (filterAgent && entry.agent !== filterAgent) continue;
+            events.push({
+              ...entry,
+              project: proj.name,
+              type: entry.type || entry.event || "activity",
+              timestamp: entry.timestamp || entry.created || entry.time,
+            });
+          } catch {
+            // Try plain text format: "2026-03-20T10:00:00Z [agent] event description"
+            const match = line.match(/^(\S+)\s+\[(\S+)]\s+(.+)/);
+            if (match) {
+              const agent = match[2];
+              if (filterAgent && agent !== filterAgent) continue;
+              events.push({
+                project: proj.name,
+                timestamp: match[1],
+                agent,
+                description: match[3],
+                type: "activity",
+              });
+            }
+          }
+        }
+      } catch { /* skip */ }
+    }
+
+    // Read recent issues (by updated date)
+    const issuesDir = path.join(projDir, "issues");
+    if (fs.existsSync(issuesDir)) {
+      const issueFiles = fs.readdirSync(issuesDir).filter((f) => f.endsWith(".json"));
+      for (const issueFile of issueFiles) {
+        try {
+          const issue = JSON.parse(fs.readFileSync(path.join(issuesDir, issueFile), "utf8"));
+          if (filterAgent && issue.assignee !== filterAgent) continue;
+          events.push({
+            project: proj.name,
+            type: "issue_update",
+            timestamp: issue.updated || issue.created,
+            agent: issue.assignee || null,
+            description: `Issue "${issue.title || issueFile}" — ${issue.status || "unknown"}`,
+            issueId: issue.id || issueFile.replace(".json", ""),
+            status: issue.status,
+          });
+        } catch { /* skip */ }
+      }
+    }
+
+    // Read resolved approvals
+    const resolvedDir = path.join(projDir, "approvals", "resolved");
+    if (fs.existsSync(resolvedDir)) {
+      const resolvedFiles = fs.readdirSync(resolvedDir).filter((f) => f.endsWith(".json"));
+      for (const rf of resolvedFiles) {
+        try {
+          const approval = JSON.parse(fs.readFileSync(path.join(resolvedDir, rf), "utf8"));
+          if (filterAgent && approval.requester !== filterAgent && approval.resolved_by !== filterAgent) continue;
+          events.push({
+            project: proj.name,
+            type: `approval_${approval.decision || approval.status || "resolved"}`,
+            timestamp: approval.resolved_at || approval.created,
+            agent: approval.resolved_by || "kavin",
+            description: `${approval.decision || "resolved"}: ${approval.what || rf}`,
+            requester: approval.requester,
+          });
+        } catch { /* skip */ }
+      }
+    }
+
+    // Read standups
+    const standupsDir = path.join(projDir, "standups");
+    if (fs.existsSync(standupsDir)) {
+      const standupFiles = fs.readdirSync(standupsDir).filter((f) => f.endsWith(".md"));
+      for (const sf of standupFiles) {
+        const dateMatch = sf.match(/(\d{4}-\d{2}-\d{2})/);
+        if (!dateMatch) continue;
+        // Read lead from PROJECT.md
+        let lead = null;
+        const projectMdPath = path.join(projDir, "PROJECT.md");
+        if (fs.existsSync(projectMdPath)) {
+          try {
+            const raw = fs.readFileSync(projectMdPath, "utf8");
+            const leadMatch = raw.match(/\*\*Lead:\*\*\s*(\S+)/);
+            lead = leadMatch?.[1] || null;
+          } catch { /* skip */ }
+        }
+        if (filterAgent && lead !== filterAgent) continue;
+        events.push({
+          project: proj.name,
+          type: "standup",
+          timestamp: new Date(dateMatch[1] + "T09:00:00Z").toISOString(),
+          agent: lead,
+          description: `Standup posted`,
+          date: dateMatch[1],
+        });
+      }
+    }
+  }
+
+  // Sort by timestamp descending, apply limit
+  events.sort((a, b) => (b.timestamp || "").localeCompare(a.timestamp || ""));
+  const limited = events.slice(0, limit);
+
+  return res.json({ events: limited });
+});
+
+// List all agents with their current status
+app.get("/mc/api/agents", requireSetupAuth, (_req, res) => {
+  try {
+    const entries = fs.readdirSync(STATE_DIR, { withFileTypes: true });
+    const workspaceDirs = entries
+      .filter((e) => e.isDirectory() && (e.name === "workspace" || e.name.startsWith("workspace-")))
+      .map((e) => e.name);
+
+    const agents = workspaceDirs.map((dir) => {
+      const agent = { id: dir, workspace: dir };
+
+      const identityPath = path.join(STATE_DIR, dir, "IDENTITY.md");
+      if (fs.existsSync(identityPath)) {
+        const raw = fs.readFileSync(identityPath, "utf8");
+        const nameMatch = raw.match(/(?:^|\n)#\s+(.+)/);
+        const emojiMatch = raw.match(/emoji:\s*(.+)/i) || raw.match(/^(\p{Emoji_Presentation}|\p{Emoji}\uFE0F)/mu);
+        agent.name = nameMatch?.[1]?.trim() || dir.replace(/^workspace-?/, "") || "Sam";
+        agent.emoji = emojiMatch?.[1]?.trim() || null;
+      } else {
+        agent.name = dir === "workspace" ? "Sam" : dir.replace(/^workspace-/, "").split("-")[0];
+        agent.name = agent.name.charAt(0).toUpperCase() + agent.name.slice(1);
+      }
+
+      const soulPath = path.join(STATE_DIR, dir, "SOUL.md");
+      if (fs.existsSync(soulPath)) {
+        const raw = fs.readFileSync(soulPath, "utf8");
+        const lines = raw.split("\n").filter((l) => l.trim() && !l.startsWith("#"));
+        agent.role = lines[0]?.trim().slice(0, 120) || "";
+      } else {
+        agent.role = "";
+      }
+
+      const tasksPath = path.join(STATE_DIR, dir, "memory", "active-tasks.md");
+      agent.inProgress = [];
+      agent.waitingOn = [];
+      agent.status = "idle";
+      if (fs.existsSync(tasksPath)) {
+        const raw = fs.readFileSync(tasksPath, "utf8");
+        let currentSection = null;
+        for (const line of raw.split("\n")) {
+          const headerMatch = line.match(/^##\s+(.+)/);
+          if (headerMatch) { currentSection = headerMatch[1].trim(); continue; }
+          if (currentSection === "In Progress" && line.startsWith("- ")) {
+            agent.inProgress.push(line.slice(2).replace(/\(last-updated:\s*\d{4}-\d{2}-\d{2}\)/, "").trim());
+          }
+          if (currentSection === "Waiting On" && line.startsWith("- ")) {
+            agent.waitingOn.push(line.slice(2).replace(/\(last-updated:\s*\d{4}-\d{2}-\d{2}\)/, "").trim());
+          }
+        }
+        if (agent.inProgress.length > 0) agent.status = "active";
+      }
+
+      return agent;
+    });
+
+    return res.json({ agents });
+  } catch (err) {
+    return res.status(500).json({ error: "Failed to list agents", detail: err.message });
+  }
+});
+
+// Get agent detail
+app.get("/mc/api/agents/:id", requireSetupAuth, (req, res) => {
+  const agentId = req.params.id;
+  const dirPath = path.join(STATE_DIR, agentId);
+
+  if (!fs.existsSync(dirPath) || !fs.statSync(dirPath).isDirectory()) {
+    return res.status(404).json({ error: "Agent workspace not found" });
+  }
+
+  const agent = { id: agentId, workspace: agentId };
+
+  const identityPath = path.join(dirPath, "IDENTITY.md");
+  if (fs.existsSync(identityPath)) {
+    const raw = fs.readFileSync(identityPath, "utf8");
+    const nameMatch = raw.match(/(?:^|\n)#\s+(.+)/);
+    const emojiMatch = raw.match(/emoji:\s*(.+)/i) || raw.match(/^(\p{Emoji_Presentation}|\p{Emoji}\uFE0F)/mu);
+    agent.name = nameMatch?.[1]?.trim() || agentId.replace(/^workspace-?/, "") || "Sam";
+    agent.emoji = emojiMatch?.[1]?.trim() || null;
+    agent.identityRaw = raw;
+  } else {
+    agent.name = agentId === "workspace" ? "Sam" : agentId.replace(/^workspace-/, "").split("-")[0];
+    agent.name = agent.name.charAt(0).toUpperCase() + agent.name.slice(1);
+  }
+
+  const soulPath = path.join(dirPath, "SOUL.md");
+  if (fs.existsSync(soulPath)) {
+    const raw = fs.readFileSync(soulPath, "utf8");
+    agent.soulRaw = raw;
+    const lines = raw.split("\n").filter((l) => l.trim() && !l.startsWith("#"));
+    agent.role = lines[0]?.trim().slice(0, 120) || "";
+    agent.soulSummary = lines.slice(0, 3).join("\n");
+  }
+
+  const memoryPath = path.join(dirPath, "MEMORY.md");
+  if (fs.existsSync(memoryPath)) {
+    agent.memoryRaw = fs.readFileSync(memoryPath, "utf8");
+  }
+
+  const tasksPath = path.join(dirPath, "memory", "active-tasks.md");
+  if (fs.existsSync(tasksPath)) {
+    agent.tasksRaw = fs.readFileSync(tasksPath, "utf8");
+  }
+
+  agent.inProgress = [];
+  agent.waitingOn = [];
+  agent.status = "idle";
+  if (agent.tasksRaw) {
+    let currentSection = null;
+    for (const line of agent.tasksRaw.split("\n")) {
+      const headerMatch = line.match(/^##\s+(.+)/);
+      if (headerMatch) { currentSection = headerMatch[1].trim(); continue; }
+      if (currentSection === "In Progress" && line.startsWith("- ")) {
+        agent.inProgress.push(line.slice(2).replace(/\(last-updated:\s*\d{4}-\d{2}-\d{2}\)/, "").trim());
+      }
+      if (currentSection === "Waiting On" && line.startsWith("- ")) {
+        agent.waitingOn.push(line.slice(2).replace(/\(last-updated:\s*\d{4}-\d{2}-\d{2}\)/, "").trim());
+      }
+    }
+    if (agent.inProgress.length > 0) agent.status = "active";
+  }
+
+  agent.projects = [];
+  const projectsDir = path.join(STATE_DIR, "shared", "projects");
+  if (fs.existsSync(projectsDir)) {
+    const projEntries = fs.readdirSync(projectsDir, { withFileTypes: true }).filter((e) => e.isDirectory());
+    for (const proj of projEntries) {
+      const projectPath = path.join(projectsDir, proj.name, "PROJECT.md");
+      if (fs.existsSync(projectPath)) {
+        const raw = fs.readFileSync(projectPath, "utf8");
+        const leadMatch = raw.match(/\*\*Lead:\*\*\s*(\S+)/);
+        if (leadMatch && leadMatch[1].toLowerCase() === agent.name.toLowerCase()) {
+          const titleMatch = raw.match(/^#\s+(.+)/m);
+          agent.projects.push({ id: proj.name, title: titleMatch?.[1] || proj.name });
+        }
+      }
+    }
+  }
+
+  return res.json({ agent });
+});
+
+// Get agent activity (recent daily logs)
+app.get("/mc/api/agents/:id/activity", requireSetupAuth, (req, res) => {
+  const agentId = req.params.id;
+  const dirPath = path.join(STATE_DIR, agentId);
+
+  if (!fs.existsSync(dirPath)) {
+    return res.status(404).json({ error: "Agent workspace not found" });
+  }
+
+  const days = [];
+  const dailyDir = path.join(dirPath, "memory", "daily");
+  if (fs.existsSync(dailyDir)) {
+    const files = fs.readdirSync(dailyDir)
+      .filter((f) => f.endsWith(".md"))
+      .sort()
+      .reverse()
+      .slice(0, 7);
+
+    for (const file of files) {
+      try {
+        const content = fs.readFileSync(path.join(dailyDir, file), "utf8");
+        days.push({ date: file.replace(".md", ""), content });
+      } catch { /* skip */ }
+    }
+  }
+
+  const activityEntries = [];
+  const activityDir = path.join(dirPath, "memory", "activity");
+  if (fs.existsSync(activityDir)) {
+    const files = fs.readdirSync(activityDir)
+      .filter((f) => f.endsWith(".md") || f.endsWith(".json"))
+      .sort()
+      .reverse()
+      .slice(0, 20);
+
+    for (const file of files) {
+      try {
+        const content = fs.readFileSync(path.join(activityDir, file), "utf8");
+        activityEntries.push({ file, content });
+      } catch { /* skip */ }
+    }
+  }
+
+  return res.json({ days, activityEntries });
+});
+
+// Get agent runs (from subagents/runs.json)
+app.get("/mc/api/agents/:id/runs", requireSetupAuth, (req, res) => {
+  const agentId = req.params.id;
+  const runsPath = path.join(STATE_DIR, "subagents", "runs.json");
+
+  if (!fs.existsSync(runsPath)) {
+    return res.json({ runs: [] });
+  }
+
+  try {
+    const raw = fs.readFileSync(runsPath, "utf8");
+    const allRuns = JSON.parse(raw);
+    const runsArray = Array.isArray(allRuns) ? allRuns : [];
+
+    const dirPath = path.join(STATE_DIR, agentId);
+    let agentName = agentId === "workspace" ? "sam" : agentId.replace(/^workspace-/, "").split("-")[0];
+
+    const identityPath = path.join(dirPath, "IDENTITY.md");
+    if (fs.existsSync(identityPath)) {
+      const idRaw = fs.readFileSync(identityPath, "utf8");
+      const nameMatch = idRaw.match(/(?:^|\n)#\s+(.+)/);
+      if (nameMatch) agentName = nameMatch[1].trim().toLowerCase();
+    }
+
+    const filtered = runsArray.filter((run) => {
+      const spawner = (run.spawner || run.parent || run.agent || "").toLowerCase();
+      return spawner.includes(agentName) || spawner.includes(agentId.replace(/^workspace-?/, ""));
+    });
+
+    filtered.sort((a, b) => {
+      const ta = new Date(a.timestamp || a.started || 0).getTime();
+      const tb = new Date(b.timestamp || b.started || 0).getTime();
+      return tb - ta;
+    });
+
+    return res.json({ runs: filtered.slice(0, 50) });
+  } catch (err) {
+    return res.json({ runs: [], error: err.message });
+  }
+});
+
 // Get compiled dashboard data
 app.get("/mc/api/dashboard", requireSetupAuth, (_req, res) => {
   const dashboardPath = path.join(STATE_DIR, "shared", "projects", "dashboard.json");
@@ -1473,6 +1987,386 @@ app.get("/mc/api/dashboard", requireSetupAuth, (_req, res) => {
     }
   }
   return res.json({ projects: [], approvals: [], standups: [], costs: {} });
+});
+
+// --- Issue Management API ---
+// Issues are stored as JSON files at shared/projects/{slug}/issues/{id}.json
+// Counter file at shared/projects/{slug}/issues/.counter tracks auto-increment
+
+function issueDir(slug) {
+  return path.join(STATE_DIR, "shared", "projects", slug, "issues");
+}
+
+function readCounter(slug) {
+  const counterPath = path.join(issueDir(slug), ".counter");
+  try {
+    return parseInt(fs.readFileSync(counterPath, "utf8").trim(), 10) || 0;
+  } catch {
+    return 0;
+  }
+}
+
+function writeCounter(slug, value) {
+  const dir = issueDir(slug);
+  fs.mkdirSync(dir, { recursive: true });
+  fs.writeFileSync(path.join(dir, ".counter"), String(value), "utf8");
+}
+
+function projectPrefix(slug) {
+  // Convert slug to uppercase prefix, e.g. "lia-first-100" -> "LIA"
+  const parts = slug.split("-");
+  if (parts.length >= 1) {
+    return parts[0].toUpperCase();
+  }
+  return slug.toUpperCase().slice(0, 3);
+}
+
+// List all issues for a project
+app.get("/mc/api/issues", requireSetupAuth, (req, res) => {
+  const slug = req.query.project;
+  if (!slug || typeof slug !== "string") {
+    return res.status(400).json({ error: "Missing ?project= parameter" });
+  }
+  const dir = issueDir(slug);
+  if (!fs.existsSync(dir)) {
+    return res.json({ issues: [] });
+  }
+  const files = fs.readdirSync(dir).filter((f) => f.endsWith(".json"));
+  const issues = [];
+  for (const file of files) {
+    try {
+      const raw = fs.readFileSync(path.join(dir, file), "utf8");
+      issues.push(JSON.parse(raw));
+    } catch { /* skip malformed */ }
+  }
+  // Sort by updated date, newest first
+  issues.sort((a, b) => (b.updated || "").localeCompare(a.updated || ""));
+  return res.json({ issues });
+});
+
+// Get single issue
+app.get("/mc/api/issues/:id", requireSetupAuth, (req, res) => {
+  const slug = req.query.project;
+  const id = req.params.id;
+  if (!slug || typeof slug !== "string") {
+    return res.status(400).json({ error: "Missing ?project= parameter" });
+  }
+  const filePath = path.join(issueDir(slug), `${id}.json`);
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).json({ error: "Issue not found" });
+  }
+  try {
+    const raw = fs.readFileSync(filePath, "utf8");
+    return res.json(JSON.parse(raw));
+  } catch (err) {
+    return res.status(500).json({ error: "Failed to read issue" });
+  }
+});
+
+// Create issue
+app.post("/mc/api/issues", requireSetupAuth, (req, res) => {
+  const { project, title, description, priority, assignee, labels } = req.body;
+  if (!project || !title) {
+    return res.status(400).json({ error: "Missing project or title" });
+  }
+  const counter = readCounter(project) + 1;
+  writeCounter(project, counter);
+  const prefix = projectPrefix(project);
+  const id = `${prefix}-${String(counter).padStart(3, "0")}`;
+  const now = new Date().toISOString();
+  const issue = {
+    id,
+    title,
+    description: description || "",
+    status: "todo",
+    priority: priority || "none",
+    assignee: assignee || null,
+    project,
+    milestone: null,
+    labels: labels || [],
+    created: now,
+    updated: now,
+    created_by: "kavin",
+    comments: [],
+  };
+  const dir = issueDir(project);
+  fs.mkdirSync(dir, { recursive: true });
+  fs.writeFileSync(path.join(dir, `${id}.json`), JSON.stringify(issue, null, 2), "utf8");
+  return res.json(issue);
+});
+
+// Update issue (partial)
+app.patch("/mc/api/issues/:id", requireSetupAuth, (req, res) => {
+  const slug = req.query.project || req.body.project;
+  const id = req.params.id;
+  if (!slug) {
+    return res.status(400).json({ error: "Missing project" });
+  }
+  const filePath = path.join(issueDir(slug), `${id}.json`);
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).json({ error: "Issue not found" });
+  }
+  try {
+    const existing = JSON.parse(fs.readFileSync(filePath, "utf8"));
+    const updates = req.body;
+    delete updates.id; // prevent ID change
+    delete updates.created; // prevent creation date change
+    const updated = { ...existing, ...updates, updated: new Date().toISOString() };
+    fs.writeFileSync(filePath, JSON.stringify(updated, null, 2), "utf8");
+    return res.json(updated);
+  } catch (err) {
+    return res.status(500).json({ error: "Failed to update issue" });
+  }
+});
+
+// Add comment to issue
+app.post("/mc/api/issues/:id/comments", requireSetupAuth, (req, res) => {
+  const slug = req.query.project || req.body.project;
+  const id = req.params.id;
+  const { text, author } = req.body;
+  if (!slug || !text) {
+    return res.status(400).json({ error: "Missing project or text" });
+  }
+  const filePath = path.join(issueDir(slug), `${id}.json`);
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).json({ error: "Issue not found" });
+  }
+  try {
+    const existing = JSON.parse(fs.readFileSync(filePath, "utf8"));
+    const comment = {
+      author: author || "kavin",
+      text,
+      created: new Date().toISOString(),
+    };
+    existing.comments = existing.comments || [];
+    existing.comments.push(comment);
+    existing.updated = new Date().toISOString();
+    fs.writeFileSync(filePath, JSON.stringify(existing, null, 2), "utf8");
+    return res.json({ ok: true, comment, issue: existing });
+  } catch (err) {
+    return res.status(500).json({ error: "Failed to add comment" });
+  }
+});
+
+// --- Budget Management API ---
+// Budget policies stored as budget-policy.json inside each project directory.
+// Cost data aggregated from costs/*.json files within each project.
+
+function parseBudgetFromProjectMd(raw) {
+  if (!raw) return 0;
+  const match = raw.match(/\*\*Budget:\*\*\s*\$(\d+(?:\.\d+)?)/);
+  return match ? parseFloat(match[1]) : 0;
+}
+
+function loadProjectCosts(projectSlug) {
+  const costsDir = path.join(STATE_DIR, "shared", "projects", projectSlug, "costs");
+  if (!fs.existsSync(costsDir)) return { agents: [], totalSpend: 0, entries: [] };
+  const files = fs.readdirSync(costsDir).filter((f) => f.endsWith(".json"));
+  const agents = [];
+  let totalSpend = 0;
+  const allEntries = [];
+  for (const file of files) {
+    try {
+      const raw = fs.readFileSync(path.join(costsDir, file), "utf8");
+      const data = JSON.parse(raw);
+      agents.push(data);
+      totalSpend += data.total_usd || 0;
+      if (data.entries) {
+        for (const entry of data.entries) {
+          allEntries.push({ ...entry, agent: data.agent });
+        }
+      }
+    } catch { /* skip malformed */ }
+  }
+  allEntries.sort((a, b) => (b.timestamp || "").localeCompare(a.timestamp || ""));
+  return { agents, totalSpend, entries: allEntries };
+}
+
+function loadBudgetPolicy(projectSlug) {
+  const policyPath = path.join(STATE_DIR, "shared", "projects", projectSlug, "budget-policy.json");
+  if (!fs.existsSync(policyPath)) return null;
+  try {
+    return JSON.parse(fs.readFileSync(policyPath, "utf8"));
+  } catch { return null; }
+}
+
+function computeCostSummary(projectSlug, costData, weeklyBudget, policy) {
+  const { agents, totalSpend, entries } = costData;
+  const budget = policy?.weekly_budget_usd ?? weeklyBudget;
+  const remaining = Math.max(0, budget - totalSpend);
+  const utilizationPct = budget > 0 ? Math.round((totalSpend / budget) * 100) : 0;
+
+  // Calculate daily burn rate from entries in the last 7 days
+  const now = Date.now();
+  const sevenDaysAgo = now - 7 * 24 * 60 * 60 * 1000;
+  const recentEntries = entries.filter((e) => {
+    const ts = e.timestamp ? new Date(e.timestamp).getTime() : 0;
+    return ts >= sevenDaysAgo;
+  });
+  const recentSpend = recentEntries.reduce((sum, e) => sum + (e.cost_usd || 0), 0);
+  const timestamps = recentEntries.map((e) => new Date(e.timestamp).getTime()).filter((t) => t > 0);
+  let daySpan = 1;
+  if (timestamps.length > 1) {
+    daySpan = Math.max(1, Math.ceil((Math.max(...timestamps) - Math.min(...timestamps)) / (24 * 60 * 60 * 1000)));
+  }
+  const dailyBurnRate = recentSpend > 0 ? recentSpend / daySpan : 0;
+
+  // Projected exhaustion date
+  let exhaustionDate = null;
+  if (dailyBurnRate > 0 && remaining > 0) {
+    const daysRemaining = remaining / dailyBurnRate;
+    exhaustionDate = new Date(now + daysRemaining * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
+  }
+
+  const warnThreshold = policy?.warn_threshold ?? 0.8;
+  const stopThreshold = policy?.stop_threshold ?? 1.0;
+  let status = "healthy";
+  if (budget > 0) {
+    if (totalSpend / budget >= stopThreshold) status = "exceeded";
+    else if (totalSpend / budget >= warnThreshold) status = "warning";
+  }
+
+  return {
+    project: projectSlug,
+    totalSpend: Math.round(totalSpend * 100) / 100,
+    budget,
+    remaining: Math.round(remaining * 100) / 100,
+    utilizationPct,
+    dailyBurnRate: Math.round(dailyBurnRate * 100) / 100,
+    exhaustionDate,
+    status,
+    warnThreshold,
+    stopThreshold,
+    agents: agents.map((a) => ({
+      agent: a.agent,
+      totalUsd: a.total_usd || 0,
+      entryCount: a.entries?.length || 0,
+      weekStart: a.week_start,
+    })),
+    perAgentLimits: policy?.per_agent_limits || null,
+  };
+}
+
+// GET /mc/api/costs?project={slug} — cost summary for one project
+app.get("/mc/api/costs", requireSetupAuth, (req, res) => {
+  const slug = req.query.project;
+  if (!slug || typeof slug !== "string") {
+    return res.status(400).json({ error: "Missing ?project= parameter" });
+  }
+  const projectDir = path.join(STATE_DIR, "shared", "projects", slug);
+  if (!fs.existsSync(projectDir)) {
+    return res.status(404).json({ error: "Project not found" });
+  }
+
+  const costData = loadProjectCosts(slug);
+  const policy = loadBudgetPolicy(slug);
+
+  let weeklyBudget = 0;
+  const projectMdPath = path.join(projectDir, "PROJECT.md");
+  if (fs.existsSync(projectMdPath)) {
+    weeklyBudget = parseBudgetFromProjectMd(fs.readFileSync(projectMdPath, "utf8"));
+  }
+
+  const summary = computeCostSummary(slug, costData, weeklyBudget, policy);
+  return res.json({ ...summary, entries: costData.entries });
+});
+
+// GET /mc/api/costs/overview — cost summary across all projects
+app.get("/mc/api/costs/overview", requireSetupAuth, (_req, res) => {
+  const projectsDir = path.join(STATE_DIR, "shared", "projects");
+  if (!fs.existsSync(projectsDir)) {
+    return res.json({ projects: [], totals: { spend: 0, budget: 0, utilizationPct: 0 } });
+  }
+  const dirs = fs.readdirSync(projectsDir, { withFileTypes: true });
+  const summaries = [];
+  let totalSpend = 0;
+  let totalBudget = 0;
+
+  for (const entry of dirs) {
+    if (!entry.isDirectory()) continue;
+    const slug = entry.name;
+    const costData = loadProjectCosts(slug);
+    const policy = loadBudgetPolicy(slug);
+
+    let weeklyBudget = 0;
+    const projectMdPath = path.join(projectsDir, slug, "PROJECT.md");
+    if (fs.existsSync(projectMdPath)) {
+      weeklyBudget = parseBudgetFromProjectMd(fs.readFileSync(projectMdPath, "utf8"));
+    }
+
+    const summary = computeCostSummary(slug, costData, weeklyBudget, policy);
+
+    let title = slug;
+    let projectStatus = "unknown";
+    let lead = "unassigned";
+    if (fs.existsSync(projectMdPath)) {
+      const raw = fs.readFileSync(projectMdPath, "utf8");
+      const titleMatch = raw.match(/^#\s+(.+)/m);
+      if (titleMatch) title = titleMatch[1];
+      const statusMatch = raw.match(/\*\*Status:\*\*\s*(\S+)/);
+      if (statusMatch) projectStatus = statusMatch[1];
+      const leadMatch = raw.match(/\*\*Lead:\*\*\s*(\S+)/);
+      if (leadMatch) lead = leadMatch[1];
+    }
+
+    summaries.push({ ...summary, title, projectStatus, lead });
+    totalSpend += summary.totalSpend;
+    totalBudget += summary.budget;
+  }
+
+  return res.json({
+    projects: summaries,
+    totals: {
+      spend: Math.round(totalSpend * 100) / 100,
+      budget: totalBudget,
+      utilizationPct: totalBudget > 0 ? Math.round((totalSpend / totalBudget) * 100) : 0,
+    },
+  });
+});
+
+// GET /mc/api/budget-policy?project={slug} — get budget policy
+app.get("/mc/api/budget-policy", requireSetupAuth, (req, res) => {
+  const slug = req.query.project;
+  if (!slug || typeof slug !== "string") {
+    return res.status(400).json({ error: "Missing ?project= parameter" });
+  }
+  const policy = loadBudgetPolicy(slug);
+  if (!policy) {
+    return res.json({ exists: false, policy: null });
+  }
+  return res.json({ exists: true, policy });
+});
+
+// PUT /mc/api/budget-policy — update budget policy
+app.put("/mc/api/budget-policy", requireSetupAuth, (req, res) => {
+  const { project, weekly_budget_usd, warn_threshold, stop_threshold, per_agent_limits } = req.body;
+  if (!project || typeof project !== "string") {
+    return res.status(400).json({ error: "Missing project" });
+  }
+  if (typeof weekly_budget_usd !== "number" || weekly_budget_usd < 0) {
+    return res.status(400).json({ error: "Invalid weekly_budget_usd" });
+  }
+  const projectDir = path.join(STATE_DIR, "shared", "projects", project);
+  if (!fs.existsSync(projectDir)) {
+    return res.status(404).json({ error: "Project not found" });
+  }
+
+  const today = new Date().toISOString().split("T")[0];
+  const existing = loadBudgetPolicy(project);
+
+  const policy = {
+    project,
+    weekly_budget_usd,
+    warn_threshold: typeof warn_threshold === "number" ? Math.min(1, Math.max(0, warn_threshold)) : (existing?.warn_threshold ?? 0.8),
+    stop_threshold: typeof stop_threshold === "number" ? Math.min(1.5, Math.max(0, stop_threshold)) : (existing?.stop_threshold ?? 1.0),
+    per_agent_limits: per_agent_limits || existing?.per_agent_limits || {},
+    created: existing?.created || today,
+    updated: today,
+  };
+
+  const policyPath = path.join(projectDir, "budget-policy.json");
+  fs.writeFileSync(policyPath, JSON.stringify(policy, null, 2), "utf8");
+  return res.json({ ok: true, policy });
 });
 
 // Serve the Mission Control SPA

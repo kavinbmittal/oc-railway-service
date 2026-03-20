@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
-import { getFile } from "../api.js";
+import { getFile, getProjectCosts, getBudgetPolicy, updateBudgetPolicy } from "../api.js";
 import {
   ArrowLeft, FileText, Activity, DollarSign, Clock,
-  User, Wallet, Target, ShieldCheck, Bot,
+  User, Wallet, Target, ShieldCheck, Bot, CircleDot, Pencil,
 } from "lucide-react";
 import Markdown from "../components/Markdown.jsx";
 import { Skeleton } from "../components/ui/Skeleton.jsx";
@@ -11,9 +11,15 @@ import { StatusBadge } from "../components/StatusBadge.jsx";
 import { MetricCard } from "../components/MetricCard.jsx";
 import { EmptyState } from "../components/EmptyState.jsx";
 import { ActivityRow } from "../components/ActivityRow.jsx";
+import { QuotaBar } from "../components/QuotaBar.jsx";
+import { CostTimeline } from "../components/CostTimeline.jsx";
+import { BurnRateIndicator } from "../components/BurnRateIndicator.jsx";
+import { BudgetEditModal } from "../components/BudgetEditModal.jsx";
+import Issues from "./Issues.jsx";
 
 const TABS = [
   { id: "overview", label: "Overview", icon: FileText },
+  { id: "issues", label: "Issues", icon: CircleDot },
   { id: "standups", label: "Standups", icon: Activity },
   { id: "costs", label: "Costs", icon: DollarSign },
   { id: "activity", label: "Activity", icon: Clock },
@@ -61,6 +67,10 @@ export default function ProjectDetail({ projectId, navigate }) {
   const [milestones, setMilestones] = useState(null);
   const [standups, setStandups] = useState([]);
   const [costs, setCosts] = useState([]);
+  const [costSummary, setCostSummary] = useState(null);
+  const [budgetPolicy, setBudgetPolicy] = useState(null);
+  const [showBudgetModal, setShowBudgetModal] = useState(false);
+  const [savingBudget, setSavingBudget] = useState(false);
   const [activityLog, setActivityLog] = useState("");
   const [loading, setLoading] = useState(true);
 
@@ -71,15 +81,35 @@ export default function ProjectDetail({ projectId, navigate }) {
       getFile(`shared/projects/${projectId}/activity.log`).catch(() => null),
       loadStandups(projectId),
       loadCosts(projectId),
-    ]).then(([proj, miles, activity, standupList, costList]) => {
+      getProjectCosts(projectId).catch(() => null),
+      getBudgetPolicy(projectId).catch(() => null),
+    ]).then(([proj, miles, activity, standupList, costList, costData, policyData]) => {
       setProjectRaw(proj?.content || null);
       setMilestones(miles?.content || null);
       setActivityLog(activity?.content || "");
       setStandups(standupList);
       setCosts(costList);
+      setCostSummary(costData);
+      setBudgetPolicy(policyData?.policy || null);
       setLoading(false);
     });
   }, [projectId]);
+
+  const handleSaveBudget = async (data) => {
+    setSavingBudget(true);
+    try {
+      const result = await updateBudgetPolicy(data);
+      setBudgetPolicy(result.policy);
+      // Refresh cost summary
+      const updated = await getProjectCosts(projectId).catch(() => null);
+      if (updated) setCostSummary(updated);
+      setShowBudgetModal(false);
+    } catch (e) {
+      console.error("Failed to save budget:", e);
+    } finally {
+      setSavingBudget(false);
+    }
+  };
 
   const project = parseProjectMd(projectRaw);
   const activities = parseActivityLog(activityLog);
@@ -222,6 +252,11 @@ export default function ProjectDetail({ projectId, navigate }) {
           </div>
         </TabsContent>
 
+        {/* Issues tab */}
+        <TabsContent value="issues">
+          <Issues projectSlug={projectId} navigate={navigate} />
+        </TabsContent>
+
         {/* Standups tab */}
         <TabsContent value="standups">
           {standups.length === 0 ? (
@@ -242,56 +277,23 @@ export default function ProjectDetail({ projectId, navigate }) {
 
         {/* Costs tab */}
         <TabsContent value="costs">
-          <div className="space-y-4">
-            {costs.length === 0 ? (
-              <EmptyState icon={DollarSign} text="No cost data yet" sub="Agents will log their token usage here." />
-            ) : (
-              <>
-                {/* Summary metrics */}
-                <div className="grid grid-cols-2 gap-1">
-                  <MetricCard
-                    label="Total Spend"
-                    value={`$${totalCost.toFixed(2)}`}
-                    mono
-                  />
-                  <MetricCard
-                    label="Entries"
-                    value={costs.reduce((sum, c) => sum + (c.entries?.length || 0), 0)}
-                  />
-                </div>
-
-                {/* Per-agent breakdown */}
-                <div className="border border-border divide-y divide-border">
-                  {costs.map((c) => (
-                    <div key={c.agent} className="px-4 py-3">
-                      <div className="flex justify-between items-center mb-2">
-                        <span className="text-sm font-medium text-foreground">{c.agent}</span>
-                        <span className="text-sm font-mono tabular-nums text-foreground">
-                          ${c.total_usd?.toFixed(2) || "0.00"}
-                        </span>
-                      </div>
-                      {c.entries && c.entries.length > 0 && (
-                        <div className="space-y-1">
-                          {c.entries.slice(-5).map((e, i) => (
-                            <div key={i} className="flex justify-between text-xs text-muted-foreground">
-                              <span className="truncate mr-4">{e.task}</span>
-                              <span className="font-mono tabular-nums shrink-0">
-                                {e.type === "claude-code" ? (
-                                  <span className="text-cyan-400">CC</span>
-                                ) : (
-                                  `$${e.cost_usd?.toFixed(2)}`
-                                )}
-                              </span>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </>
-            )}
-          </div>
+          <ProjectCostsTab
+            costs={costs}
+            costSummary={costSummary}
+            budgetPolicy={budgetPolicy}
+            totalCost={totalCost}
+            projectId={projectId}
+            onEditBudget={() => setShowBudgetModal(true)}
+          />
+          {showBudgetModal && (
+            <BudgetEditModal
+              project={projectId}
+              policy={budgetPolicy}
+              onSave={handleSaveBudget}
+              onClose={() => setShowBudgetModal(false)}
+              saving={savingBudget}
+            />
+          )}
         </TabsContent>
 
         {/* Activity tab */}

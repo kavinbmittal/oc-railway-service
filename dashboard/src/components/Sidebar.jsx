@@ -7,8 +7,11 @@ import {
   ChevronRight,
   Search,
   Bot,
+  Inbox,
+  Activity,
+  CircleDot,
 } from "lucide-react";
-import { getApprovals, getProjects } from "../api.js";
+import { getApprovals, getProjects, getInbox } from "../api.js";
 
 /* ── Predefined project colors (cycled) ────────────────────────────── */
 const PROJECT_COLORS = [
@@ -93,6 +96,7 @@ function SidebarNavItem({ active, onClick, icon: Icon, label, badge, badgeTone =
 /* ── Main sidebar ──────────────────────────────────────────────────── */
 export default function Sidebar({ page, navigate, refreshKey }) {
   const [approvalCount, setApprovalCount] = useState(0);
+  const [inboxCount, setInboxCount] = useState(0);
   const [projects, setProjects] = useState([]);
 
   /* Poll approvals */
@@ -103,6 +107,20 @@ export default function Sidebar({ page, navigate, refreshKey }) {
         .catch(() => {});
     load();
     const interval = setInterval(load, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  /* Poll inbox count */
+  useEffect(() => {
+    const load = () =>
+      getInbox()
+        .then((data) => {
+          const c = data?.counts || {};
+          setInboxCount((c.approvals || 0) + (c.budget || 0) + (c.tasks || 0));
+        })
+        .catch(() => {});
+    load();
+    const interval = setInterval(load, 60000);
     return () => clearInterval(interval);
   }, []);
 
@@ -160,12 +178,26 @@ export default function Sidebar({ page, navigate, refreshKey }) {
             label="Dashboard"
           />
           <SidebarNavItem
+            active={page === "inbox"}
+            onClick={() => navigate("inbox")}
+            icon={Inbox}
+            label="Inbox"
+            badge={inboxCount}
+            badgeTone="danger"
+          />
+          <SidebarNavItem
             active={page === "approvals"}
             onClick={() => navigate("approvals")}
             icon={ShieldCheck}
             label="Approvals"
             badge={approvalCount}
             badgeTone="danger"
+          />
+          <SidebarNavItem
+            active={page === "activity"}
+            onClick={() => navigate("activity")}
+            icon={Activity}
+            label="Activity"
           />
         </div>
 
@@ -215,6 +247,17 @@ export default function Sidebar({ page, navigate, refreshKey }) {
 
         {/* ── Work section ────────────────────────────────────── */}
         <SidebarSection label="Work">
+          <SidebarNavItem
+            active={page === "issues" || page === "issue-detail"}
+            onClick={() => {
+              // Navigate to first project's issues, or overview if none
+              const slug = coloredProjects[0]?.id || coloredProjects[0]?.slug;
+              if (slug) navigate("issues", slug);
+              else navigate("overview");
+            }}
+            icon={CircleDot}
+            label="Issues"
+          />
           <SidebarNavItem
             active={page === "agents"}
             onClick={() => navigate("agents")}

@@ -90,6 +90,105 @@ ${gateLines}
   return { slug };
 }
 
+// --- Issues API ---
+
+export async function getIssues(projectSlug) {
+  const data = await fetchJSON(`${BASE}/issues?project=${encodeURIComponent(projectSlug)}`);
+  return data.issues || [];
+}
+
+export async function getIssue(id, projectSlug) {
+  return fetchJSON(`${BASE}/issues/${encodeURIComponent(id)}?project=${encodeURIComponent(projectSlug)}`);
+}
+
+export async function createIssue({ project, title, description, priority, assignee, labels }) {
+  const res = await fetch(`${BASE}/issues`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ project, title, description, priority, assignee, labels }),
+  });
+  if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+  return res.json();
+}
+
+export async function updateIssue(id, projectSlug, updates) {
+  const res = await fetch(`${BASE}/issues/${encodeURIComponent(id)}?project=${encodeURIComponent(projectSlug)}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(updates),
+  });
+  if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+  return res.json();
+}
+
+export async function addComment(id, projectSlug, text, author) {
+  const res = await fetch(`${BASE}/issues/${encodeURIComponent(id)}/comments?project=${encodeURIComponent(projectSlug)}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ project: projectSlug, text, author }),
+  });
+  if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+  return res.json();
+}
+
+export async function getInbox() {
+  return fetchJSON(`${BASE}/inbox`);
+}
+
+export async function getActivity({ limit = 50, project, agent } = {}) {
+  const params = new URLSearchParams();
+  if (limit) params.set("limit", String(limit));
+  if (project) params.set("project", project);
+  if (agent) params.set("agent", agent);
+  const data = await fetchJSON(`${BASE}/activity?${params}`);
+  return data.events || [];
+}
+
+// --- Agents API ---
+
+export async function getAgents() {
+  const data = await fetchJSON(`${BASE}/agents`);
+  return data.agents || [];
+}
+
+export async function getAgent(id) {
+  const data = await fetchJSON(`${BASE}/agents/${encodeURIComponent(id)}`);
+  return data.agent || null;
+}
+
+export async function getAgentActivity(id) {
+  return fetchJSON(`${BASE}/agents/${encodeURIComponent(id)}/activity`);
+}
+
+export async function getAgentRuns(id) {
+  const data = await fetchJSON(`${BASE}/agents/${encodeURIComponent(id)}/runs`);
+  return data.runs || [];
+}
+
+// --- Costs & Budget API ---
+
+export async function getCostOverview() {
+  return fetchJSON(`${BASE}/costs/overview`);
+}
+
+export async function getProjectCosts(projectSlug) {
+  return fetchJSON(`${BASE}/costs?project=${encodeURIComponent(projectSlug)}`);
+}
+
+export async function getBudgetPolicy(projectSlug) {
+  return fetchJSON(`${BASE}/budget-policy?project=${encodeURIComponent(projectSlug)}`);
+}
+
+export async function updateBudgetPolicy({ project, weekly_budget_usd, warn_threshold, stop_threshold, per_agent_limits }) {
+  const res = await fetch(`${BASE}/budget-policy`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ project, weekly_budget_usd, warn_threshold, stop_threshold, per_agent_limits }),
+  });
+  if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+  return res.json();
+}
+
 export async function resolveApproval({ project, id, decision, comment, requester, gate, what, why, created }) {
   const now = new Date().toISOString();
   const timestamp = Date.now();
