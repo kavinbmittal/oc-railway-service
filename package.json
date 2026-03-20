@@ -16,5 +16,22 @@
     "express": "^5.1.0",
     "http-proxy": "^1.18.1",
     "tar": "^7.5.4"
-  }
+  },
+  "version": "1.0.0",
+  "description": "This repo packages **OpenClaw** for Railway with a small **/setup** web wizard so users can deploy and onboard **without running any commands**.",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kavinbmittal/openclaw-railway-template.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/kavinbmittal/openclaw-railway-template/issues"
+  },
+  "homepage": "https://github.com/kavinbmittal/openclaw-railway-template#readme"
 }

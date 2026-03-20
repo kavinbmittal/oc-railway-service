@@ -1309,6 +1309,116 @@ app.post("/setup/import", requireSetupAuth, async (req, res) => {
   }
 });
 
+// --- Mission Control Dashboard ---
+// Serves the dashboard SPA and provides a file API for reading project data.
+// Look for dashboard dist in the app directory first (deployed via template),
+// then fall back to the state directory (manually placed).
+const DASHBOARD_DIR = fs.existsSync(path.resolve(import.meta.dirname, "..", "dashboard", "dist"))
+  ? path.resolve(import.meta.dirname, "..", "dashboard", "dist")
+  : path.join(STATE_DIR, "dashboard", "dist");
+const PROJECTS_ALLOWED_PREFIXES = ["shared/", "workspace"];
+
+// File API: read files from the OpenClaw state directory.
+// Only allows paths under approved prefixes to prevent directory traversal.
+app.get("/mc/api/files", requireSetupAuth, (req, res) => {
+  const filePath = req.query.path;
+  if (!filePath || typeof filePath !== "string") {
+    return res.status(400).json({ error: "Missing ?path= parameter" });
+  }
+  // Block directory traversal
+  const normalized = path.normalize(filePath);
+  if (normalized.includes("..") || path.isAbsolute(normalized)) {
+    return res.status(403).json({ error: "Path traversal not allowed" });
+  }
+  // Only allow approved prefixes
+  if (!PROJECTS_ALLOWED_PREFIXES.some((p) => normalized.startsWith(p))) {
+    return res.status(403).json({ error: "Path not in allowed scope" });
+  }
+  const fullPath = path.join(STATE_DIR, normalized);
+  if (!fs.existsSync(fullPath)) {
+    return res.status(404).json({ error: "File not found" });
+  }
+  const stat = fs.statSync(fullPath);
+  if (stat.isDirectory()) {
+    // Return directory listing
+    const entries = fs.readdirSync(fullPath, { withFileTypes: true }).map((e) => ({
+      name: e.name,
+      type: e.isDirectory() ? "directory" : "file",
+    }));
+    return res.json({ type: "directory", entries });
+  }
+  // Return file contents
+  const content = fs.readFileSync(fullPath, "utf8");
+  if (fullPath.endsWith(".json")) {
+    try {
+      return res.json({ type: "file", content: JSON.parse(content) });
+    } catch {
+      return res.json({ type: "file", content });
+    }
+  }
+  return res.json({ type: "file", content });
+});
+
+// List all projects
+app.get("/mc/api/projects", requireSetupAuth, (_req, res) => {
+  const projectsDir = path.join(STATE_DIR, "shared", "projects");
+  if (!fs.existsSync(projectsDir)) {
+    return res.json({ projects: [] });
+  }
+  const entries = fs.readdirSync(projectsDir, { withFileTypes: true });
+  const projects = entries
+    .filter((e) => e.isDirectory())
+    .map((e) => {
+      const projectPath = path.join(projectsDir, e.name, "PROJECT.md");
+      let meta = { id: e.name };
+      if (fs.existsSync(projectPath)) {
+        const raw = fs.readFileSync(projectPath, "utf8");
+        // Parse basic frontmatter-style fields
+        const leadMatch = raw.match(/\*\*Lead:\*\*\s*(\S+)/);
+        const budgetMatch = raw.match(/\*\*Budget:\*\*\s*(.+)/);
+        const statusMatch = raw.match(/\*\*Status:\*\*\s*(\S+)/);
+        const titleMatch = raw.match(/^#\s+(.+)/m);
+        meta = {
+          ...meta,
+          title: titleMatch?.[1] || e.name,
+          lead: leadMatch?.[1] || "unassigned",
+          budget: budgetMatch?.[1]?.trim() || "none",
+          status: statusMatch?.[1] || "unknown",
+          raw,
+        };
+      }
+      return meta;
+    });
+  return res.json({ projects });
+});
+
+// Get compiled dashboard data
+app.get("/mc/api/dashboard", requireSetupAuth, (_req, res) => {
+  const dashboardPath = path.join(STATE_DIR, "shared", "projects", "dashboard.json");
+  if (fs.existsSync(dashboardPath)) {
+    try {
+      const data = JSON.parse(fs.readFileSync(dashboardPath, "utf8"));
+      return res.json(data);
+    } catch {
+      return res.status(500).json({ error: "Failed to parse dashboard.json" });
+    }
+  }
+  return res.json({ projects: [], approvals: [], standups: [], costs: {} });
+});
+
+// Serve the Mission Control SPA
+if (fs.existsSync(DASHBOARD_DIR)) {
+  app.use("/mc", express.static(DASHBOARD_DIR));
+  // SPA catch-all: serve index.html for any /mc/* route not matched above
+  app.get("/mc/*", (req, res) => {
+    // Don't catch API routes
+    if (req.path.startsWith("/mc/api/")) return res.status(404).json({ error: "Not found" });
+    const indexPath = path.join(DASHBOARD_DIR, "index.html");
+    if (fs.existsSync(indexPath)) return res.sendFile(indexPath);
+    return res.status(404).send("Dashboard not built yet. Run: cd dashboard && npm run build");
+  });
+}
+
 // Proxy everything else to the gateway.
 const proxy = httpProxy.createProxyServer({
   target: GATEWAY_TARGET,
