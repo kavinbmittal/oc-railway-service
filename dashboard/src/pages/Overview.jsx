@@ -1,12 +1,19 @@
 import { useState, useEffect } from "react";
 import { getProjects } from "../api.js";
-import { FolderKanban, DollarSign, Clock, CheckCircle2 } from "lucide-react";
+import { FolderKanban, User, DollarSign, ArrowRight } from "lucide-react";
 
 const STATUS_COLORS = {
-  active: "bg-emerald-500/20 text-emerald-400",
-  paused: "bg-amber-500/20 text-amber-400",
-  completed: "bg-zinc-500/20 text-zinc-400",
-  unknown: "bg-zinc-500/20 text-zinc-500",
+  active: "bg-green-900/50 text-green-300",
+  paused: "bg-orange-900/50 text-orange-300",
+  completed: "bg-blue-900/50 text-blue-300",
+  unknown: "bg-muted text-muted-foreground",
+};
+
+const STATUS_DOT = {
+  active: "bg-green-400",
+  paused: "bg-yellow-400",
+  completed: "bg-blue-400",
+  unknown: "bg-muted-foreground",
 };
 
 export default function Overview({ navigate }) {
@@ -23,8 +30,16 @@ export default function Overview({ navigate }) {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-zinc-500 text-sm">Loading projects...</div>
+      <div className="space-y-6">
+        <div className="h-12" />
+        <div className="grid grid-cols-2 xl:grid-cols-4 gap-1">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="border border-border p-4">
+              <div className="bg-accent/75 h-4 w-20 mb-3" />
+              <div className="bg-accent/75 h-8 w-16" />
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
@@ -32,84 +47,117 @@ export default function Overview({ navigate }) {
   if (error) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-red-400 text-sm">Error: {error}</div>
+        <p className="text-sm text-destructive">Error: {error}</p>
       </div>
     );
   }
 
   const activeCount = projects.filter((p) => p.status === "active").length;
+  const totalBudget = projects
+    .map((p) => {
+      const match = p.budget?.match(/\$(\d+)/);
+      return match ? parseInt(match[1]) : 0;
+    })
+    .reduce((a, b) => a + b, 0);
 
   return (
-    <div>
-      <div className="mb-8">
-        <h2 className="text-2xl font-bold text-zinc-100">Overview</h2>
-        <p className="text-zinc-500 text-sm mt-1">
-          {projects.length} project{projects.length !== 1 ? "s" : ""} ·{" "}
-          {activeCount} active
-        </p>
+    <div className="space-y-6">
+      {/* Breadcrumb bar */}
+      <div className="h-12 flex items-center">
+        <h1 className="text-sm font-semibold uppercase tracking-wider">Dashboard</h1>
       </div>
 
-      {projects.length === 0 ? (
-        <div className="border border-dashed border-zinc-700 rounded-lg p-12 text-center">
-          <FolderKanban className="mx-auto mb-3 text-zinc-600" size={32} />
-          <p className="text-zinc-400 text-sm">No projects yet.</p>
-          <p className="text-zinc-600 text-xs mt-1">
-            Create a project by adding a directory to shared/projects/
-          </p>
-        </div>
-      ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {projects.map((project) => (
-            <button
-              key={project.id}
-              onClick={() => navigate("project", project.id)}
-              className="text-left border border-zinc-800 rounded-lg p-5 bg-zinc-900 hover:bg-zinc-800/70 transition-colors"
-            >
-              <div className="flex items-start justify-between mb-3">
-                <h3 className="font-semibold text-zinc-100 text-sm">
-                  {project.title}
-                </h3>
+      {/* Metric cards */}
+      <div className="grid grid-cols-2 xl:grid-cols-4 gap-1 sm:gap-2">
+        <MetricCard label="Projects" value={projects.length} />
+        <MetricCard label="Active" value={activeCount} />
+        <MetricCard
+          label="Weekly Budget"
+          value={`$${totalBudget}`}
+          mono
+        />
+        <MetricCard label="Agents" value="9" />
+      </div>
+
+      {/* Projects section */}
+      <div>
+        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
+          Projects
+        </h3>
+
+        {projects.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-16 text-center border border-border">
+            <div className="bg-muted/50 p-4 mb-4">
+              <FolderKanban className="h-10 w-10 text-muted-foreground/50" />
+            </div>
+            <p className="text-sm text-muted-foreground mb-1">No projects yet</p>
+            <p className="text-xs text-muted-foreground/60">
+              Create a project directory in shared/projects/
+            </p>
+          </div>
+        ) : (
+          <div className="border border-border divide-y divide-border">
+            {projects.map((project) => (
+              <button
+                key={project.id}
+                onClick={() => navigate("project", project.id)}
+                className="flex items-center gap-3 px-4 py-3 text-sm w-full text-left transition-colors cursor-pointer hover:bg-accent/50"
+              >
+                {/* Status dot */}
                 <span
-                  className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                  className={`w-2 h-2 rounded-full shrink-0 ${
+                    STATUS_DOT[project.status] || STATUS_DOT.unknown
+                  }`}
+                />
+
+                {/* Title */}
+                <span className="font-medium text-foreground flex-1 truncate">
+                  {project.title}
+                </span>
+
+                {/* Status badge */}
+                <span
+                  className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium shrink-0 ${
                     STATUS_COLORS[project.status] || STATUS_COLORS.unknown
                   }`}
                 >
                   {project.status}
                 </span>
-              </div>
-              <div className="space-y-1.5 text-xs text-zinc-400">
-                <div className="flex items-center gap-1.5">
-                  <Users size={12} />
-                  <span>Lead: {project.lead}</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <DollarSign size={12} />
-                  <span>{project.budget}</span>
-                </div>
-              </div>
-            </button>
-          ))}
-        </div>
-      )}
+
+                {/* Lead */}
+                <span className="flex items-center gap-1 text-xs text-muted-foreground shrink-0">
+                  <User size={12} />
+                  {project.lead}
+                </span>
+
+                {/* Budget */}
+                <span className="text-xs text-muted-foreground font-mono tabular-nums shrink-0">
+                  {project.budget}
+                </span>
+
+                <ArrowRight size={14} className="text-muted-foreground/50 shrink-0" />
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
 
-function Users(props) {
+function MetricCard({ label, value, mono }) {
   return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width={props.size || 24}
-      height={props.size || 24}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-      <circle cx="9" cy="7" r="4" />
-    </svg>
+    <div className="border border-border px-4 py-4 sm:px-5 sm:py-5">
+      <div
+        className={`text-2xl sm:text-3xl font-semibold tracking-tight ${
+          mono ? "tabular-nums font-mono" : "tabular-nums"
+        }`}
+      >
+        {value}
+      </div>
+      <div className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground mt-1">
+        {label}
+      </div>
+    </div>
   );
 }
