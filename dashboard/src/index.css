@@ -22,28 +22,125 @@
   --radius: 0;
 }
 
+/* ── Base ──────────────────────────────────────────────────────────── */
+html {
+  height: 100%;
+  color-scheme: dark;
+}
+
 body {
   background-color: var(--color-background);
   color: var(--color-foreground);
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  height: 100%;
+  overflow: hidden;
 }
 
 code, pre, .font-mono {
   font-family: "SF Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 
+h1, h2, h3 {
+  text-wrap: balance;
+}
+
 .tabular-nums {
   font-variant-numeric: tabular-nums;
 }
 
-.scrollbar-auto-hide::-webkit-scrollbar { width: 6px; }
-.scrollbar-auto-hide::-webkit-scrollbar-track { background: transparent; }
-.scrollbar-auto-hide::-webkit-scrollbar-thumb { background: transparent !important; transition: background 150ms ease; border-radius: 3px; }
-.scrollbar-auto-hide:hover::-webkit-scrollbar-thumb { background: oklch(0.4 0 0) !important; }
+/* Prevent double-tap-to-zoom on interactive elements for mobile */
+a, button, [role="button"], input, select, textarea, label {
+  touch-action: manipulation;
+}
 
-/* Markdown prose overrides */
+/* ── Dark mode scrollbars (Paperclip style) ────────────────────────── */
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+*::-webkit-scrollbar-track {
+  background: oklch(0.205 0 0);
+}
+
+*::-webkit-scrollbar-thumb {
+  background: oklch(0.4 0 0);
+  border-radius: 4px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: oklch(0.5 0 0);
+}
+
+/* ── Auto-hide scrollbar (sidebar) ─────────────────────────────────── */
+.scrollbar-auto-hide::-webkit-scrollbar { width: 6px; }
+.scrollbar-auto-hide::-webkit-scrollbar-track { background: transparent !important; }
+.scrollbar-auto-hide::-webkit-scrollbar-thumb { background: transparent !important; transition: background 150ms ease; border-radius: 3px; }
+.scrollbar-auto-hide:hover::-webkit-scrollbar-track { background: oklch(0.205 0 0) !important; }
+.scrollbar-auto-hide:hover::-webkit-scrollbar-thumb { background: oklch(0.4 0 0) !important; }
+.scrollbar-auto-hide:hover::-webkit-scrollbar-thumb:hover { background: oklch(0.5 0 0) !important; }
+
+/* Hidden scrollbar utility */
+.scrollbar-none::-webkit-scrollbar { display: none; }
+.scrollbar-none { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* ── Dashboard activity row entry animation (from Paperclip) ───────── */
+@keyframes dashboard-activity-enter {
+  0% {
+    opacity: 0;
+    transform: translateY(-14px) scale(0.985);
+    filter: blur(4px);
+  }
+  62% {
+    opacity: 1;
+    transform: translateY(2px) scale(1.002);
+    filter: blur(0);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+@keyframes dashboard-activity-highlight {
+  0% {
+    box-shadow: inset 2px 0 0 var(--color-primary);
+    background-color: color-mix(in oklab, var(--color-accent) 55%, transparent);
+  }
+  100% {
+    box-shadow: inset 0 0 0 transparent;
+    background-color: transparent;
+  }
+}
+
+.activity-row-enter {
+  animation:
+    dashboard-activity-enter 520ms cubic-bezier(0.16, 1, 0.3, 1),
+    dashboard-activity-highlight 920ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .activity-row-enter {
+    animation: none;
+  }
+}
+
+/* ── Dialog content transitions ────────────────────────────────────── */
+[data-slot="dialog-content"] {
+  transition: max-width 200ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ── Touch targets for mobile ──────────────────────────────────────── */
+@media (pointer: coarse) {
+  button, [role="button"], input, select, textarea {
+    min-height: 44px;
+  }
+}
+
+/* ── Markdown prose overrides ──────────────────────────────────────── */
 .mc-prose h1, .mc-prose h2, .mc-prose h3 { color: var(--color-foreground); font-weight: 600; margin-top: 1rem; margin-bottom: 0.5rem; }
 .mc-prose h1 { font-size: 1.25rem; }
 .mc-prose h2 { font-size: 1rem; }
