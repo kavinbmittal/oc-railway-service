@@ -23,6 +23,20 @@ const SECTION_CONFIG = {
   "Done (this week)": { icon: CheckCircle2, color: "text-green-400", dotColor: "bg-green-400", label: "Done" },
 };
 
+function stripMarkdown(text) {
+  return text
+    .replace(/\*\*(.+?)\*\*/g, "$1")        // **bold**
+    .replace(/\*(.+?)\*/g, "$1")             // *italic*
+    .replace(/__(.+?)__/g, "$1")             // __bold__
+    .replace(/_(.+?)_/g, "$1")               // _italic_
+    .replace(/~~(.+?)~~/g, "$1")             // ~~strikethrough~~
+    .replace(/`(.+?)`/g, "$1")               // `code`
+    .replace(/\[(.+?)\]\(.+?\)/g, "$1")      // [link](url)
+    .replace(/^>\s?/gm, "")                  // > blockquote
+    .replace(/^#{1,6}\s+/gm, "")             // # headers
+    .trim();
+}
+
 function parseTasks(raw) {
   if (!raw) return null;
   const sections = {};
@@ -38,10 +52,15 @@ function parseTasks(raw) {
     if (current && line.startsWith("- ")) {
       const text = line.slice(2).trim();
       const dateMatch = text.match(/\(last-updated:\s*(\d{4}-\d{2}-\d{2})\)/);
-      sections[current].push({
-        text: text.replace(/\(last-updated:\s*\d{4}-\d{2}-\d{2}\)/, "").trim(),
-        date: dateMatch?.[1] || null,
-      });
+      const cleaned = stripMarkdown(
+        text.replace(/\(last-updated:\s*\d{4}-\d{2}-\d{2}\)/, "").trim()
+      );
+      if (cleaned) {
+        sections[current].push({
+          text: cleaned,
+          date: dateMatch?.[1] || null,
+        });
+      }
     }
   }
 
