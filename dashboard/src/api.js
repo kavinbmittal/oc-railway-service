@@ -89,6 +89,13 @@ ${gateLines}
       `shared/projects/${slug}/notifications/${timestamp}-assigned.json`,
       JSON.stringify(notification, null, 2)
     ),
+    // Scaffold directories — gateway auto-creates parents from .gitkeep files
+    writeFile(`shared/projects/${slug}/costs/.gitkeep`, ""),
+    writeFile(`shared/projects/${slug}/approvals/pending/.gitkeep`, ""),
+    writeFile(`shared/projects/${slug}/approvals/resolved/.gitkeep`, ""),
+    writeFile(`shared/projects/${slug}/standups/.gitkeep`, ""),
+    writeFile(`shared/projects/${slug}/experiments/.gitkeep`, ""),
+    writeFile(`shared/projects/${slug}/issues/.gitkeep`, ""),
   ]);
 
   // Enable heartbeat cron for the lead agent
