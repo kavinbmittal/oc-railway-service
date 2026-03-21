@@ -95,7 +95,7 @@ function SidebarNavItem({ active, onClick, icon: Icon, label, badge, badgeTone =
 }
 
 /* ── Main sidebar ──────────────────────────────────────────────────── */
-export default function Sidebar({ page, navigate, refreshKey }) {
+export default function Sidebar({ page, selectedProject, navigate, refreshKey }) {
   const [approvalCount, setApprovalCount] = useState(0);
   const [inboxCount, setInboxCount] = useState(0);
   const [projects, setProjects] = useState([]);
@@ -209,13 +209,14 @@ export default function Sidebar({ page, navigate, refreshKey }) {
         >
           {coloredProjects.map((project) => {
             const slug = project.id || project.slug;
+            const isActive = page === "project" && selectedProject === slug;
             return (
               <button
                 key={slug}
                 onClick={() => navigate("project", slug)}
                 className={`flex items-center gap-2.5 px-3 py-1.5 text-[13px] font-medium transition-colors w-full text-left ${
-                  page === "project"
-                    ? "text-foreground/80 hover:bg-accent/50 hover:text-foreground"
+                  isActive
+                    ? "bg-accent text-foreground"
                     : "text-foreground/80 hover:bg-accent/50 hover:text-foreground"
                 }`}
               >
@@ -239,9 +240,9 @@ export default function Sidebar({ page, navigate, refreshKey }) {
           <SidebarNavItem
             active={page === "issues" || page === "issue-detail"}
             onClick={() => {
-              // Navigate to first project's issues, or overview if none
+              // Navigate to first project's issues tab, or overview if none
               const slug = coloredProjects[0]?.id || coloredProjects[0]?.slug;
-              if (slug) navigate("issues", slug);
+              if (slug) navigate("project-tab", { slug, tab: "issues" });
               else navigate("overview");
             }}
             icon={CircleDot}

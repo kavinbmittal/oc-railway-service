@@ -1405,25 +1405,51 @@ app.delete("/mc/api/files", requireSetupAuth, (req, res) => {
 
 // List pending approvals across all projects
 app.get("/mc/api/approvals", requireSetupAuth, (_req, res) => {
-  const projectsDir = path.join(STATE_DIR, "shared", "projects");
-  if (!fs.existsSync(projectsDir)) {
-    return res.json({ approvals: [] });
-  }
   const approvals = [];
-  const projects = fs.readdirSync(projectsDir, { withFileTypes: true }).filter((e) => e.isDirectory());
-  for (const proj of projects) {
-    const pendingDir = path.join(projectsDir, proj.name, "approvals", "pending");
-    if (!fs.existsSync(pendingDir)) continue;
-    const files = fs.readdirSync(pendingDir).filter((f) => f.endsWith(".json"));
-    for (const file of files) {
-      try {
-        const raw = fs.readFileSync(path.join(pendingDir, file), "utf8");
-        const data = JSON.parse(raw);
-        if (data.status === "resolved") continue; // skip tombstones
-        approvals.push({ ...data, _project: proj.name, _file: file });
-      } catch { /* skip malformed files */ }
+
+  // Source 1: Project-format approvals (shared/projects/*/approvals/pending/*.json)
+  const projectsDir = path.join(STATE_DIR, "shared", "projects");
+  if (fs.existsSync(projectsDir)) {
+    const projects = fs.readdirSync(projectsDir, { withFileTypes: true }).filter((e) => e.isDirectory());
+    for (const proj of projects) {
+      const pendingDir = path.join(projectsDir, proj.name, "approvals", "pending");
+      if (!fs.existsSync(pendingDir)) continue;
+      const files = fs.readdirSync(pendingDir).filter((f) => f.endsWith(".json"));
+      for (const file of files) {
+        try {
+          const raw = fs.readFileSync(path.join(pendingDir, file), "utf8");
+          const data = JSON.parse(raw);
+          if (data.status === "resolved") continue; // skip tombstones
+          approvals.push({ ...data, _project: proj.name, _file: file });
+        } catch { /* skip malformed files */ }
+      }
     }
   }
+
+  // Source 2: Legacy deliverables format (shared/output/index.json with status "needs-feedback")
+  const indexPath = path.join(STATE_DIR, "shared", "output", "index.json");
+  if (fs.existsSync(indexPath)) {
+    try {
+      const indexRaw = fs.readFileSync(indexPath, "utf8");
+      const index = JSON.parse(indexRaw);
+      const entries = Array.isArray(index) ? index : (index.deliverables || index.entries || []);
+      for (const entry of entries) {
+        if (entry.status !== "needs-feedback") continue;
+        approvals.push({
+          id: entry.id || entry.taskId || entry.file,
+          gate: "deliverable",
+          what: entry.title || entry.description || entry.file || "Deliverable review",
+          why: entry.summary || entry.description || null,
+          requester: entry.agent || entry.author || "unknown",
+          created: entry.created || entry.timestamp || entry.date || null,
+          _project: entry.project || "general",
+          _file: entry.file || entry.id,
+          _source: "deliverables",
+        });
+      }
+    } catch { /* skip malformed index.json */ }
+  }
+
   approvals.sort((a, b) => (b.created || "").localeCompare(a.created || ""));
   return res.json({ approvals });
 });
@@ -1600,6 +1626,30 @@ app.get("/mc/api/inbox", requireSetupAuth, (_req, res) => {
         } catch { /* skip */ }
       }
     }
+  }
+
+  // E. Legacy deliverables needing feedback (shared/output/index.json)
+  const indexPath = path.join(STATE_DIR, "shared", "output", "index.json");
+  if (fs.existsSync(indexPath)) {
+    try {
+      const indexRaw = fs.readFileSync(indexPath, "utf8");
+      const index = JSON.parse(indexRaw);
+      const entries = Array.isArray(index) ? index : (index.deliverables || index.entries || []);
+      for (const entry of entries) {
+        if (entry.status !== "needs-feedback") continue;
+        items.push({
+          type: "approval",
+          project: entry.project || "general",
+          id: entry.id || entry.taskId || entry.file,
+          title: entry.title || entry.description || "Deliverable review",
+          subtitle: entry.summary || entry.description || null,
+          requester: entry.agent || entry.author || "unknown",
+          gate: "deliverable",
+          timestamp: entry.created || entry.timestamp || entry.date || new Date().toISOString(),
+          data: entry,
+        });
+      }
+    } catch { /* skip malformed index.json */ }
   }
 
   // Sort by recency

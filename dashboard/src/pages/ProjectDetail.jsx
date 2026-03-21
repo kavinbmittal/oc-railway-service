@@ -65,8 +65,18 @@ function parseActivityLog(raw) {
     .reverse();
 }
 
-export default function ProjectDetail({ projectId, navigate }) {
-  const [tab, setTab] = useState("overview");
+export default function ProjectDetail({ projectId, navigate, initialTab }) {
+  const [tab, setTab] = useState(initialTab || "overview");
+
+  // Sync tab from URL when navigating via back/forward
+  useEffect(() => {
+    if (initialTab && initialTab !== tab) setTab(initialTab);
+  }, [initialTab]);
+
+  const handleTabChange = (newTab) => {
+    setTab(newTab);
+    navigate("project-tab", { slug: projectId, tab: newTab });
+  };
   const [projectRaw, setProjectRaw] = useState(null);
   const [milestones, setMilestones] = useState(null);
   const [standups, setStandups] = useState([]);
@@ -181,7 +191,7 @@ export default function ProjectDetail({ projectId, navigate }) {
       </div>
 
       {/* Tabs */}
-      <Tabs value={tab} onValueChange={setTab}>
+      <Tabs value={tab} onValueChange={handleTabChange}>
         <TabsList>
           {TABS.map(({ id, label, icon: Icon }) => (
             <TabsTrigger key={id} value={id}>
