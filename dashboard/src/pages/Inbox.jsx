@@ -9,6 +9,7 @@ import ApprovalCard from "../components/ApprovalCard.jsx";
 
 const TABS = [
   { value: "all", label: "All" },
+  { value: "proposed_issue", label: "Proposed" },
   { value: "approval", label: "Approvals" },
   { value: "budget", label: "Budget" },
   { value: "stale_task", label: "Tasks" },

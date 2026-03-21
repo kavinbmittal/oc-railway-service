@@ -1784,6 +1784,29 @@ app.get("/mc/api/inbox", requireSetupAuth, (_req, res) => {
     } catch { /* skip malformed index.json */ }
   }
 
+  // E. Proposed Issues — issues with status "proposed" awaiting Kavin's review
+  for (const proj of projects) {
+    const issuesDir = path.join(projectsDir, proj.name, "issues");
+    if (!fs.existsSync(issuesDir)) continue;
+    const issueFiles = fs.readdirSync(issuesDir).filter((f) => f.endsWith(".json"));
+    for (const issueFile of issueFiles) {
+      try {
+        const issue = JSON.parse(fs.readFileSync(path.join(issuesDir, issueFile), "utf8"));
+        if (issue.status !== "proposed") continue;
+        items.push({
+          type: "proposed_issue",
+          project: proj.name,
+          id: issue.id || issueFile.replace(".json", ""),
+          title: issue.title || issueFile.replace(".json", ""),
+          subtitle: issue.description ? issue.description.slice(0, 120) : null,
+          assignee: issue.assignee || null,
+          priority: issue.priority || "medium",
+          timestamp: issue.created || new Date().toISOString(),
+        });
+      } catch { /* skip */ }
+    }
+  }
+
   // Sort by recency
   items.sort((a, b) => (b.timestamp || "").localeCompare(a.timestamp || ""));
 
@@ -1792,8 +1815,9 @@ app.get("/mc/api/inbox", requireSetupAuth, (_req, res) => {
     budget: items.filter((i) => i.type === "budget").length,
     tasks: items.filter((i) => i.type === "stale_task").length,
     standups: items.filter((i) => i.type === "standup").length,
+    proposed: items.filter((i) => i.type === "proposed_issue").length,
   };
-  counts.total = counts.approvals + counts.budget + counts.tasks + counts.standups;
+  counts.total = counts.approvals + counts.budget + counts.tasks + counts.standups + counts.proposed;
 
   return res.json({ items, counts });
 });

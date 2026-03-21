@@ -31,6 +31,7 @@ const STATUS_BADGE = {
   rejected: "bg-red-900/50 text-red-300",
 
   // Issue statuses
+  proposed: "bg-violet-900/50 text-violet-300",
   backlog: "bg-muted text-muted-foreground",
   todo: "bg-blue-900/50 text-blue-300",
   in_progress: "bg-yellow-900/50 text-yellow-300",

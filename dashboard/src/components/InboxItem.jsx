@@ -8,6 +8,7 @@ import {
   DollarSign,
   Clock,
   FileText,
+  CircleDot,
   Check,
   X,
   AlertTriangle,
@@ -39,6 +40,12 @@ const TYPE_CONFIG = {
     iconColor: "text-blue-400",
     label: "Standup",
   },
+  proposed_issue: {
+    icon: CircleDot,
+    iconBg: "bg-violet-900/40",
+    iconColor: "text-violet-400",
+    label: "Proposed Issue",
+  },
 };
 
 function handleItemClick(item, onNavigate) {
@@ -64,6 +71,12 @@ function handleItemClick(item, onNavigate) {
       // Navigate to project costs tab
       if (item.project && item.project !== "general") {
         onNavigate("project-tab", { slug: item.project, tab: "costs" });
+      }
+      break;
+    case "proposed_issue":
+      // Navigate to project issues tab where proposed issues appear
+      if (item.project && item.project !== "general") {
+        onNavigate("project-tab", { slug: item.project, tab: "issues" });
       }
       break;
     default:

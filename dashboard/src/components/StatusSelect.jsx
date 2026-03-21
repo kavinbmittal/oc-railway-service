@@ -5,7 +5,7 @@
 import { useState, useRef, useEffect } from "react";
 import { StatusBadge } from "./StatusBadge.jsx";
 
-export const ALL_STATUSES = ["backlog", "todo", "in_progress", "in_review", "done", "cancelled"];
+export const ALL_STATUSES = ["proposed", "backlog", "todo", "in_progress", "in_review", "done", "cancelled"];
 
 const STATUS_CIRCLE = {
   backlog: "border-muted-foreground/40",

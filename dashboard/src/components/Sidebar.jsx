@@ -117,7 +117,7 @@ export default function Sidebar({ page, selectedProject, navigate, refreshKey })
       getInbox()
         .then((data) => {
           const c = data?.counts || {};
-          setInboxCount((c.approvals || 0) + (c.budget || 0) + (c.tasks || 0));
+          setInboxCount((c.approvals || 0) + (c.budget || 0) + (c.tasks || 0) + (c.proposed || 0));
         })
         .catch(() => {});
     load();

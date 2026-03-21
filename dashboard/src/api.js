@@ -134,6 +134,10 @@ export async function updateIssue(id, projectSlug, updates) {
   return res.json();
 }
 
+export async function deleteIssue(id, projectSlug) {
+  return deleteFile(`shared/projects/${projectSlug}/issues/${id}.json`);
+}
+
 export async function addComment(id, projectSlug, text, author) {
   const res = await fetch(`${BASE}/issues/${encodeURIComponent(id)}/comments?project=${encodeURIComponent(projectSlug)}`, {
     method: "POST",
