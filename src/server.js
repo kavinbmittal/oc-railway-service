@@ -167,7 +167,7 @@ function _getTelegramBotToken() {
       }
     }
   } catch { /* ignore */ }
-  return process.env.OPS_TELEGRAM_BOT_TOKEN?.trim() || null;
+  return process.env.TEST_TELEGRAM_ID?.trim() || null;
 }
 
 async function _sendFallbackAlert(fields) {
