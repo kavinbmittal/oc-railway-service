@@ -146,6 +146,100 @@ let lastGatewayExit = null;
 let lastDoctorOutput = null;
 let lastDoctorAt = null;
 
+// --- Model Fallback Watcher ---
+// Tracks provider fallback state to avoid duplicate alerts.
+// Key: provider prefix (e.g. "anthropic"), Value: { alertedAt, reason, next }
+const _fallbackState = new Map();
+const FALLBACK_COOLDOWN_MS = 5 * 60 * 1000; // 5 min between alerts for same provider
+const OPS_CHAT_ID = process.env.OPS_TELEGRAM_CHAT_ID?.trim() || "1460501374"; // Kavin's DM
+
+function _getTelegramBotToken() {
+  try {
+    const cfg = JSON.parse(fs.readFileSync(configPath(), "utf8"));
+    // Walk known paths for the bot token
+    const tg = cfg?.channels?.telegram;
+    if (tg?.botToken) return tg.botToken;
+    if (tg?.token) return tg.token;
+    // Try agents.list[0] (main/Sam) telegram config
+    for (const agent of cfg?.agents?.list || []) {
+      if (agent.id === "main" && agent.channels?.telegram?.botToken) {
+        return agent.channels.telegram.botToken;
+      }
+    }
+  } catch { /* ignore */ }
+  return process.env.OPS_TELEGRAM_BOT_TOKEN?.trim() || null;
+}
+
+async function _sendFallbackAlert(fields) {
+  const botToken = _getTelegramBotToken();
+  if (!botToken) {
+    console.error("[ops-watcher] No Telegram bot token found — cannot send fallback alert");
+    return;
+  }
+
+  const provider = (fields.requested || "").split("/")[0] || "unknown";
+  const now = Date.now();
+  const prev = _fallbackState.get(provider);
+  if (prev && (now - prev.alertedAt) < FALLBACK_COOLDOWN_MS) return; // debounce
+
+  _fallbackState.set(provider, { alertedAt: now, reason: fields.reason, next: fields.next });
+
+  const reason = fields.reason || "unknown";
+  const requested = fields.requested || "unknown";
+  const next = fields.next || "none";
+  const decision = fields.decision || "unknown";
+
+  let text = `⚠️ *Model fallback triggered*\n\n`;
+  text += `*Requested:* \`${requested}\`\n`;
+  text += `*Decision:* ${decision}\n`;
+  text += `*Reason:* ${reason}\n`;
+
+  if (next === "none") {
+    text += `\n🔴 *All fallbacks exhausted* — agent request failed entirely.`;
+  } else {
+    text += `*Falling back to:* \`${next}\``;
+  }
+
+  const body = {
+    chat_id: OPS_CHAT_ID,
+    text,
+    parse_mode: "Markdown",
+  };
+
+  try {
+    const resp = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    if (!resp.ok) {
+      console.error(`[ops-watcher] Telegram sendMessage failed: ${resp.status} ${await resp.text()}`);
+    }
+  } catch (err) {
+    console.error(`[ops-watcher] Telegram sendMessage error: ${err}`);
+  }
+}
+
+function _parseFallbackLine(line) {
+  const match = line.match(/\[model-fallback\/decision\]/);
+  if (!match) return null;
+
+  const fields = {};
+  for (const [, key, val] of line.matchAll(/(\w+)=(\S+)/g)) {
+    fields[key] = val;
+  }
+  return fields;
+}
+
+function _scanGatewayLine(line) {
+  const fields = _parseFallbackLine(line);
+  if (fields) {
+    _sendFallbackAlert(fields).catch((err) => {
+      console.error(`[ops-watcher] alert error: ${err}`);
+    });
+  }
+}
+
 function sleep(ms) {
   return new Promise((r) => setTimeout(r, ms));
 }
@@ -195,13 +289,34 @@ async function startGateway() {
   ];
 
   gatewayProc = childProcess.spawn(OPENCLAW_NODE, clawArgs(args), {
-    stdio: "inherit",
+    stdio: ["inherit", "pipe", "pipe"],
     env: {
       ...process.env,
       OPENCLAW_STATE_DIR: STATE_DIR,
       OPENCLAW_WORKSPACE_DIR: WORKSPACE_DIR,
     },
   });
+
+  // Forward stdout/stderr to console (preserving Railway log visibility)
+  // and scan each line for model-fallback events.
+  for (const stream of [gatewayProc.stdout, gatewayProc.stderr]) {
+    if (!stream) continue;
+    let buffer = "";
+    stream.on("data", (chunk) => {
+      const text = chunk.toString();
+      process.stdout.write(text); // preserve original logging
+      buffer += text;
+      const lines = buffer.split("\n");
+      buffer = lines.pop() || ""; // keep incomplete line in buffer
+      for (const line of lines) {
+        _scanGatewayLine(line);
+      }
+    });
+    stream.on("end", () => {
+      if (buffer.trim()) _scanGatewayLine(buffer);
+      buffer = "";
+    });
+  }
 
   gatewayProc.on("error", (err) => {
     const msg = `[gateway] spawn error: ${String(err)}`;
