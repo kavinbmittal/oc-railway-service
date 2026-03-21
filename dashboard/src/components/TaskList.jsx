@@ -1,4 +1,5 @@
 import { Circle, Pause, ListTodo, CheckCircle2 } from "lucide-react";
+import Markdown from "./Markdown.jsx";
 
 const SECTION_CONFIG = {
   "In Progress": { icon: Circle, color: "text-cyan-400", dotColor: "bg-cyan-400", label: "In Progress" },
@@ -81,7 +82,7 @@ export function TaskList({ tasksRaw }) {
               {items.map((item, i) => (
                 <div key={i} className="flex items-start gap-3 px-4 py-2.5 text-sm">
                   <span className={`w-1.5 h-1.5 rounded-full mt-1.5 shrink-0 ${config.dotColor}`} />
-                  <span className="text-foreground/80 flex-1">{item.text}</span>
+                  <span className="text-foreground/80 flex-1"><Markdown content={item.text} className="text-sm" /></span>
                   {item.date && (
                     <span className="text-[10px] text-muted-foreground/50 font-mono tabular-nums shrink-0">
                       {item.date}

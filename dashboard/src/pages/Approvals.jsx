@@ -4,6 +4,7 @@ import { ShieldCheck, Check, X, Loader2, MessageSquare } from "lucide-react";
 import { formatTimeAgo } from "../utils/formatDate.js";
 import { StatusBadge } from "../components/StatusBadge.jsx";
 import { EmptyState } from "../components/EmptyState.jsx";
+import Markdown from "../components/Markdown.jsx";
 
 export default function Approvals({ navigate }) {
   const [approvals, setApprovals] = useState([]);
@@ -139,16 +140,16 @@ function ApprovalCard({ approval, onResolved, navigate }) {
               {approval.gate}
             </span>
           </div>
-          <p className="text-sm text-foreground/80">{approval.what}</p>
+          <Markdown content={approval.what} className="text-sm" />
           {approval.why && approval._source === "deliverables" ? (
             <details className="mt-2">
               <summary className="text-xs text-muted-foreground cursor-pointer hover:text-foreground">View deliverable content</summary>
-              <div className="mt-2 text-xs text-muted-foreground whitespace-pre-wrap border border-border p-3 bg-background max-h-64 overflow-y-auto">
-                {approval.why}
+              <div className="mt-2 border border-border p-3 bg-background max-h-64 overflow-y-auto">
+                <Markdown content={approval.why} className="text-xs" />
               </div>
             </details>
           ) : approval.why ? (
-            <p className="text-xs text-muted-foreground mt-1">{approval.why}</p>
+            <Markdown content={approval.why} className="text-xs text-muted-foreground mt-1" />
           ) : null}
         </div>
         <div className="text-right shrink-0">

@@ -3,6 +3,7 @@ import { getFile } from "../api.js";
 import { MetricCard } from "../components/MetricCard.jsx";
 import { Badge } from "../components/ui/Badge.jsx";
 import { Circle, Clock, Pause, CheckCircle2, ListTodo, ChevronRight } from "lucide-react";
+import Markdown from "../components/Markdown.jsx";
 
 const AGENTS = [
   { name: "Sam", workspace: "workspace", role: "Cross-project coordinator", canLead: false },
@@ -220,7 +221,7 @@ function AgentRow({ agent, rawTasks, navigate }) {
                           className="flex items-start gap-2 py-1 pl-1 text-xs"
                         >
                           <span className={`w-1 h-1 rounded-full mt-1.5 shrink-0 ${config.dotColor}`} />
-                          <span className="text-foreground/80 flex-1">{item.text}</span>
+                          <span className="text-foreground/80 flex-1"><Markdown content={item.text} className="text-xs" /></span>
                           {item.date && (
                             <span className="text-[10px] text-muted-foreground/50 font-mono tabular-nums shrink-0">
                               {item.date}
