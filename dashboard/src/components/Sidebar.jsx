@@ -2,7 +2,6 @@ import { useState, useEffect, useMemo } from "react";
 import {
   LayoutDashboard,
   ShieldCheck,
-  Plus,
   ChevronRight,
   Search,
   Bot,
@@ -207,18 +206,6 @@ export default function Sidebar({ page, navigate, refreshKey }) {
         <SidebarSection
           label="Projects"
           collapsible
-          action={
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                navigate("create-project");
-              }}
-              className="flex items-center justify-center h-4 w-4 rounded text-muted-foreground/60 hover:text-foreground hover:bg-accent/50 transition-colors"
-              aria-label="New project"
-            >
-              <Plus className="h-3 w-3" />
-            </button>
-          }
         >
           {coloredProjects.map((project) => {
             const slug = project.id || project.slug;
