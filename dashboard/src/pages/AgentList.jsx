@@ -235,7 +235,7 @@ function AgentRow({ agent, rawTasks, navigate }) {
               })}
             </div>
           ) : rawTasks ? (
-            <pre className="text-xs text-muted-foreground whitespace-pre-wrap font-mono bg-muted/30 p-3 max-h-48 overflow-y-auto scrollbar-auto-hide">
+            <pre className="text-xs text-muted-foreground whitespace-pre-wrap font-mono bg-muted/30 p-3 max-h-[calc(100vh-300px)] overflow-y-auto scrollbar-auto-hide">
               {rawTasks.slice(0, 800)}
               {rawTasks.length > 800 ? "\n..." : ""}
             </pre>

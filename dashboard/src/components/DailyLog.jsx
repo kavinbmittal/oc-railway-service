@@ -36,7 +36,7 @@ export function DailyLog({ days, activityEntries }) {
               {formatDateHeader(day.date)}
             </span>
           </div>
-          <div className="p-4 max-h-96 overflow-y-auto scrollbar-auto-hide">
+          <div className="p-4 max-h-[calc(100vh-300px)] overflow-y-auto scrollbar-auto-hide">
             <Markdown content={day.content} />
           </div>
         </div>
@@ -57,7 +57,7 @@ export function DailyLog({ days, activityEntries }) {
                 <div className="text-[10px] font-mono text-muted-foreground/50 mb-1">
                   {entry.file}
                 </div>
-                <div className="text-sm text-foreground/80 max-h-48 overflow-y-auto scrollbar-auto-hide">
+                <div className="text-sm text-foreground/80 max-h-[calc(100vh-300px)] overflow-y-auto scrollbar-auto-hide">
                   <Markdown content={typeof entry.content === "string" ? entry.content : JSON.stringify(entry.content, null, 2)} />
                 </div>
               </div>

@@ -144,7 +144,7 @@ function ApprovalCard({ approval, onResolved, navigate }) {
           {approval.why && approval._source === "deliverables" ? (
             <details className="mt-2">
               <summary className="text-xs text-muted-foreground cursor-pointer hover:text-foreground">View deliverable content</summary>
-              <div className="mt-2 border border-border p-3 bg-background max-h-64 overflow-y-auto">
+              <div className="mt-2 border border-border p-3 bg-background max-h-[calc(100vh-300px)] overflow-y-auto">
                 <Markdown content={approval.why} className="text-xs" />
               </div>
             </details>
