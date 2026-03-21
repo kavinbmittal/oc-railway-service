@@ -41,7 +41,9 @@ const WORKSPACE_DIR =
   path.join(STATE_DIR, "workspace");
 
 // Canonical heartbeat message — source of truth is shared/protocols/projects.md
-const HEARTBEAT_MESSAGE = `Project heartbeat (scan only — do NOT do actual work): Read shared/protocols/projects.md. Check shared/projects/ for projects where you are lead. (1) Check notifications/ — process and delete. (2) Check issues/ — update statuses, propose new issues if needed (status: proposed). (3) Post daily standup if not done today. (4) If .budget-exceeded exists, message Kavin you are paused. Do NOT execute work items in this turn.`;
+const DASHBOARD_URL = "https://dash.belowthesurface.studio/mc";
+
+const HEARTBEAT_MESSAGE = `Project heartbeat (scan only — do NOT do actual work): Read shared/protocols/projects.md. Check shared/projects/ for projects where you are lead. (1) Check notifications/ — process and delete. (2) Check issues/ — update statuses, propose new issues if needed (status: proposed). (3) Post daily standup if not done today. (4) If .budget-exceeded exists, message Kavin you are paused. Do NOT execute work items in this turn. When referencing the dashboard, always include a direct link: ${DASHBOARD_URL}#/projects/{project-slug}/issues for issues, ${DASHBOARD_URL}#/projects/{project-slug} for project overview.`;
 
 // Protect /setup with a user-provided password.
 const SETUP_PASSWORD = process.env.SETUP_PASSWORD?.trim();
