@@ -5,6 +5,7 @@ import { Tabs, TabsList, TabsTrigger } from "../components/ui/Tabs.jsx";
 import { Skeleton } from "../components/ui/Skeleton.jsx";
 import { EmptyState } from "../components/EmptyState.jsx";
 import { InboxItem } from "../components/InboxItem.jsx";
+import ApprovalCard from "../components/ApprovalCard.jsx";
 
 const TABS = [
   { value: "all", label: "All" },
@@ -157,15 +158,37 @@ export default function Inbox({ navigate }) {
         />
       ) : (
         <div className="border border-border">
-          {items.map((item) => (
-            <InboxItem
-              key={item.id}
-              item={item}
-              onApprove={item.type === "approval" && item.project ? handleApprove : undefined}
-              onReject={item.type === "approval" && item.project ? handleReject : undefined}
-              onNavigate={navigate}
-            />
-          ))}
+          {items.map((item) =>
+            item.type === "approval" ? (
+              <ApprovalCard
+                key={item.id}
+                approval={{
+                  ...item.data,
+                  id: item.id,
+                  _project: item.project,
+                  project: item.project,
+                  requester: item.requester || item.data?.requester,
+                  gate: item.gate || item.data?.gate,
+                  what: item.data?.what || item.title,
+                  why: item.data?.why,
+                  created: item.data?.created || item.timestamp,
+                  timestamp: item.timestamp,
+                  title: item.title,
+                  subtitle: item.subtitle,
+                  _source: item.data?._source,
+                }}
+                onResolved={refresh}
+                navigate={navigate}
+                hideProject={false}
+              />
+            ) : (
+              <InboxItem
+                key={item.id}
+                item={item}
+                onNavigate={navigate}
+              />
+            )
+          )}
         </div>
       )}
     </div>

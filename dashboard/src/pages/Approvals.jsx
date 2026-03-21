@@ -1,10 +1,8 @@
 import { useState, useEffect } from "react";
-import { getApprovals, resolveApproval } from "../api.js";
-import { ShieldCheck, Check, X, Loader2, MessageSquare } from "lucide-react";
-import { formatTimeAgo } from "../utils/formatDate.js";
-import { StatusBadge } from "../components/StatusBadge.jsx";
+import { getApprovals } from "../api.js";
+import { ShieldCheck } from "lucide-react";
 import { EmptyState } from "../components/EmptyState.jsx";
-import Markdown from "../components/Markdown.jsx";
+import ApprovalCard from "../components/ApprovalCard.jsx";
 
 export default function Approvals({ navigate }) {
   const [approvals, setApprovals] = useState([]);
@@ -65,6 +63,7 @@ export default function Approvals({ navigate }) {
               approval={approval}
               onResolved={refresh}
               navigate={navigate}
+              hideProject={false}
             />
           ))}
         </div>
@@ -72,155 +71,3 @@ export default function Approvals({ navigate }) {
     </div>
   );
 }
-
-function ApprovalCard({ approval, onResolved, navigate }) {
-  const [showComment, setShowComment] = useState(false);
-  const [comment, setComment] = useState("");
-  const [action, setAction] = useState(null); // "approved" | "rejected"
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState(null);
-
-  async function handleResolve(decision) {
-    if (decision === "rejected" && !comment.trim()) {
-      setAction("rejected");
-      setShowComment(true);
-      return;
-    }
-
-    setSubmitting(true);
-    setError(null);
-
-    try {
-      await resolveApproval({
-        project: approval._project || approval.project,
-        id: approval.id,
-        decision,
-        comment: comment.trim() || null,
-        requester: approval.requester,
-        gate: approval.gate,
-        what: approval.what,
-        why: approval.why,
-        created: approval.created,
-      });
-      onResolved();
-    } catch (err) {
-      setError(err.message);
-      setSubmitting(false);
-    }
-  }
-
-  const timeAgo = approval.created ? formatTimeAgo(approval.created) : "";
-
-  return (
-    <div className="border border-border p-4 space-y-3">
-      {/* Header */}
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1">
-            {approval._project ? (
-              <button
-                onClick={() => navigate("project", approval._project)}
-                className="text-sm font-medium text-foreground hover:underline"
-              >
-                {approval._project}
-              </button>
-            ) : (
-              <button
-                onClick={() => {
-                  const name = (approval.requester || "").toLowerCase();
-                  const workspaceId = name === "sam" ? "workspace" : `workspace-${name}`;
-                  navigate("agent-detail", workspaceId);
-                }}
-                className="text-sm font-medium text-muted-foreground hover:underline"
-              >
-                {approval.requester}
-              </button>
-            )}
-            <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-amber-900/50 text-amber-300">
-              {approval.gate}
-            </span>
-          </div>
-          <Markdown content={approval.what} className="text-sm" />
-          {approval.why && approval._source === "deliverables" ? (
-            <details className="mt-2">
-              <summary className="text-xs text-muted-foreground cursor-pointer hover:text-foreground">View deliverable content</summary>
-              <div className="mt-2 border border-border p-3 bg-background max-h-[calc(100vh-300px)] overflow-y-auto">
-                <Markdown content={approval.why} className="text-xs" />
-              </div>
-            </details>
-          ) : approval.why ? (
-            <Markdown content={approval.why} className="text-xs text-muted-foreground mt-1" />
-          ) : null}
-        </div>
-        <div className="text-right shrink-0">
-          <span className="text-xs text-muted-foreground">{approval.requester}</span>
-          {timeAgo && (
-            <p className="text-xs text-muted-foreground/60 mt-0.5">{timeAgo}</p>
-          )}
-        </div>
-      </div>
-
-      {/* Comment area */}
-      {showComment && (
-        <div className="space-y-2">
-          <textarea
-            value={comment}
-            onChange={(e) => setComment(e.target.value)}
-            placeholder={action === "rejected" ? "Reason for rejection (required)" : "Comment (optional)"}
-            rows={2}
-            className="w-full px-3 py-2 text-sm bg-background border border-border text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-ring transition-colors resize-none"
-          />
-        </div>
-      )}
-
-      {error && (
-        <p className="text-xs text-red-400">{error}</p>
-      )}
-
-      {/* Actions */}
-      <div className="flex items-center gap-2">
-        <button
-          onClick={() => {
-            if (!showComment) {
-              setShowComment(true);
-              setAction("approved");
-            } else {
-              handleResolve("approved");
-            }
-          }}
-          disabled={submitting}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-green-700 text-white rounded-md hover:bg-green-600 transition-colors disabled:opacity-50"
-        >
-          {submitting && action === "approved" ? (
-            <Loader2 size={12} className="animate-spin" />
-          ) : (
-            <Check size={12} />
-          )}
-          Approve
-        </button>
-        <button
-          onClick={() => handleResolve("rejected")}
-          disabled={submitting || (action === "rejected" && !comment.trim())}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-red-700 text-white rounded-md hover:bg-red-600 transition-colors disabled:opacity-50"
-        >
-          {submitting && action === "rejected" ? (
-            <Loader2 size={12} className="animate-spin" />
-          ) : (
-            <X size={12} />
-          )}
-          Reject
-        </button>
-        {!showComment && (
-          <button
-            onClick={() => setShowComment(true)}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <MessageSquare size={12} />
-            Comment
-          </button>
-        )}
-      </div>
-    </div>
-  );
-}
-
