@@ -28,9 +28,9 @@ function agentColor(name) {
 function formatTime(isoString) {
   try {
     return new Date(isoString).toLocaleTimeString("en-US", {
-      hour: "2-digit",
+      hour: "numeric",
       minute: "2-digit",
-      hour12: false,
+      hour12: true,
     });
   } catch {
     return "";

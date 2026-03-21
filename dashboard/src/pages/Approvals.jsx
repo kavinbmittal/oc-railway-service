@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { getApprovals, resolveApproval } from "../api.js";
 import { ShieldCheck, Check, X, Loader2, MessageSquare } from "lucide-react";
+import { formatTimeAgo } from "../utils/formatDate.js";
 import { StatusBadge } from "../components/StatusBadge.jsx";
 import { EmptyState } from "../components/EmptyState.jsx";
 
@@ -202,17 +203,3 @@ function ApprovalCard({ approval, onResolved, navigate }) {
   );
 }
 
-function formatTimeAgo(isoString) {
-  try {
-    const diff = Date.now() - new Date(isoString).getTime();
-    const mins = Math.floor(diff / 60000);
-    if (mins < 1) return "just now";
-    if (mins < 60) return `${mins}m ago`;
-    const hours = Math.floor(mins / 60);
-    if (hours < 24) return `${hours}h ago`;
-    const days = Math.floor(hours / 24);
-    return `${days}d ago`;
-  } catch {
-    return "";
-  }
-}

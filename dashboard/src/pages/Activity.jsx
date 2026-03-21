@@ -27,7 +27,7 @@ export default function Activity({ navigate }) {
 
   useEffect(() => {
     Promise.all([
-      getActivity({ limit: 100, project: filterProject || undefined, agent: filterAgent || undefined }),
+      getActivity({ limit: 500, project: filterProject || undefined, agent: filterAgent || undefined }),
       getProjects(),
     ])
       .then(([evts, projs]) => {

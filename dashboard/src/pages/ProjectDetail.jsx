@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { getFile, getProjectCosts, getBudgetPolicy, updateBudgetPolicy, getApprovals, resolveApproval } from "../api.js";
+import { formatDate as formatDateUtil, formatTimeAgo } from "../utils/formatDate.js";
 import {
   ArrowLeft, FileText, Activity, DollarSign, Clock,
   User, Wallet, Target, ShieldCheck, Bot, CircleDot, Pencil,
@@ -167,7 +168,7 @@ export default function ProjectDetail({ projectId, navigate }) {
           {project.created && (
             <span className="flex items-center gap-1.5">
               <Clock size={12} />
-              {project.created}
+              {formatDateUtil(project.created)}
             </span>
           )}
           {totalCost > 0 && (
@@ -271,10 +272,14 @@ export default function ProjectDetail({ projectId, navigate }) {
             <div className="space-y-2">
               {standups.map((s, i) => {
                 const isLatest = i === 0;
+                const dateStr = s.name.replace(".md", "");
+                const displayDate = (() => {
+                  try { return formatDateUtil(dateStr + "T00:00:00"); } catch { return dateStr; }
+                })();
                 return (
                   <CollapsibleSection
                     key={s.name}
-                    title={s.name.replace(".md", "")}
+                    title={displayDate}
                     defaultOpen={isLatest}
                   >
                     <Markdown content={s.content} />
@@ -324,19 +329,41 @@ export default function ProjectDetail({ projectId, navigate }) {
           {activities.length === 0 ? (
             <EmptyState icon={Clock} text="No activity yet" sub="Events will appear as the project progresses." />
           ) : (
-            <div className="border border-border divide-y divide-border">
-              {activities.map((a, i) => (
-                <ActivityRow
-                  key={i}
-                  time={a.time}
-                  agent={a.agent}
-                  event={a.event}
-                />
-              ))}
-            </div>
+            <GroupedActivityList activities={activities} />
           )}
         </TabsContent>
       </Tabs>
+    </div>
+  );
+}
+
+function GroupedActivityList({ activities }) {
+  // Group activities by date (YYYY-MM-DD from the time field)
+  const groups = {};
+  for (const a of activities) {
+    const dateKey = a.time ? a.time.split(" ")[0] : "unknown";
+    if (!groups[dateKey]) groups[dateKey] = [];
+    groups[dateKey].push(a);
+  }
+  const groupEntries = Object.entries(groups);
+
+  return (
+    <div className="space-y-2">
+      {groupEntries.map(([dateKey, items], gi) => {
+        const isLatest = gi === 0;
+        const displayDate = (() => {
+          try { return formatDateUtil(dateKey + "T00:00:00"); } catch { return dateKey; }
+        })();
+        return (
+          <CollapsibleSection key={dateKey} title={displayDate} defaultOpen={isLatest}>
+            <div className="divide-y divide-border border border-border">
+              {items.map((a, i) => (
+                <ActivityRow key={i} time={a.time} agent={a.agent} event={a.event} />
+              ))}
+            </div>
+          </CollapsibleSection>
+        );
+      })}
     </div>
   );
 }
@@ -645,28 +672,13 @@ function ProjectApprovalCard({ approval, onResolved }) {
   );
 }
 
-function formatTimeAgo(isoString) {
-  try {
-    const diff = Date.now() - new Date(isoString).getTime();
-    const mins = Math.floor(diff / 60000);
-    if (mins < 1) return "just now";
-    if (mins < 60) return `${mins}m ago`;
-    const hours = Math.floor(mins / 60);
-    if (hours < 24) return `${hours}h ago`;
-    const days = Math.floor(hours / 24);
-    return `${days}d ago`;
-  } catch {
-    return "";
-  }
-}
-
 async function loadStandups(projectId) {
   try {
     const dir = await getFile(`shared/projects/${projectId}/standups`);
     if (dir.type !== "directory" || !dir.entries) return [];
     const files = dir.entries.filter((e) => e.type === "file" && e.name.endsWith(".md"));
     return Promise.all(
-      files.sort((a, b) => b.name.localeCompare(a.name)).slice(0, 7).map(async (f) => {
+      files.sort((a, b) => b.name.localeCompare(a.name)).map(async (f) => {
         const data = await getFile(`shared/projects/${projectId}/standups/${f.name}`);
         return { name: f.name, content: data.content || "" };
       })

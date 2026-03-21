@@ -6,6 +6,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { getIssue, updateIssue, addComment } from "../api.js";
 import { ArrowLeft, Clock, Calendar } from "lucide-react";
+import { formatDate as formatDateUtil, formatTimeAgo } from "../utils/formatDate.js";
 import { Skeleton } from "../components/ui/Skeleton.jsx";
 import Markdown from "../components/Markdown.jsx";
 import { StatusSelect } from "../components/StatusSelect.jsx";
@@ -16,22 +17,12 @@ import { StatusBadge } from "../components/StatusBadge.jsx";
 
 function formatDate(iso) {
   if (!iso) return "";
-  return new Date(iso).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
+  return formatDateUtil(iso);
 }
 
 function timeAgo(iso) {
   if (!iso) return "";
-  const d = new Date(iso);
-  const now = new Date();
-  const diff = Math.floor((now - d) / 1000);
-  if (diff < 60) return "just now";
-  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
-  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
-  return `${Math.floor(diff / 86400)}d ago`;
+  return formatTimeAgo(iso);
 }
 
 function PropertyRow({ label, children }) {

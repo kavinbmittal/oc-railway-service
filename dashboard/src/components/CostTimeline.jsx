@@ -3,6 +3,8 @@
  * Inspired by Paperclip's FinanceTimelineCard.
  */
 
+import { formatDateTime } from "../utils/formatDate.js";
+
 export function CostTimeline({ entries = [] }) {
   if (entries.length === 0) {
     return (
@@ -25,12 +27,7 @@ export function CostTimeline({ entries = [] }) {
       {/* Entries */}
       {entries.map((entry, i) => {
         const time = entry.timestamp
-          ? new Date(entry.timestamp).toLocaleString("en-US", {
-              month: "short",
-              day: "numeric",
-              hour: "2-digit",
-              minute: "2-digit",
-            })
+          ? formatDateTime(entry.timestamp)
           : "";
 
         return (

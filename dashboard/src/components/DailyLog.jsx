@@ -1,16 +1,11 @@
 import { Calendar, Clock } from "lucide-react";
 import Markdown from "./Markdown.jsx";
 import { EmptyState } from "./EmptyState.jsx";
+import { formatDate } from "../utils/formatDate.js";
 
 function formatDateHeader(dateStr) {
   try {
-    const d = new Date(dateStr + "T00:00:00");
-    return d.toLocaleDateString("en-US", {
-      weekday: "long",
-      month: "long",
-      day: "numeric",
-      year: "numeric",
-    });
+    return formatDate(dateStr + "T00:00:00");
   } catch {
     return dateStr;
   }

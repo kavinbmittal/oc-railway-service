@@ -1,6 +1,7 @@
 import { CheckCircle2, XCircle, Clock, Loader2 } from "lucide-react";
 import { StatusBadge } from "./StatusBadge.jsx";
 import { EmptyState } from "./EmptyState.jsx";
+import { formatDateTime } from "../utils/formatDate.js";
 
 const STATUS_ICONS = {
   ok: { icon: CheckCircle2, color: "text-green-400" },
@@ -15,10 +16,7 @@ const STATUS_ICONS = {
 function formatTimestamp(ts) {
   if (!ts) return "--";
   try {
-    const d = new Date(ts);
-    return d.toLocaleDateString("en-US", { month: "short", day: "numeric" }) +
-      " " +
-      d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: false });
+    return formatDateTime(ts);
   } catch {
     return ts;
   }

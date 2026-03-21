@@ -5,16 +5,11 @@
 import { useState } from "react";
 import { AgentInitial } from "./AssigneeSelect.jsx";
 import Markdown from "./Markdown.jsx";
+import { formatDateTime } from "../utils/formatDate.js";
 
 function formatTime(iso) {
   if (!iso) return "";
-  const d = new Date(iso);
-  return d.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  return formatDateTime(iso);
 }
 
 export function CommentThread({ comments = [], onAdd, className = "" }) {
