@@ -1403,6 +1403,80 @@ app.delete("/mc/api/files", requireSetupAuth, (req, res) => {
   return res.json({ ok: true, deleted: normalized });
 });
 
+// Get single approval by ID
+app.get("/mc/api/approvals/:id", requireSetupAuth, (req, res) => {
+  const { id } = req.params;
+
+  // Search project-format approvals (pending + resolved)
+  const projectsDir = path.join(STATE_DIR, "shared", "projects");
+  if (fs.existsSync(projectsDir)) {
+    const projects = fs.readdirSync(projectsDir, { withFileTypes: true }).filter((e) => e.isDirectory());
+    for (const proj of projects) {
+      // Check pending
+      const pendingPath = path.join(projectsDir, proj.name, "approvals", "pending", `${id}.json`);
+      if (fs.existsSync(pendingPath)) {
+        try {
+          const raw = fs.readFileSync(pendingPath, "utf8");
+          const data = JSON.parse(raw);
+          if (data.status === "resolved") {
+            // It's a tombstone — look in resolved
+            const resolvedPath = path.join(projectsDir, proj.name, "approvals", "resolved", `${id}.json`);
+            if (fs.existsSync(resolvedPath)) {
+              const resolvedRaw = fs.readFileSync(resolvedPath, "utf8");
+              const resolvedData = JSON.parse(resolvedRaw);
+              return res.json({ ...resolvedData, _project: proj.name });
+            }
+          }
+          return res.json({ ...data, _project: proj.name });
+        } catch { /* skip */ }
+      }
+      // Check resolved
+      const resolvedPath = path.join(projectsDir, proj.name, "approvals", "resolved", `${id}.json`);
+      if (fs.existsSync(resolvedPath)) {
+        try {
+          const raw = fs.readFileSync(resolvedPath, "utf8");
+          const data = JSON.parse(raw);
+          return res.json({ ...data, _project: proj.name });
+        } catch { /* skip */ }
+      }
+    }
+  }
+
+  // Check deliverables
+  const indexPath = path.join(STATE_DIR, "shared", "output", "index.json");
+  if (fs.existsSync(indexPath)) {
+    try {
+      const indexRaw = fs.readFileSync(indexPath, "utf8");
+      const index = JSON.parse(indexRaw);
+      const entries = Array.isArray(index) ? index : (index.deliverables || index.entries || []);
+      const entry = entries.find((e) => (e.id || e.taskId || e.file) === id);
+      if (entry) {
+        let deliverableContent = null;
+        if (entry.deliverable) {
+          const delivPath = path.join(STATE_DIR, entry.deliverable);
+          if (fs.existsSync(delivPath)) {
+            try { deliverableContent = fs.readFileSync(delivPath, "utf8"); } catch {}
+          }
+        }
+        return res.json({
+          id: entry.id || entry.taskId || entry.file,
+          gate: "deliverable-review",
+          what: entry.summary || entry.title || entry.description || "Deliverable review",
+          why: deliverableContent || entry.description || null,
+          requester: entry.agent || entry.author || "unknown",
+          created: entry.created || entry.timestamp || entry.date || null,
+          _project: entry.project || null,
+          _deliverablePath: entry.deliverable || null,
+          _source: "deliverables",
+          status: entry.status === "needs-feedback" ? "pending" : entry.status,
+        });
+      }
+    } catch { /* skip */ }
+  }
+
+  return res.status(404).json({ error: "Approval not found" });
+});
+
 // List pending approvals across all projects
 app.get("/mc/api/approvals", requireSetupAuth, (_req, res) => {
   const approvals = [];

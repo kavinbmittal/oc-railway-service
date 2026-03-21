@@ -42,6 +42,10 @@ export async function getApprovals() {
   return data.approvals || [];
 }
 
+export async function getApprovalDetail(id) {
+  return fetchJSON(`${BASE}/approvals/${encodeURIComponent(id)}`);
+}
+
 export async function createProject({ name, mission, lead, budget, gates }) {
   const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
   const today = new Date().toISOString().split("T")[0];

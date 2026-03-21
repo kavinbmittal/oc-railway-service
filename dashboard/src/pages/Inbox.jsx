@@ -45,19 +45,19 @@ export default function Inbox({ navigate }) {
     return data.counts;
   }, [data]);
 
-  async function handleApprove(item) {
+  async function handleApprove(approval) {
     setActionError(null);
     try {
       await resolveApproval({
-        project: item.project,
-        id: item.id,
+        project: approval._project || approval.project,
+        id: approval.id,
         decision: "approved",
         comment: null,
-        requester: item.requester,
-        gate: item.gate,
-        what: item.data?.what || item.title,
-        why: item.data?.why,
-        created: item.data?.created || item.timestamp,
+        requester: approval.requester,
+        gate: approval.gate,
+        what: approval.what || approval.title,
+        why: approval.why,
+        created: approval.created || approval.timestamp,
       });
       refresh();
     } catch (err) {
@@ -65,21 +65,21 @@ export default function Inbox({ navigate }) {
     }
   }
 
-  async function handleReject(item) {
+  async function handleReject(approval) {
     const comment = prompt("Reason for rejection:");
     if (!comment) return;
     setActionError(null);
     try {
       await resolveApproval({
-        project: item.project,
-        id: item.id,
+        project: approval._project || approval.project,
+        id: approval.id,
         decision: "rejected",
         comment,
-        requester: item.requester,
-        gate: item.gate,
-        what: item.data?.what || item.title,
-        why: item.data?.why,
-        created: item.data?.created || item.timestamp,
+        requester: approval.requester,
+        gate: approval.gate,
+        what: approval.what || approval.title,
+        why: approval.why,
+        created: approval.created || approval.timestamp,
       });
       refresh();
     } catch (err) {
@@ -157,7 +157,7 @@ export default function Inbox({ navigate }) {
           sub={tab === "all" ? "Nothing needs your attention right now." : undefined}
         />
       ) : (
-        <div className="border border-border">
+        <div className="border border-border rounded-lg overflow-hidden">
           {items.map((item) =>
             item.type === "approval" ? (
               <ApprovalCard
@@ -177,7 +177,8 @@ export default function Inbox({ navigate }) {
                   subtitle: item.subtitle,
                   _source: item.data?._source,
                 }}
-                onResolved={refresh}
+                onApprove={handleApprove}
+                onReject={handleReject}
                 navigate={navigate}
                 hideProject={false}
               />

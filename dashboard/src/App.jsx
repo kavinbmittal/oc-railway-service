@@ -6,6 +6,7 @@ import AgentList from "./pages/AgentList.jsx";
 import AgentDetail from "./pages/AgentDetail.jsx";
 import CreateProject from "./pages/CreateProject.jsx";
 import Approvals from "./pages/Approvals.jsx";
+import ApprovalDetail from "./pages/ApprovalDetail.jsx";
 import Inbox from "./pages/Inbox.jsx";
 import Activity from "./pages/Activity.jsx";
 import IssueDetail from "./pages/IssueDetail.jsx";
@@ -41,6 +42,7 @@ function parseHash(hash) {
     case "create-project":
       return { page: "create-project" };
     case "approvals":
+      if (parts[1]) return { page: "approval-detail", approvalId: parts[1] };
       return { page: "approvals" };
     case "projects": {
       const slug = parts[1];
@@ -97,6 +99,8 @@ function buildHash(target, data) {
       return "#/create-project";
     case "approvals":
       return "#/approvals";
+    case "approval-detail":
+      return `#/approvals/${data}`;
     default:
       return `#/${target}`;
   }
@@ -109,6 +113,7 @@ export default function App() {
   const [selectedAgent, setSelectedAgent] = useState(initial.selectedAgent || null);
   const [issueContext, setIssueContext] = useState(initial.issueContext || null);
   const [projectTab, setProjectTab] = useState(initial.projectTab || null);
+  const [approvalId, setApprovalId] = useState(initial.approvalId || null);
   const [refreshKey, setRefreshKey] = useState(0);
 
   /* Apply parsed hash state */
@@ -118,6 +123,7 @@ export default function App() {
     setSelectedAgent(s.selectedAgent || null);
     setIssueContext(s.issueContext || null);
     setProjectTab(s.projectTab || null);
+    setApprovalId(s.approvalId || null);
     setRefreshKey((k) => k + 1);
   }, []);
 
@@ -157,6 +163,9 @@ export default function App() {
             )}
             {page === "create-project" && <CreateProject navigate={navigate} />}
             {page === "approvals" && <Approvals navigate={navigate} />}
+            {page === "approval-detail" && approvalId && (
+              <ApprovalDetail approvalId={approvalId} navigate={navigate} />
+            )}
             {page === "inbox" && <Inbox navigate={navigate} />}
             {page === "activity" && <Activity navigate={navigate} />}
             {page === "costs" && <Costs navigate={navigate} />}

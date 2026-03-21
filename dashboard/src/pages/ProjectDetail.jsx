@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { getFile, getProjectCosts, getBudgetPolicy, updateBudgetPolicy, getApprovals } from "../api.js";
+import { getFile, getProjectCosts, getBudgetPolicy, updateBudgetPolicy, getApprovals, resolveApproval } from "../api.js";
 import { formatDate as formatDateUtil, formatTimeAgo } from "../utils/formatDate.js";
 import {
   ArrowLeft, FileText, Activity, DollarSign, Clock,
@@ -204,12 +204,22 @@ export default function ProjectDetail({ projectId, navigate, initialTab }) {
       {/* Tabs */}
       <Tabs value={tab} onValueChange={handleTabChange}>
         <TabsList>
-          {TABS.map(({ id, label, icon: Icon }) => (
-            <TabsTrigger key={id} value={id}>
-              <Icon size={14} strokeWidth={1.8} />
-              {label}
-            </TabsTrigger>
-          ))}
+          {TABS.map(({ id, label, icon: Icon }) => {
+            const pendingCount = id === "approvals"
+              ? approvals.filter((a) => !a.status || a.status === "pending").length
+              : 0;
+            return (
+              <TabsTrigger key={id} value={id}>
+                <Icon size={14} strokeWidth={1.8} />
+                {label}
+                {pendingCount > 0 && (
+                  <span className="ml-1.5 inline-flex items-center justify-center min-w-[16px] h-4 rounded-full bg-amber-900/50 text-amber-300 text-[10px] font-medium px-1">
+                    {pendingCount}
+                  </span>
+                )}
+              </TabsTrigger>
+            );
+          })}
         </TabsList>
 
         {/* Overview tab */}
@@ -337,6 +347,7 @@ export default function ProjectDetail({ projectId, navigate, initialTab }) {
           <ProjectApprovalsTab
             approvals={approvals}
             projectId={projectId}
+            navigate={navigate}
             onResolved={() => {
               getApprovals()
                 .then((all) => setApprovals(all.filter((a) => {
@@ -550,27 +561,80 @@ function ProjectCostsTab({ costs, costSummary, budgetPolicy, totalCost, projectI
   );
 }
 
-function ProjectApprovalsTab({ approvals, projectId, onResolved }) {
+function ProjectApprovalsTab({ approvals, projectId, onResolved, navigate }) {
+  async function handleApprove(approval) {
+    try {
+      await resolveApproval({
+        project: approval._project || approval.project || projectId,
+        id: approval.id,
+        decision: "approved",
+        comment: null,
+        requester: approval.requester,
+        gate: approval.gate,
+        what: approval.what || approval.title,
+        why: approval.why,
+        created: approval.created,
+      });
+      onResolved();
+    } catch (err) {
+      console.error("Approve failed:", err);
+    }
+  }
+
+  async function handleReject(approval) {
+    const comment = prompt("Reason for rejection:");
+    if (!comment) return;
+    try {
+      await resolveApproval({
+        project: approval._project || approval.project || projectId,
+        id: approval.id,
+        decision: "rejected",
+        comment,
+        requester: approval.requester,
+        gate: approval.gate,
+        what: approval.what || approval.title,
+        why: approval.why,
+        created: approval.created,
+      });
+      onResolved();
+    } catch (err) {
+      console.error("Reject failed:", err);
+    }
+  }
+
+  const pendingCount = approvals.filter(
+    (a) => !a.status || a.status === "pending"
+  ).length;
+
   if (approvals.length === 0) {
     return (
       <EmptyState
         icon={ShieldCheck}
-        text="No pending approvals"
-        sub="All clear — no approvals waiting for this project."
+        text="No approvals"
+        sub="All clear — no approvals for this project."
       />
     );
   }
 
   return (
     <div className="space-y-3">
-      {approvals.map((approval) => (
-        <ApprovalCard
-          key={approval.id || approval._file}
-          approval={approval}
-          onResolved={onResolved}
-          hideProject={true}
-        />
-      ))}
+      {pendingCount > 0 && (
+        <p className="text-xs text-muted-foreground">
+          {pendingCount} pending
+        </p>
+      )}
+      <div className="border border-border rounded-lg overflow-hidden">
+        {approvals.map((approval) => (
+          <ApprovalCard
+            key={approval.id || approval._file}
+            approval={approval}
+            onApprove={handleApprove}
+            onReject={handleReject}
+            navigate={navigate}
+            hideProject={true}
+          />
+        ))}
+      </div>
     </div>
   );
 }
