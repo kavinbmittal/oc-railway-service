@@ -98,7 +98,11 @@ export default function ProjectDetail({ projectId, navigate, initialTab }) {
       loadCosts(projectId),
       getProjectCosts(projectId).catch(() => null),
       getBudgetPolicy(projectId).catch(() => null),
-      getApprovals().then((all) => all.filter((a) => (a._project || a.project) === projectId)).catch(() => []),
+      getApprovals().then((all) => all.filter((a) => {
+        // Include project-format approvals matching this project
+        if ((a._project || a.project) === projectId) return true;
+        return false;
+      })).catch(() => []),
     ]).then(([proj, miles, activity, standupList, costList, costData, policyData, approvalList]) => {
       setProjectRaw(proj?.content || null);
       setMilestones(miles?.content || null);
@@ -167,7 +171,14 @@ export default function ProjectDetail({ projectId, navigate, initialTab }) {
           <StatusBadge status={project.status} />
         </div>
         <div className="flex flex-wrap gap-4 text-xs text-muted-foreground">
-          <span className="flex items-center gap-1.5">
+          <span
+            className="flex items-center gap-1.5 cursor-pointer hover:text-foreground transition-colors"
+            onClick={() => {
+              const name = project.lead.toLowerCase();
+              const workspaceId = name === "sam" ? "workspace" : `workspace-${name}`;
+              navigate("agent-detail", workspaceId);
+            }}
+          >
             <User size={12} />
             {project.lead}
           </span>
@@ -328,7 +339,10 @@ export default function ProjectDetail({ projectId, navigate, initialTab }) {
             projectId={projectId}
             onResolved={() => {
               getApprovals()
-                .then((all) => setApprovals(all.filter((a) => (a._project || a.project) === projectId)))
+                .then((all) => setApprovals(all.filter((a) => {
+                  if ((a._project || a.project) === projectId) return true;
+                  return false;
+                })))
                 .catch(() => {});
             }}
           />
@@ -608,9 +622,16 @@ function ProjectApprovalCard({ approval, onResolved }) {
             </span>
           </div>
           <p className="text-sm text-foreground/80">{approval.what}</p>
-          {approval.why && (
+          {approval.why && approval._source === "deliverables" ? (
+            <details className="mt-2">
+              <summary className="text-xs text-muted-foreground cursor-pointer hover:text-foreground">View deliverable content</summary>
+              <div className="mt-2 text-xs text-muted-foreground whitespace-pre-wrap border border-border p-3 bg-background max-h-64 overflow-y-auto">
+                {approval.why}
+              </div>
+            </details>
+          ) : approval.why ? (
             <p className="text-xs text-muted-foreground mt-1">{approval.why}</p>
-          )}
+          ) : null}
         </div>
         <div className="text-right shrink-0">
           <span className="text-xs text-muted-foreground">{approval.requester}</span>

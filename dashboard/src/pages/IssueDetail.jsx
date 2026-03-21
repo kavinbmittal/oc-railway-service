@@ -116,7 +116,7 @@ export default function IssueDetail({ projectSlug, issueId, navigate }) {
       {/* Breadcrumb */}
       <div className="h-12 flex items-center gap-2">
         <button
-          onClick={() => navigate("project", projectSlug)}
+          onClick={() => navigate("overview")}
           className="text-[13px] text-muted-foreground hover:text-foreground transition-colors"
         >
           Dashboard
@@ -127,6 +127,13 @@ export default function IssueDetail({ projectSlug, issueId, navigate }) {
           className="text-[13px] text-muted-foreground hover:text-foreground transition-colors"
         >
           {projectSlug}
+        </button>
+        <span className="text-muted-foreground/40">/</span>
+        <button
+          onClick={() => navigate("project-tab", { slug: projectSlug, tab: "issues" })}
+          className="text-[13px] text-muted-foreground hover:text-foreground transition-colors"
+        >
+          Issues
         </button>
         <span className="text-muted-foreground/40">/</span>
         <span className="text-[13px] font-semibold text-foreground truncate">

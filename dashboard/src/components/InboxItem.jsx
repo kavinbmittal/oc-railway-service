@@ -41,14 +41,52 @@ const TYPE_CONFIG = {
   },
 };
 
+function handleItemClick(item, onNavigate) {
+  if (!onNavigate) return;
+  switch (item.type) {
+    case "approval":
+      // Navigate to approvals page for all approval items
+      onNavigate("approvals");
+      break;
+    case "standup":
+      // Navigate to project standups tab
+      if (item.project && item.project !== "general") {
+        onNavigate("project-tab", { slug: item.project, tab: "standups" });
+      }
+      break;
+    case "stale_task":
+      // Navigate to issue detail if we have a project and issue id
+      if (item.project && item.project !== "general" && item.id) {
+        onNavigate("issue-detail", { projectSlug: item.project, issueId: item.id });
+      }
+      break;
+    case "budget":
+      // Navigate to project costs tab
+      if (item.project && item.project !== "general") {
+        onNavigate("project-tab", { slug: item.project, tab: "costs" });
+      }
+      break;
+    default:
+      if (item.project && item.project !== "general") {
+        onNavigate("project", item.project);
+      }
+  }
+}
+
 export function InboxItem({ item, onApprove, onReject, onNavigate }) {
   const config = TYPE_CONFIG[item.type] || TYPE_CONFIG.stale_task;
   const Icon = item.type === "budget" && item.severity === "critical" ? AlertTriangle : config.icon;
   const iconBg = item.type === "budget" && item.severity === "critical" ? "bg-red-900/40" : config.iconBg;
   const iconColor = item.type === "budget" && item.severity === "critical" ? "text-red-400" : config.iconColor;
 
+  const hasRealProject = item.project && item.project !== "general";
+  const isDeliverable = item.gate === "deliverable" || item.gate === "deliverable-review";
+
   return (
-    <div className="group flex items-start gap-3 px-4 py-3 border-b border-border last:border-b-0 transition-colors hover:bg-accent/30">
+    <div
+      className="group flex items-start gap-3 px-4 py-3 border-b border-border last:border-b-0 transition-colors hover:bg-accent/30 cursor-pointer"
+      onClick={() => handleItemClick(item, onNavigate)}
+    >
       {/* Type icon */}
       <span className={`shrink-0 rounded-md p-1.5 mt-0.5 ${iconBg}`}>
         <Icon className={`h-4 w-4 ${iconColor}`} />
@@ -57,10 +95,7 @@ export function InboxItem({ item, onApprove, onReject, onNavigate }) {
       {/* Content */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-0.5">
-          <span
-            className="text-sm font-medium text-foreground truncate cursor-pointer hover:underline"
-            onClick={() => onNavigate && onNavigate("project", item.project)}
-          >
+          <span className="text-sm font-medium text-foreground truncate">
             {item.title}
           </span>
         </div>
@@ -68,10 +103,19 @@ export function InboxItem({ item, onApprove, onReject, onNavigate }) {
           <p className="text-xs text-muted-foreground truncate">{item.subtitle}</p>
         )}
         <div className="flex items-center gap-2 mt-1">
-          <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium bg-accent text-accent-foreground">
-            {item.project}
-          </span>
-          {item.requester && (
+          {hasRealProject ? (
+            <span
+              className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium bg-accent text-accent-foreground cursor-pointer hover:underline"
+              onClick={(e) => { e.stopPropagation(); onNavigate && onNavigate("project", item.project); }}
+            >
+              {item.project}
+            </span>
+          ) : item.requester ? (
+            <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium bg-accent text-accent-foreground">
+              {item.requester}
+            </span>
+          ) : null}
+          {item.requester && hasRealProject && (
             <span className="text-[11px] text-muted-foreground">by {item.requester}</span>
           )}
           {item.gate && (

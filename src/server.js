@@ -1646,15 +1646,25 @@ app.get("/mc/api/inbox", requireSetupAuth, (_req, res) => {
       const entries = Array.isArray(index) ? index : (index.deliverables || index.entries || []);
       for (const entry of entries) {
         if (entry.status !== "needs-feedback") continue;
+        // Read deliverable content if file exists
+        let deliverableContent = null;
+        if (entry.deliverable) {
+          const delivPath = path.join(STATE_DIR, entry.deliverable);
+          if (fs.existsSync(delivPath)) {
+            try { deliverableContent = fs.readFileSync(delivPath, "utf8"); } catch {}
+          }
+        }
         items.push({
           type: "approval",
-          project: entry.project || "general",
+          project: entry.project || null,
           id: entry.id || entry.taskId || entry.file,
-          title: entry.title || entry.description || "Deliverable review",
-          subtitle: entry.summary || entry.description || null,
+          title: entry.summary || entry.title || entry.description || "Deliverable review",
+          subtitle: entry.description || entry.summary || null,
           requester: entry.agent || entry.author || "unknown",
-          gate: "deliverable",
+          gate: "deliverable-review",
           timestamp: entry.created || entry.timestamp || entry.date || new Date().toISOString(),
+          _source: "deliverables",
+          _deliverableContent: deliverableContent,
           data: entry,
         });
       }

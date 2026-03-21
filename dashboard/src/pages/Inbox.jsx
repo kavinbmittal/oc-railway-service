@@ -161,8 +161,8 @@ export default function Inbox({ navigate }) {
             <InboxItem
               key={item.id}
               item={item}
-              onApprove={item.type === "approval" ? handleApprove : undefined}
-              onReject={item.type === "approval" ? handleReject : undefined}
+              onApprove={item.type === "approval" && item.project ? handleApprove : undefined}
+              onReject={item.type === "approval" && item.project ? handleReject : undefined}
               onNavigate={navigate}
             />
           ))}

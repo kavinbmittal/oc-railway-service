@@ -57,7 +57,15 @@ export function ActivityEvent({ event, onNavigate }) {
       {/* Agent badge */}
       {event.agent && (
         <span className="shrink-0">
-          <span className={`inline-flex items-center px-2 py-0.5 text-[11px] font-medium text-white rounded-sm ${agentColor(event.agent)}`}>
+          <span
+            className={`inline-flex items-center px-2 py-0.5 text-[11px] font-medium text-white rounded-sm cursor-pointer hover:opacity-80 ${agentColor(event.agent)}`}
+            onClick={() => {
+              if (!onNavigate) return;
+              const name = event.agent.toLowerCase();
+              const workspaceId = name === "sam" ? "workspace" : `workspace-${name}`;
+              onNavigate("agent-detail", workspaceId);
+            }}
+          >
             {event.agent}
           </span>
         </span>

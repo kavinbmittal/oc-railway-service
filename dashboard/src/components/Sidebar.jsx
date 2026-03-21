@@ -209,7 +209,7 @@ export default function Sidebar({ page, selectedProject, navigate, refreshKey })
         >
           {coloredProjects.map((project) => {
             const slug = project.id || project.slug;
-            const isActive = page === "project" && selectedProject === slug;
+            const isActive = (page === "project" || page === "issue-detail") && selectedProject === slug;
             return (
               <button
                 key={slug}
@@ -249,7 +249,7 @@ export default function Sidebar({ page, selectedProject, navigate, refreshKey })
             label="Issues"
           />
           <SidebarNavItem
-            active={page === "agents"}
+            active={page === "agents" || page === "agent-detail"}
             onClick={() => navigate("agents")}
             icon={Bot}
             label="Agents"

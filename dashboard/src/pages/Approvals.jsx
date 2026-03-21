@@ -124,9 +124,16 @@ function ApprovalCard({ approval, onResolved, navigate }) {
                 {approval._project}
               </button>
             ) : (
-              <span className="text-sm font-medium text-muted-foreground">
+              <button
+                onClick={() => {
+                  const name = (approval.requester || "").toLowerCase();
+                  const workspaceId = name === "sam" ? "workspace" : `workspace-${name}`;
+                  navigate("agent-detail", workspaceId);
+                }}
+                className="text-sm font-medium text-muted-foreground hover:underline"
+              >
                 {approval.requester}
-              </span>
+              </button>
             )}
             <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-amber-900/50 text-amber-300">
               {approval.gate}

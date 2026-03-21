@@ -46,7 +46,11 @@ export default function Overview({ navigate }) {
       .then(async ([projs, inbox, summaries]) => {
         setProjects(projs);
         setProjectSummaries(summaries);
-        if (inbox?.counts) setInboxCount(inbox.counts.total || 0);
+        if (inbox?.counts) {
+          // Only count actionable items (approvals + budget + stale tasks), not standups
+          const c = inbox.counts;
+          setInboxCount((c.approvals || 0) + (c.budget || 0) + (c.tasks || 0));
+        }
         // Load recent issues across all projects
         try {
           const allIssues = [];
@@ -203,7 +207,21 @@ export default function Overview({ navigate }) {
 
                       {/* Lead */}
                       <td className="px-4 py-3 hidden sm:table-cell">
-                        <span className="text-xs text-muted-foreground capitalize">{project.lead || "--"}</span>
+                        {project.lead && project.lead !== "unassigned" ? (
+                          <span
+                            className="text-xs text-muted-foreground capitalize cursor-pointer hover:text-foreground transition-colors"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const name = project.lead.toLowerCase();
+                              const workspaceId = name === "sam" ? "workspace" : `workspace-${name}`;
+                              navigate("agent-detail", workspaceId);
+                            }}
+                          >
+                            {project.lead}
+                          </span>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">--</span>
+                        )}
                       </td>
 
                       {/* Milestone */}
