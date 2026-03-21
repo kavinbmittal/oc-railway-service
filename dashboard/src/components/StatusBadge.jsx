@@ -39,6 +39,10 @@ const STATUS_BADGE = {
   done: "bg-green-900/50 text-green-300",
   cancelled: "bg-muted text-muted-foreground",
 
+  // Goal statuses
+  not_started: "bg-muted text-muted-foreground",
+  at_risk: "bg-red-900/50 text-red-300",
+
   // Fallback alias used by existing pages
   unknown: "bg-muted text-muted-foreground",
 };

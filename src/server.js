@@ -2369,6 +2369,299 @@ app.put("/mc/api/budget-policy", requireSetupAuth, (req, res) => {
   return res.json({ ok: true, policy });
 });
 
+// --- Goals API ---
+
+app.get("/mc/api/goals", requireSetupAuth, (_req, res) => {
+  const goalsPath = path.join(STATE_DIR, "shared", "goals.json");
+  try {
+    if (!fs.existsSync(goalsPath)) {
+      return res.json({ goals: [] });
+    }
+    const data = JSON.parse(fs.readFileSync(goalsPath, "utf8"));
+    return res.json({ goals: data.goals || [] });
+  } catch (err) {
+    return res.status(500).json({ error: "Failed to read goals", detail: err.message });
+  }
+});
+
+app.post("/mc/api/goals", requireSetupAuth, (req, res) => {
+  const goalsPath = path.join(STATE_DIR, "shared", "goals.json");
+  try {
+    let data = { goals: [] };
+    if (fs.existsSync(goalsPath)) {
+      data = JSON.parse(fs.readFileSync(goalsPath, "utf8"));
+      if (!Array.isArray(data.goals)) data.goals = [];
+    }
+
+    const { title, level, parent, projects, status } = req.body;
+    if (!title || typeof title !== "string") {
+      return res.status(400).json({ error: "Missing title" });
+    }
+
+    const id = `g-${String(data.goals.length + 1).padStart(3, "0")}`;
+    const goal = {
+      id,
+      title: title.trim(),
+      level: level || "project",
+      status: status || "not_started",
+      parent: parent || null,
+      projects: Array.isArray(projects) ? projects : [],
+      progress: 0,
+      created: new Date().toISOString().split("T")[0],
+    };
+
+    data.goals.push(goal);
+    fs.mkdirSync(path.dirname(goalsPath), { recursive: true });
+    fs.writeFileSync(goalsPath, JSON.stringify(data, null, 2), "utf8");
+    return res.json({ ok: true, goal });
+  } catch (err) {
+    return res.status(500).json({ error: "Failed to create goal", detail: err.message });
+  }
+});
+
+app.patch("/mc/api/goals/:id", requireSetupAuth, (req, res) => {
+  const goalsPath = path.join(STATE_DIR, "shared", "goals.json");
+  try {
+    if (!fs.existsSync(goalsPath)) {
+      return res.status(404).json({ error: "No goals file" });
+    }
+    const data = JSON.parse(fs.readFileSync(goalsPath, "utf8"));
+    const idx = (data.goals || []).findIndex((g) => g.id === req.params.id);
+    if (idx === -1) {
+      return res.status(404).json({ error: "Goal not found" });
+    }
+
+    const updates = req.body;
+    const goal = data.goals[idx];
+    if (updates.title !== undefined) goal.title = updates.title;
+    if (updates.status !== undefined) goal.status = updates.status;
+    if (updates.progress !== undefined) goal.progress = Number(updates.progress);
+    if (updates.parent !== undefined) goal.parent = updates.parent || null;
+    if (updates.projects !== undefined) goal.projects = updates.projects;
+    if (updates.level !== undefined) goal.level = updates.level;
+
+    data.goals[idx] = goal;
+    fs.writeFileSync(goalsPath, JSON.stringify(data, null, 2), "utf8");
+    return res.json({ ok: true, goal });
+  } catch (err) {
+    return res.status(500).json({ error: "Failed to update goal", detail: err.message });
+  }
+});
+
+app.delete("/mc/api/goals/:id", requireSetupAuth, (req, res) => {
+  const goalsPath = path.join(STATE_DIR, "shared", "goals.json");
+  try {
+    if (!fs.existsSync(goalsPath)) {
+      return res.status(404).json({ error: "No goals file" });
+    }
+    const data = JSON.parse(fs.readFileSync(goalsPath, "utf8"));
+    const idx = (data.goals || []).findIndex((g) => g.id === req.params.id);
+    if (idx === -1) {
+      return res.status(404).json({ error: "Goal not found" });
+    }
+    data.goals.splice(idx, 1);
+    fs.writeFileSync(goalsPath, JSON.stringify(data, null, 2), "utf8");
+    return res.json({ ok: true });
+  } catch (err) {
+    return res.status(500).json({ error: "Failed to delete goal", detail: err.message });
+  }
+});
+
+// --- Org Chart API ---
+
+app.get("/mc/api/org-chart", requireSetupAuth, (_req, res) => {
+  try {
+    // Read TEAM.md for structure
+    const teamPath = path.join(STATE_DIR, "shared", "TEAM.md");
+    const teamRaw = fs.existsSync(teamPath) ? fs.readFileSync(teamPath, "utf8") : "";
+
+    // Read agent data from workspaces
+    const entries = fs.readdirSync(STATE_DIR, { withFileTypes: true });
+    const workspaceDirs = entries
+      .filter((e) => e.isDirectory() && (e.name === "workspace" || e.name.startsWith("workspace-")))
+      .map((e) => e.name);
+
+    const agentMap = {};
+    for (const dir of workspaceDirs) {
+      const agent = { id: dir === "workspace" ? "sam" : dir.replace(/^workspace-/, "").split("-")[0] };
+
+      const identityPath = path.join(STATE_DIR, dir, "IDENTITY.md");
+      if (fs.existsSync(identityPath)) {
+        const raw = fs.readFileSync(identityPath, "utf8");
+        const nameMatch = raw.match(/(?:^|\n)#\s+(.+)/);
+        const emojiMatch = raw.match(/emoji:\s*(.+)/i) || raw.match(/^(\p{Emoji_Presentation}|\p{Emoji}\uFE0F)/mu);
+        agent.name = nameMatch?.[1]?.trim() || agent.id.charAt(0).toUpperCase() + agent.id.slice(1);
+        agent.emoji = emojiMatch?.[1]?.trim() || null;
+      } else {
+        agent.name = agent.id.charAt(0).toUpperCase() + agent.id.slice(1);
+        agent.emoji = null;
+      }
+
+      const soulPath = path.join(STATE_DIR, dir, "SOUL.md");
+      if (fs.existsSync(soulPath)) {
+        const raw = fs.readFileSync(soulPath, "utf8");
+        const lines = raw.split("\n").filter((l) => l.trim() && !l.startsWith("#"));
+        agent.role = lines[0]?.trim().slice(0, 120) || "";
+      } else {
+        agent.role = "";
+      }
+
+      // Check status from active-tasks
+      const tasksPath = path.join(STATE_DIR, dir, "memory", "active-tasks.md");
+      agent.status = "idle";
+      if (fs.existsSync(tasksPath)) {
+        const raw = fs.readFileSync(tasksPath, "utf8");
+        if (/## In Progress[\s\S]*?- .+/m.test(raw)) agent.status = "active";
+      }
+
+      agentMap[agent.id] = agent;
+    }
+
+    // Read project leads
+    const projectsDir = path.join(STATE_DIR, "shared", "projects");
+    const projectLeads = {};
+    if (fs.existsSync(projectsDir)) {
+      for (const entry of fs.readdirSync(projectsDir, { withFileTypes: true })) {
+        if (!entry.isDirectory()) continue;
+        const projMd = path.join(projectsDir, entry.name, "PROJECT.md");
+        if (fs.existsSync(projMd)) {
+          const raw = fs.readFileSync(projMd, "utf8");
+          const leadMatch = raw.match(/\*\*Lead:\*\*\s*(\w+)/i);
+          if (leadMatch) {
+            const leadName = leadMatch[1].toLowerCase();
+            if (!projectLeads[leadName]) projectLeads[leadName] = [];
+            projectLeads[leadName].push(entry.name);
+          }
+        }
+      }
+    }
+
+    // Build hierarchy: Kavin → Sam → leads → specialists
+    const leads = ["binny", "leslie", "kiko", "zara", "ritam", "midas", "businessg"];
+    const specialists = { ej: "binny", jon: "binny" };
+
+    const buildNode = (id, type, childIds) => {
+      const a = agentMap[id] || { id, name: id.charAt(0).toUpperCase() + id.slice(1), role: "", status: "idle", emoji: null };
+      return {
+        id: a.id,
+        name: a.name,
+        role: a.role,
+        type,
+        emoji: a.emoji,
+        projects: projectLeads[a.id] || [],
+        status: a.status,
+        children: childIds,
+      };
+    };
+
+    const nodes = [];
+
+    // Kavin (human)
+    nodes.push({ id: "kavin", name: "Kavin", role: "Board", type: "human", emoji: null, projects: [], status: "active", children: ["sam"] });
+
+    // Sam (coordinator)
+    const samChildren = leads.filter((l) => agentMap[l]);
+    nodes.push(buildNode("sam", "coordinator", samChildren));
+
+    // Leads
+    for (const lead of leads) {
+      if (!agentMap[lead]) continue;
+      const specChildren = Object.entries(specialists).filter(([, parent]) => parent === lead).map(([id]) => id).filter((id) => agentMap[id]);
+      nodes.push(buildNode(lead, "lead", specChildren));
+    }
+
+    // Specialists
+    for (const [specId] of Object.entries(specialists)) {
+      if (!agentMap[specId]) continue;
+      nodes.push(buildNode(specId, "specialist", []));
+    }
+
+    return res.json({ nodes });
+  } catch (err) {
+    return res.status(500).json({ error: "Failed to build org chart", detail: err.message });
+  }
+});
+
+// --- Workspaces (Execution Runs) API ---
+
+app.get("/mc/api/workspaces", requireSetupAuth, (req, res) => {
+  const runsPath = path.join(STATE_DIR, "subagents", "runs.json");
+  try {
+    if (!fs.existsSync(runsPath)) {
+      return res.json({ workspaces: [] });
+    }
+
+    const raw = fs.readFileSync(runsPath, "utf8");
+    const allRuns = Array.isArray(JSON.parse(raw)) ? JSON.parse(raw) : [];
+
+    let filtered = allRuns;
+
+    // Filter by project
+    const projectFilter = req.query.project;
+    if (projectFilter) {
+      filtered = filtered.filter((r) => (r.project || "").toLowerCase() === projectFilter.toLowerCase());
+    }
+
+    // Filter by agent
+    const agentFilter = req.query.agent;
+    if (agentFilter) {
+      filtered = filtered.filter((r) => {
+        const spawner = (r.spawner || r.parent || r.agent || "").toLowerCase();
+        return spawner.includes(agentFilter.toLowerCase());
+      });
+    }
+
+    // Filter by status
+    const statusFilter = req.query.status;
+    if (statusFilter) {
+      filtered = filtered.filter((r) => (r.status || "").toLowerCase() === statusFilter.toLowerCase());
+    }
+
+    // Sort newest first
+    filtered.sort((a, b) => {
+      const ta = new Date(a.timestamp || a.started || 0).getTime();
+      const tb = new Date(b.timestamp || b.started || 0).getTime();
+      return tb - ta;
+    });
+
+    // Map to workspace format
+    const workspaces = filtered.slice(0, 100).map((run) => {
+      const started = run.timestamp || run.started || null;
+      const ended = run.ended || run.completed || null;
+      let durationMs = null;
+      if (started && ended) {
+        durationMs = new Date(ended).getTime() - new Date(started).getTime();
+      }
+
+      // Try to extract issue ID from task/template
+      let issue = null;
+      const taskStr = run.task || run.template || run.prompt || "";
+      const issueMatch = taskStr.match(/([A-Z]+-\d+)/);
+      if (issueMatch) issue = issueMatch[1];
+
+      return {
+        id: run.id || run.runId || `run-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        agent: run.spawner || run.parent || run.agent || "unknown",
+        project: run.project || null,
+        issue,
+        type: run.type || run.tool || "openclaw",
+        model: run.model || null,
+        status: run.status || "completed",
+        started,
+        ended,
+        duration_ms: durationMs,
+        branch: run.branch || null,
+        working_dir: run.workingDir || run.working_dir || null,
+        task: taskStr.slice(0, 500) || null,
+      };
+    });
+
+    return res.json({ workspaces });
+  } catch (err) {
+    return res.status(500).json({ error: "Failed to list workspaces", detail: err.message });
+  }
+});
+
 // Serve the Mission Control SPA
 if (fs.existsSync(DASHBOARD_DIR)) {
   app.use("/mc", express.static(DASHBOARD_DIR));

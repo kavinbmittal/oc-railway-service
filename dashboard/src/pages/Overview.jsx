@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { getProjects, getInbox, getIssues } from "../api.js";
-import { FolderKanban, User, DollarSign, ArrowRight, AlertTriangle, CheckCircle, ArrowUpRight, CircleDot } from "lucide-react";
+import { getProjects, getInbox, getIssues, getGoals } from "../api.js";
+import { FolderKanban, User, DollarSign, ArrowRight, AlertTriangle, CheckCircle, ArrowUpRight, CircleDot, Target } from "lucide-react";
 import { Skeleton } from "../components/ui/Skeleton.jsx";
 import { MetricCard } from "../components/MetricCard.jsx";
 import { StatusBadge, STATUS_DOT } from "../components/StatusBadge.jsx";
@@ -26,15 +26,18 @@ export default function Overview({ navigate }) {
   const [error, setError] = useState(null);
   const [inboxCount, setInboxCount] = useState(null);
   const [recentIssues, setRecentIssues] = useState([]);
+  const [goals, setGoals] = useState([]);
 
   useEffect(() => {
     Promise.all([
       getProjects(),
       getInbox().catch(() => null),
+      getGoals().catch(() => []),
     ])
-      .then(async ([projs, inbox]) => {
+      .then(async ([projs, inbox, goalsData]) => {
         setProjects(projs);
         if (inbox?.counts) setInboxCount(inbox.counts.total || 0);
+        setGoals(goalsData || []);
         // Load recent issues across all projects
         try {
           const allIssues = [];
@@ -210,6 +213,58 @@ export default function Overview({ navigate }) {
                 }
               />
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* Goals summary section */}
+      {goals.length > 0 && (
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+              Goals
+            </h3>
+            <button
+              onClick={() => navigate("goals")}
+              className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
+            >
+              View all <ArrowRight size={12} />
+            </button>
+          </div>
+          <div className="border border-border divide-y divide-border">
+            {goals
+              .filter((g) => g.level === "company" || !g.parent)
+              .slice(0, 5)
+              .map((goal) => {
+                const pct = Math.round((goal.progress || 0) * 100);
+                return (
+                  <EntityRow
+                    key={goal.id}
+                    onClick={() => navigate("goals")}
+                    leading={
+                      <Target size={14} className="text-muted-foreground" />
+                    }
+                    title={goal.title}
+                    trailing={
+                      <>
+                        <div className="flex items-center gap-1.5 shrink-0 w-20 hidden sm:flex">
+                          <div className="relative h-1.5 flex-1 bg-muted overflow-hidden rounded-full">
+                            <div
+                              className={`absolute inset-y-0 left-0 rounded-full transition-all ${
+                                pct >= 100 ? "bg-green-400" : pct >= 60 ? "bg-blue-400" : pct >= 30 ? "bg-yellow-400" : "bg-muted-foreground/40"
+                              }`}
+                              style={{ width: `${Math.min(pct, 100)}%` }}
+                            />
+                          </div>
+                          <span className="text-[10px] text-muted-foreground tabular-nums">{pct}%</span>
+                        </div>
+                        <StatusBadge status={goal.status} />
+                        <ArrowRight size={14} className="text-muted-foreground/50 shrink-0" />
+                      </>
+                    }
+                  />
+                );
+              })}
           </div>
         </div>
       )}

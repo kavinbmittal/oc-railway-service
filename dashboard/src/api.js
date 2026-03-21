@@ -189,6 +189,59 @@ export async function updateBudgetPolicy({ project, weekly_budget_usd, warn_thre
   return res.json();
 }
 
+// --- Goals API ---
+
+export async function getGoals() {
+  const data = await fetchJSON(`${BASE}/goals`);
+  return data.goals || [];
+}
+
+export async function createGoal({ title, level, parent, projects, status }) {
+  const res = await fetch(`${BASE}/goals`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ title, level, parent, projects, status }),
+  });
+  if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+  return res.json();
+}
+
+export async function updateGoal(id, updates) {
+  const res = await fetch(`${BASE}/goals/${encodeURIComponent(id)}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(updates),
+  });
+  if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+  return res.json();
+}
+
+export async function deleteGoal(id) {
+  const res = await fetch(`${BASE}/goals/${encodeURIComponent(id)}`, {
+    method: "DELETE",
+  });
+  if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+  return res.json();
+}
+
+// --- Org Chart API ---
+
+export async function getOrgChart() {
+  const data = await fetchJSON(`${BASE}/org-chart`);
+  return data.nodes || [];
+}
+
+// --- Workspaces API ---
+
+export async function getWorkspaces({ project, agent, status } = {}) {
+  const params = new URLSearchParams();
+  if (project) params.set("project", project);
+  if (agent) params.set("agent", agent);
+  if (status) params.set("status", status);
+  const data = await fetchJSON(`${BASE}/workspaces?${params}`);
+  return data.workspaces || [];
+}
+
 export async function resolveApproval({ project, id, decision, comment, requester, gate, what, why, created }) {
   const now = new Date().toISOString();
   const timestamp = Date.now();

@@ -11,6 +11,9 @@ import Activity from "./pages/Activity.jsx";
 import Issues from "./pages/Issues.jsx";
 import IssueDetail from "./pages/IssueDetail.jsx";
 import Costs from "./pages/Costs.jsx";
+import Goals from "./pages/Goals.jsx";
+import OrgChart from "./pages/OrgChart.jsx";
+import Workspaces from "./pages/Workspaces.jsx";
 
 export default function App() {
   const [page, setPage] = useState("overview");
@@ -68,6 +71,9 @@ export default function App() {
             {page === "inbox" && <Inbox navigate={navigate} />}
             {page === "activity" && <Activity navigate={navigate} />}
             {page === "costs" && <Costs navigate={navigate} />}
+            {page === "goals" && <Goals navigate={navigate} />}
+            {page === "org-chart" && <OrgChart navigate={navigate} />}
+            {page === "workspaces" && <Workspaces navigate={navigate} />}
             {page === "issues" && selectedProject && (
               <Issues projectSlug={selectedProject} navigate={navigate} />
             )}
