@@ -2291,6 +2291,95 @@ app.post("/mc/api/issues/:id/comments", requireSetupAuth, (req, res) => {
   }
 });
 
+// --- Experiments API ---
+// Reads autoresearch experiment data from shared/projects/{slug}/experiments/
+
+app.get("/mc/api/experiments", requireSetupAuth, (req, res) => {
+  const slug = req.query.project;
+  if (!slug || typeof slug !== "string") {
+    return res.status(400).json({ error: "Missing ?project= parameter" });
+  }
+  const expDir = path.join(STATE_DIR, "shared", "projects", slug, "experiments");
+  if (!fs.existsSync(expDir)) {
+    return res.json({ experiments: [] });
+  }
+
+  const experiments = [];
+  let entries;
+  try {
+    entries = fs.readdirSync(expDir, { withFileTypes: true });
+  } catch {
+    return res.json({ experiments: [] });
+  }
+
+  for (const entry of entries) {
+    if (!entry.isDirectory()) continue;
+    const expPath = path.join(expDir, entry.name);
+    const programPath = path.join(expPath, "program.md");
+    const resultsPath = path.join(expPath, "results.tsv");
+
+    let programMd = null;
+    let name = entry.name;
+    let results = [];
+    let bestMetric = null;
+    let status = "unknown";
+
+    // Parse program.md
+    if (fs.existsSync(programPath)) {
+      try {
+        programMd = fs.readFileSync(programPath, "utf8");
+        const titleMatch = programMd.match(/^#\s+(.+)/m);
+        if (titleMatch) name = titleMatch[1];
+        const statusMatch = programMd.match(/## Status\s*\n\s*(\S+)/);
+        if (statusMatch) status = statusMatch[1];
+      } catch { /* skip */ }
+    }
+
+    // Parse results.tsv
+    if (fs.existsSync(resultsPath)) {
+      try {
+        const raw = fs.readFileSync(resultsPath, "utf8");
+        const lines = raw.trim().split("\n");
+        if (lines.length > 1) {
+          const headers = lines[0].split("\t").map((h) => h.trim());
+          for (let i = 1; i < lines.length; i++) {
+            const cols = lines[i].split("\t").map((c) => c.trim());
+            const row = {};
+            for (let j = 0; j < headers.length; j++) {
+              row[headers[j]] = cols[j] || "";
+            }
+            results.push(row);
+          }
+          // Find best metric (third column, assumed numeric, higher is better)
+          if (headers.length >= 3) {
+            const metricCol = headers[2];
+            const numericResults = results
+              .map((r) => parseFloat(r[metricCol]))
+              .filter((n) => !isNaN(n));
+            if (numericResults.length > 0) {
+              bestMetric = Math.max(...numericResults);
+            }
+          }
+        }
+      } catch { /* skip */ }
+    }
+
+    experiments.push({
+      name,
+      dir: entry.name,
+      program_md: programMd,
+      results,
+      result_count: results.length,
+      best_metric: bestMetric,
+      status,
+    });
+  }
+
+  // Sort by directory name (exp-001, exp-002, etc.)
+  experiments.sort((a, b) => a.dir.localeCompare(b.dir));
+  return res.json({ experiments });
+});
+
 // --- Budget Management API ---
 // Budget policies stored as budget-policy.json inside each project directory.
 // Cost data aggregated from costs/*.json files within each project.

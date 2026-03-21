@@ -227,6 +227,13 @@ export async function getWorkspaces({ project, agent, status } = {}) {
   return data.workspaces || [];
 }
 
+// --- Experiments API ---
+
+export async function getExperiments(projectSlug) {
+  const data = await fetchJSON(`${BASE}/experiments?project=${encodeURIComponent(projectSlug)}`);
+  return data.experiments || [];
+}
+
 export async function resolveApproval({ project, id, decision, comment, requester, gate, what, why, created }) {
   const now = new Date().toISOString();
   const timestamp = Date.now();

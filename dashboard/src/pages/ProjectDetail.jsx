@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
-import { getFile, getProjectCosts, getBudgetPolicy, updateBudgetPolicy, getApprovals, resolveApproval } from "../api.js";
+import { getFile, getProjectCosts, getBudgetPolicy, updateBudgetPolicy, getApprovals, resolveApproval, getExperiments } from "../api.js";
 import { formatDate as formatDateUtil, formatTimeAgo } from "../utils/formatDate.js";
 import {
   ArrowLeft, FileText, Activity, DollarSign, Clock,
-  User, Wallet, Target, ShieldCheck, Bot, CircleDot, Pencil,
+  User, Wallet, Target, ShieldCheck, Bot, CircleDot, Pencil, FlaskConical,
 } from "lucide-react";
 import Markdown from "../components/Markdown.jsx";
 import { Skeleton } from "../components/ui/Skeleton.jsx";
@@ -23,6 +23,7 @@ import ApprovalCard from "../components/ApprovalCard.jsx";
 const TABS = [
   { id: "overview", label: "Overview", icon: FileText },
   { id: "issues", label: "Issues", icon: CircleDot },
+  { id: "experiments", label: "Experiments", icon: FlaskConical },
   { id: "standups", label: "Standups", icon: Activity },
   { id: "costs", label: "Costs", icon: DollarSign },
   { id: "approvals", label: "Approvals", icon: ShieldCheck },
@@ -87,6 +88,7 @@ export default function ProjectDetail({ projectId, navigate, initialTab }) {
   const [savingBudget, setSavingBudget] = useState(false);
   const [activityLog, setActivityLog] = useState("");
   const [approvals, setApprovals] = useState([]);
+  const [experiments, setExperiments] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -103,7 +105,8 @@ export default function ProjectDetail({ projectId, navigate, initialTab }) {
         if ((a._project || a.project) === projectId) return true;
         return false;
       })).catch(() => []),
-    ]).then(([proj, miles, activity, standupList, costList, costData, policyData, approvalList]) => {
+      getExperiments(projectId).catch(() => []),
+    ]).then(([proj, miles, activity, standupList, costList, costData, policyData, approvalList, experimentList]) => {
       setProjectRaw(proj?.content || null);
       setMilestones(miles?.content || null);
       setActivityLog(activity?.content || "");
@@ -112,6 +115,7 @@ export default function ProjectDetail({ projectId, navigate, initialTab }) {
       setCostSummary(costData);
       setBudgetPolicy(policyData?.policy || null);
       setApprovals(approvalList);
+      setExperiments(experimentList);
       setLoading(false);
     });
   }, [projectId]);
@@ -293,6 +297,11 @@ export default function ProjectDetail({ projectId, navigate, initialTab }) {
         {/* Issues tab */}
         <TabsContent value="issues">
           <Issues projectSlug={projectId} navigate={navigate} />
+        </TabsContent>
+
+        {/* Experiments tab */}
+        <TabsContent value="experiments">
+          <ExperimentsTab experiments={experiments} />
         </TabsContent>
 
         {/* Standups tab */}
@@ -635,6 +644,110 @@ function ProjectApprovalsTab({ approvals, projectId, onResolved, navigate }) {
           />
         ))}
       </div>
+    </div>
+  );
+}
+
+function ExperimentsTab({ experiments }) {
+  if (!experiments || experiments.length === 0) {
+    return (
+      <EmptyState
+        icon={FlaskConical}
+        text="No experiments yet"
+        sub="The lead can start one via the autoresearch protocol."
+      />
+    );
+  }
+
+  // Compute summary across all experiments
+  const totalRuns = experiments.reduce((sum, e) => sum + e.result_count, 0);
+  const bestMetrics = experiments.map((e) => e.best_metric).filter((m) => m !== null && m !== undefined);
+  const overallBest = bestMetrics.length > 0 ? Math.max(...bestMetrics) : null;
+  const latestExp = experiments[experiments.length - 1];
+  const currentMetric = latestExp?.best_metric;
+
+  return (
+    <div className="space-y-4">
+      {/* Summary cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-1">
+        <MetricCard label="Experiments" value={experiments.length} />
+        <MetricCard label="Total Runs" value={totalRuns} />
+        {overallBest !== null && (
+          <MetricCard label="Best Metric" value={overallBest} mono />
+        )}
+      </div>
+
+      {/* Experiment list */}
+      {experiments.map((exp) => (
+        <CollapsibleSection
+          key={exp.dir}
+          title={
+            <span className="flex items-center gap-2">
+              <span>{exp.name}</span>
+              <StatusBadge status={exp.status} />
+              {exp.result_count > 0 && (
+                <span className="text-[10px] text-muted-foreground font-mono">
+                  {exp.result_count} run{exp.result_count !== 1 ? "s" : ""}
+                </span>
+              )}
+            </span>
+          }
+          defaultOpen={experiments.length === 1}
+        >
+          <div className="space-y-3">
+            {/* Program definition */}
+            {exp.program_md && (
+              <div className="border border-border p-4">
+                <Markdown content={exp.program_md} />
+              </div>
+            )}
+
+            {/* Results table */}
+            {exp.results.length > 0 && (
+              <div>
+                <h4 className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground mb-2">
+                  Results
+                </h4>
+                <div className="border border-border overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-border bg-muted/30">
+                        {Object.keys(exp.results[0]).map((col) => (
+                          <th
+                            key={col}
+                            className="px-3 py-2 text-left text-[10px] uppercase tracking-[0.16em] text-muted-foreground font-medium"
+                          >
+                            {col}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border">
+                      {exp.results.map((row, i) => (
+                        <tr key={i} className="hover:bg-muted/20 transition-colors">
+                          {Object.values(row).map((val, j) => (
+                            <td key={j} className="px-3 py-2 font-mono text-xs text-foreground/80">
+                              {val}
+                            </td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {/* Per-experiment summary */}
+            {exp.best_metric !== null && (
+              <div className="flex gap-4 text-xs text-muted-foreground">
+                <span>Best metric: <span className="font-mono font-medium text-foreground">{exp.best_metric}</span></span>
+                <span>Runs: <span className="font-mono font-medium text-foreground">{exp.result_count}</span></span>
+              </div>
+            )}
+          </div>
+        </CollapsibleSection>
+      ))}
     </div>
   );
 }
