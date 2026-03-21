@@ -2661,6 +2661,11 @@ app.put("/mc/api/budget-policy", requireSetupAuth, (req, res) => {
 
   const policyPath = path.join(projectDir, "budget-policy.json");
   fs.writeFileSync(policyPath, JSON.stringify(policy, null, 2), "utf8");
+
+  // Remove budget-exceeded flag so agents can resume on next heartbeat
+  const budgetExceededFlag = path.join(projectDir, ".budget-exceeded");
+  try { fs.unlinkSync(budgetExceededFlag); } catch { /* ignore if not present */ }
+
   return res.json({ ok: true, policy });
 });
 
@@ -3101,6 +3106,287 @@ app.use(requireDashboardAuth, async (req, res) => {
   attachGatewayAuthHeader(req);
   return proxy.web(req, res, { target: GATEWAY_TARGET });
 });
+
+// --- Cost Compiler (Budget Alerts) ---
+// Reads gateway session JSONL logs, aggregates costs per agent per project,
+// writes cost files, and triggers budget alerts at 90%/100%.
+
+function getMondayOfWeek(date) {
+  const d = new Date(date);
+  const day = d.getUTCDay(); // 0=Sun
+  const diff = day === 0 ? 6 : day - 1; // days since Monday
+  d.setUTCDate(d.getUTCDate() - diff);
+  d.setUTCHours(0, 0, 0, 0);
+  return d.toISOString().split("T")[0];
+}
+
+function buildAgentProjectMap() {
+  const projectsDir = path.join(STATE_DIR, "shared", "projects");
+  const map = {}; // agent -> { slug, budget }
+  if (!fs.existsSync(projectsDir)) return map;
+  try {
+    const entries = fs.readdirSync(projectsDir, { withFileTypes: true });
+    for (const entry of entries) {
+      if (!entry.isDirectory()) continue;
+      const slug = entry.name;
+      const projectPath = path.join(projectsDir, slug, "PROJECT.md");
+      if (!fs.existsSync(projectPath)) continue;
+      try {
+        const raw = fs.readFileSync(projectPath, "utf8");
+        const leadMatch = raw.match(/\*\*Lead:\*\*\s*(\S+)/);
+        const budgetMatch = raw.match(/\*\*Budget:\*\*\s*\$(\d+(?:\.\d+)?)/);
+        if (leadMatch) {
+          const lead = leadMatch[1].toLowerCase().replace(/^@/, "");
+          map[lead] = {
+            slug,
+            budget: budgetMatch ? parseFloat(budgetMatch[1]) : 0,
+          };
+        }
+      } catch { /* skip */ }
+    }
+  } catch { /* skip */ }
+  return map;
+}
+
+function runCostCompiler() {
+  const agentsDir = path.join(STATE_DIR, "agents");
+  if (!fs.existsSync(agentsDir)) return;
+
+  try {
+    const watermarkPath = path.join(STATE_DIR, "shared", "costs", ".watermarks.json");
+    fs.mkdirSync(path.dirname(watermarkPath), { recursive: true });
+
+    let watermarks = {};
+    try {
+      watermarks = JSON.parse(fs.readFileSync(watermarkPath, "utf8"));
+    } catch { /* fresh start */ }
+
+    const agentProjectMap = buildAgentProjectMap();
+    const agentDirs = fs.readdirSync(agentsDir, { withFileTypes: true })
+      .filter((e) => e.isDirectory())
+      .map((e) => e.name);
+
+    const currentMonday = getMondayOfWeek(new Date());
+    let totalNewEntries = 0;
+    let agentsProcessed = 0;
+
+    for (const agent of agentDirs) {
+      const sessionsDir = path.join(agentsDir, agent, "sessions");
+      if (!fs.existsSync(sessionsDir)) continue;
+
+      let sessionFiles;
+      try {
+        sessionFiles = fs.readdirSync(sessionsDir)
+          .filter((f) => f.endsWith(".jsonl"))
+          .sort();
+      } catch { continue; }
+
+      if (sessionFiles.length === 0) continue;
+
+      const wm = watermarks[agent] || { last_session: null, last_line: 0, last_processed: null };
+      const newEntries = [];
+
+      // Find starting point
+      let startIdx = 0;
+      if (wm.last_session) {
+        const idx = sessionFiles.indexOf(wm.last_session + ".jsonl");
+        if (idx >= 0) startIdx = idx;
+        // If file was deleted, start from beginning of available files
+      }
+
+      for (let fi = startIdx; fi < sessionFiles.length; fi++) {
+        const sessionFile = sessionFiles[fi];
+        const sessionId = sessionFile.replace(".jsonl", "");
+        const filePath = path.join(sessionsDir, sessionFile);
+
+        let lines;
+        try {
+          const raw = fs.readFileSync(filePath, "utf8");
+          lines = raw.split("\n");
+        } catch { continue; }
+
+        // Determine starting line
+        let startLine = 0;
+        if (sessionId === wm.last_session) {
+          startLine = wm.last_line;
+        }
+
+        for (let li = startLine; li < lines.length; li++) {
+          const line = lines[li].trim();
+          if (!line) continue;
+
+          let entry;
+          try {
+            entry = JSON.parse(line);
+          } catch { continue; }
+
+          if (entry.type !== "message") continue;
+          const usage = entry.message?.usage;
+          if (!usage?.cost?.total) continue;
+
+          newEntries.push({
+            id: entry.id || `${sessionId}-${li}`,
+            timestamp: entry.timestamp || new Date().toISOString(),
+            model: entry.model || "unknown",
+            tokens: usage.totalTokens || 0,
+            cost_usd: Math.round(usage.cost.total * 1000000) / 1000000,
+            session: sessionId.substring(0, 8),
+          });
+        }
+
+        // Update watermark to end of this file
+        watermarks[agent] = {
+          last_session: sessionId,
+          last_line: lines.length,
+          last_processed: new Date().toISOString(),
+        };
+      }
+
+      if (newEntries.length === 0) continue;
+
+      // Determine project
+      const projectInfo = agentProjectMap[agent] || { slug: "_org-level", budget: 0 };
+      const projectSlug = projectInfo.slug;
+      const costsDir = path.join(STATE_DIR, "shared", "projects", projectSlug, "costs");
+      fs.mkdirSync(costsDir, { recursive: true });
+
+      const costFilePath = path.join(costsDir, `${agent}.json`);
+      let costData = {
+        agent,
+        project: projectSlug,
+        week_start: currentMonday,
+        entries: [],
+        total_usd: 0,
+        _processed_ids: [],
+      };
+
+      try {
+        const existing = JSON.parse(fs.readFileSync(costFilePath, "utf8"));
+        costData = { ...costData, ...existing };
+        if (!costData._processed_ids) costData._processed_ids = [];
+      } catch { /* fresh */ }
+
+      // Weekly rollover — if cost file is from a previous week, archive and reset
+      if (costData.week_start && costData.week_start < currentMonday) {
+        const archiveDir = path.join(costsDir, "archive");
+        fs.mkdirSync(archiveDir, { recursive: true });
+        try {
+          fs.writeFileSync(
+            path.join(archiveDir, `${agent}-${costData.week_start}.json`),
+            JSON.stringify(costData, null, 2),
+            "utf8"
+          );
+        } catch { /* best effort */ }
+
+        // Delete budget-exceeded flag on rollover
+        const flagPath = path.join(STATE_DIR, "shared", "projects", projectSlug, ".budget-exceeded");
+        try { fs.unlinkSync(flagPath); } catch { /* ignore */ }
+
+        costData = {
+          agent,
+          project: projectSlug,
+          week_start: currentMonday,
+          entries: [],
+          total_usd: 0,
+          _processed_ids: [],
+        };
+      }
+
+      // Dedup and append
+      const processedSet = new Set(costData._processed_ids);
+      let addedCount = 0;
+      for (const entry of newEntries) {
+        if (processedSet.has(entry.id)) continue;
+        processedSet.add(entry.id);
+        costData.entries.push(entry);
+        addedCount++;
+      }
+
+      if (addedCount === 0) continue;
+
+      // Recalculate total
+      costData.total_usd = Math.round(
+        costData.entries.reduce((sum, e) => sum + (e.cost_usd || 0), 0) * 1000000
+      ) / 1000000;
+      costData._processed_ids = [...processedSet];
+
+      fs.writeFileSync(costFilePath, JSON.stringify(costData, null, 2), "utf8");
+
+      totalNewEntries += addedCount;
+      agentsProcessed++;
+
+      // Check thresholds
+      // Load budget from policy first, fall back to PROJECT.md
+      const policy = loadBudgetPolicy(projectSlug);
+      const budget = policy?.weekly_budget_usd ?? projectInfo.budget;
+
+      if (budget > 0) {
+        const projectCosts = loadProjectCosts(projectSlug);
+        const totalSpend = projectCosts.totalSpend;
+        const ratio = totalSpend / budget;
+
+        const notifDir = path.join(STATE_DIR, "shared", "projects", projectSlug, "notifications");
+        fs.mkdirSync(notifDir, { recursive: true });
+
+        if (ratio >= 1.0) {
+          // 100% — write notification + flag
+          const ts = new Date().toISOString().replace(/[:.]/g, "-");
+          const notifPath = path.join(notifDir, `${ts}-budget-exceeded.json`);
+          if (!fs.existsSync(path.join(STATE_DIR, "shared", "projects", projectSlug, ".budget-exceeded"))) {
+            fs.writeFileSync(notifPath, JSON.stringify({
+              type: "budget-exceeded",
+              project: projectSlug,
+              budget_usd: budget,
+              spent_usd: Math.round(totalSpend * 100) / 100,
+              ratio: Math.round(ratio * 1000) / 1000,
+              timestamp: new Date().toISOString(),
+              agent,
+            }, null, 2), "utf8");
+
+            fs.writeFileSync(
+              path.join(STATE_DIR, "shared", "projects", projectSlug, ".budget-exceeded"),
+              JSON.stringify({ exceeded_at: new Date().toISOString(), spent: totalSpend, budget }),
+              "utf8"
+            );
+          }
+        } else if (ratio >= 0.9) {
+          // 90% — write warning notification
+          const ts = new Date().toISOString().replace(/[:.]/g, "-");
+          // Only write if no recent warning exists (check last 10 min)
+          const existingNotifs = fs.readdirSync(notifDir).filter((f) => f.includes("budget-warning"));
+          const tenMinAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString().replace(/[:.]/g, "-");
+          const recentWarning = existingNotifs.some((f) => f > tenMinAgo);
+          if (!recentWarning) {
+            const notifPath = path.join(notifDir, `${ts}-budget-warning.json`);
+            fs.writeFileSync(notifPath, JSON.stringify({
+              type: "budget-warning",
+              project: projectSlug,
+              budget_usd: budget,
+              spent_usd: Math.round(totalSpend * 100) / 100,
+              ratio: Math.round(ratio * 1000) / 1000,
+              timestamp: new Date().toISOString(),
+              agent,
+            }, null, 2), "utf8");
+          }
+        }
+      }
+    }
+
+    // Save watermarks
+    fs.writeFileSync(watermarkPath, JSON.stringify(watermarks, null, 2), "utf8");
+
+    if (totalNewEntries > 0 || agentsProcessed > 0) {
+      console.log(`[cost-compiler] Processed ${totalNewEntries} new entries for ${agentsProcessed} agents`);
+    }
+  } catch (err) {
+    console.error(`[cost-compiler] Error: ${String(err)}`);
+  }
+}
+
+// Start cost compiler interval (every 5 minutes)
+setInterval(runCostCompiler, 300_000);
+// Run once on startup after a short delay
+setTimeout(runCostCompiler, 10_000);
 
 const server = app.listen(PORT, "0.0.0.0", async () => {
   console.log(`[wrapper] listening on :${PORT}`);
