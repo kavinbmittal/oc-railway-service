@@ -1403,6 +1403,34 @@ app.delete("/mc/api/files", requireSetupAuth, (req, res) => {
   return res.json({ ok: true, deleted: normalized });
 });
 
+// Helper: find program.md for an experiment-start approval
+function findExperimentProgram(projectsDir, projectName, approvalData) {
+  const expDir = path.join(projectsDir, projectName, "experiments");
+  if (!fs.existsSync(expDir)) return null;
+
+  // If the approval has an explicit experiment_path, use it directly
+  if (approvalData.experiment_path) {
+    const programPath = path.join(projectsDir, projectName, approvalData.experiment_path, "program.md");
+    if (fs.existsSync(programPath)) {
+      try { return fs.readFileSync(programPath, "utf8"); } catch { return null; }
+    }
+  }
+
+  // Otherwise, find the most recent experiment directory (highest exp-NNN)
+  try {
+    const entries = fs.readdirSync(expDir, { withFileTypes: true })
+      .filter((e) => e.isDirectory())
+      .sort((a, b) => b.name.localeCompare(a.name)); // descending — most recent first
+    for (const entry of entries) {
+      const programPath = path.join(expDir, entry.name, "program.md");
+      if (fs.existsSync(programPath)) {
+        try { return fs.readFileSync(programPath, "utf8"); } catch { /* skip */ }
+      }
+    }
+  } catch { /* skip */ }
+  return null;
+}
+
 // Get single approval by ID
 app.get("/mc/api/approvals/:id", requireSetupAuth, (req, res) => {
   const { id } = req.params;
@@ -1427,7 +1455,13 @@ app.get("/mc/api/approvals/:id", requireSetupAuth, (req, res) => {
               return res.json({ ...resolvedData, _project: proj.name });
             }
           }
-          return res.json({ ...data, _project: proj.name });
+          const enriched = { ...data, _project: proj.name };
+          // If experiment gate, attach program.md content
+          if (data.gate === "experiment-start" || data.gate === "autoresearch-start") {
+            const programMd = findExperimentProgram(projectsDir, proj.name, data);
+            if (programMd) enriched.programMd = programMd;
+          }
+          return res.json(enriched);
         } catch { /* skip */ }
       }
       // Check resolved
@@ -1436,7 +1470,12 @@ app.get("/mc/api/approvals/:id", requireSetupAuth, (req, res) => {
         try {
           const raw = fs.readFileSync(resolvedPath, "utf8");
           const data = JSON.parse(raw);
-          return res.json({ ...data, _project: proj.name });
+          const enriched = { ...data, _project: proj.name };
+          if (data.gate === "experiment-start" || data.gate === "autoresearch-start") {
+            const programMd = findExperimentProgram(projectsDir, proj.name, data);
+            if (programMd) enriched.programMd = programMd;
+          }
+          return res.json(enriched);
         } catch { /* skip */ }
       }
     }

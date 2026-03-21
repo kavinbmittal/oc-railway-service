@@ -101,6 +101,7 @@ export default function ApprovalDetail({ approvalId, navigate }) {
     approval._source === "deliverables" ||
     approval.gate === "deliverable" ||
     approval.gate === "deliverable-review";
+  const isExperiment = approval.gate === "experiment-start" || approval.gate === "autoresearch-start";
 
   const timeAgo = approval.created
     ? formatTimeAgo(approval.created)
@@ -212,14 +213,26 @@ export default function ApprovalDetail({ approvalId, navigate }) {
         </div>
       </div>
 
-      {/* Why / Body */}
+      {/* Why / Body — for experiments, this is the agent's case */}
       {approval.why && !isDeliverable && (
         <div className="border border-border rounded-lg p-6">
           <h3 className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground mb-3">
-            Details
+            {isExperiment ? "Approval Request" : "Details"}
           </h3>
           <div className="mc-prose">
             <Markdown content={approval.why} className="text-sm" />
+          </div>
+        </div>
+      )}
+
+      {/* Experiment Plan — rendered from program.md (single source of truth) */}
+      {isExperiment && approval.programMd && (
+        <div className="border border-border rounded-lg p-6">
+          <h3 className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground mb-3">
+            Experiment Plan
+          </h3>
+          <div className="border border-border/60 rounded p-4 bg-background max-h-[calc(100vh-400px)] overflow-y-auto mc-prose">
+            <Markdown content={approval.programMd} className="text-sm" />
           </div>
         </div>
       )}
