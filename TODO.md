@@ -32,9 +32,9 @@
 - [x] Write protocols/projects.md agent instructions
 
 ### Deferred
-- [ ] Proxy metric tracking/visualization (time-series, charts) — effort M
-- [ ] Port lia-ship-ready to themes — effort S
-- [ ] v2: Proxy metric targets on themes — themes define target values for each proxy metric (e.g. "Weekly signups: 200/week"), issues and experiments aim to hit or beat those targets across multiple instances. Aggregated view on Strategy tab shows progress toward theme-level targets. — effort M
+- [ ] Proxy metric visualization — progress bars, summing contributions vs targets on Strategy tab — effort M
+- [x] Port lia-ship-ready to themes — deleted (project completed)
+- [x] Proxy metric targets on themes + contribution values on issues/experiments
 
 ## 2026-03-22-nsm-proxy-upgrade
 
