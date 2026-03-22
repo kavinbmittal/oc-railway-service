@@ -152,7 +152,7 @@ export default function App() {
    <div className="min-h-0 flex-1 flex overflow-hidden">
     <Sidebar page={page} selectedProject={selectedProject} navigate={navigate} refreshKey={refreshKey} />
     <div className="flex min-w-0 flex-col h-full flex-1">
-     <main className="flex-1 p-4 md:p-6 overflow-auto">
+     <main className="flex-1 p-6 md:p-8 overflow-auto">
       {page ==="overview" && <Overview navigate={navigate} />}
       {page ==="project" && selectedProject && (
        <ProjectDetail projectId={selectedProject} navigate={navigate} initialTab={projectTab} />

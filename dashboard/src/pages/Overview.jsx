@@ -115,7 +115,7 @@ export default function Overview({ navigate }) {
    {inboxCount !== null && (
     <div
      onClick={() => navigate("inbox")}
-     className={`flex items-center gap-3 px-4 py-3 border cursor-pointer transition-colors ${
+     className={`flex items-center gap-3 px-5 py-3 rounded-sm border shadow-sm cursor-pointer transition-colors ${
       inboxCount > 0
        ?"border-amber-500/30 bg-amber-500/10 hover:bg-amber-500/15"
        :"border-green-500/30 bg-green-500/10 hover:bg-green-500/15"
@@ -149,28 +149,30 @@ export default function Overview({ navigate }) {
    </div>
 
    {/* Project Progress section */}
-   <div>
-    <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
-     Project Progress
-    </h3>
+   <div className="bg-card rounded-sm border border-border shadow-sm">
+    <div className="px-5 py-4 border-b border-border">
+     <h3 className="text-sm font-semibold text-foreground">Project Progress</h3>
+    </div>
 
     {displayProjects.length === 0 ? (
-     <EmptyState
-      icon={FolderKanban}
-      text="No projects yet"
-      sub="Create a project directory in shared/projects/"
-     />
+     <div className="p-5">
+      <EmptyState
+       icon={FolderKanban}
+       text="No projects yet"
+       sub="Create a project directory in shared/projects/"
+      />
+     </div>
     ) : (
-     <div className="border border-border overflow-x-auto">
+     <div className="overflow-x-auto">
       <table className="w-full text-sm">
        <thead>
         <tr className="border-b border-border text-left">
-         <th className="px-4 py-2.5 text-[11px] uppercase tracking-[0.16em] font-mono text-muted-foreground/60 font-medium">Project</th>
-         <th className="px-4 py-2.5 text-[11px] uppercase tracking-[0.16em] font-mono text-muted-foreground/60 font-medium hidden lg:table-cell">Mission / Goal</th>
-         <th className="px-4 py-2.5 text-[11px] uppercase tracking-[0.16em] font-mono text-muted-foreground/60 font-medium hidden sm:table-cell">Lead</th>
-         <th className="px-4 py-2.5 text-[11px] uppercase tracking-[0.16em] font-mono text-muted-foreground/60 font-medium hidden md:table-cell">Milestone</th>
-         <th className="px-4 py-2.5 text-[11px] uppercase tracking-[0.16em] font-mono text-muted-foreground/60 font-medium">Issues</th>
-         <th className="px-4 py-2.5 text-[11px] uppercase tracking-[0.16em] font-mono text-muted-foreground/60 font-medium hidden sm:table-cell min-w-[140px]">Budget</th>
+         <th className="px-5 py-3 text-[11px] uppercase tracking-[0.16em] font-mono text-muted-foreground/60 font-normal">Project</th>
+         <th className="px-5 py-3 text-[11px] uppercase tracking-[0.16em] font-mono text-muted-foreground/60 font-normal hidden lg:table-cell">Mission / Goal</th>
+         <th className="px-5 py-3 text-[11px] uppercase tracking-[0.16em] font-mono text-muted-foreground/60 font-normal hidden sm:table-cell">Lead</th>
+         <th className="px-5 py-3 text-[11px] uppercase tracking-[0.16em] font-mono text-muted-foreground/60 font-normal hidden md:table-cell">Milestone</th>
+         <th className="px-5 py-3 text-[11px] uppercase tracking-[0.16em] font-mono text-muted-foreground/60 font-normal">Issues</th>
+         <th className="px-5 py-3 text-[11px] uppercase tracking-[0.16em] font-mono text-muted-foreground/60 font-normal hidden sm:table-cell min-w-[140px]">Budget</th>
         </tr>
        </thead>
        <tbody className="divide-y divide-border">
@@ -187,31 +189,31 @@ export default function Overview({ navigate }) {
            className="cursor-pointer hover:bg-accent/50 transition-colors"
           >
            {/* Project name + status */}
-           <td className="px-4 py-3">
-            <div className="flex items-center gap-2">
+           <td className="px-5 py-3.5">
+            <div className="flex items-center gap-2.5">
              <span
               className={`w-2 h-2 rounded-full shrink-0 ${
                STATUS_DOT[project.status] || STATUS_DOT.unknown
               }`}
              />
-             <span className="font-medium text-foreground truncate max-w-[200px]">
+             <span className="text-sm font-medium text-foreground truncate max-w-[200px]">
               {project.title || slug}
              </span>
             </div>
            </td>
 
            {/* Mission / Goal */}
-           <td className="px-4 py-3 hidden lg:table-cell">
-            <span className="text-xs text-muted-foreground truncate block max-w-[240px]">
+           <td className="px-5 py-3.5 hidden lg:table-cell">
+            <span className="text-sm text-muted-foreground truncate block max-w-[240px]">
              {truncate(project.mission ||"", 60) ||"--"}
             </span>
            </td>
 
            {/* Lead */}
-           <td className="px-4 py-3 hidden sm:table-cell">
+           <td className="px-5 py-3.5 hidden sm:table-cell">
             {project.lead && project.lead !=="unassigned" ? (
              <span
-              className="text-xs text-muted-foreground capitalize cursor-pointer hover:text-foreground transition-colors"
+              className="text-[13px] text-muted-foreground capitalize cursor-pointer hover:text-foreground transition-colors"
               onClick={(e) => {
                e.stopPropagation();
                const name = project.lead.toLowerCase();
@@ -222,13 +224,13 @@ export default function Overview({ navigate }) {
               {project.lead}
              </span>
             ) : (
-             <span className="text-xs text-muted-foreground">--</span>
+             <span className="text-[13px] text-muted-foreground">--</span>
             )}
            </td>
 
            {/* Milestone */}
-           <td className="px-4 py-3 hidden md:table-cell">
-            <span className="text-xs text-muted-foreground truncate block max-w-[200px]">
+           <td className="px-5 py-3.5 hidden md:table-cell">
+            <span className="text-[13px] text-muted-foreground truncate block max-w-[200px]">
              {project.currentMilestone
               ? truncate(project.currentMilestone, 40)
               : <span className="text-muted-foreground/40 italic">No milestones yet</span>}
@@ -236,7 +238,7 @@ export default function Overview({ navigate }) {
            </td>
 
            {/* Issues */}
-           <td className="px-4 py-3">
+           <td className="px-5 py-3.5">
             <span className="text-xs font-mono tabular-nums text-muted-foreground">
              {project.issuesDone != null
               ? `${project.issuesDone}/${project.issuesTotal}`
@@ -245,7 +247,7 @@ export default function Overview({ navigate }) {
            </td>
 
            {/* Budget */}
-           <td className="px-4 py-3 hidden sm:table-cell">
+           <td className="px-5 py-3.5 hidden sm:table-cell">
             {budgetNum > 0 ? (
              <div className="min-w-[120px]">
               <QuotaBar
@@ -270,11 +272,11 @@ export default function Overview({ navigate }) {
 
    {/* Recent Issues section */}
    {recentIssues.length > 0 && (
-    <div>
-     <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
-      Recent Issues
-     </h3>
-     <div className="border border-border divide-y divide-border">
+    <div className="bg-card rounded-sm border border-border shadow-sm">
+     <div className="px-5 py-4 border-b border-border">
+      <h3 className="text-sm font-semibold text-foreground">Recent Issues</h3>
+     </div>
+     <div className="divide-y divide-border">
       {recentIssues.map((issue) => (
        <EntityRow
         key={issue.id}
@@ -295,7 +297,7 @@ export default function Overview({ navigate }) {
             {issue.assignee}
            </span>
           )}
-          <span className="text-xs text-muted-foreground tabular-nums shrink-0 hidden sm:inline">
+          <span className="text-xs text-muted-foreground tabular-nums shrink-0 hidden sm:inline font-mono">
            {timeAgo(issue.updated)}
           </span>
          </>

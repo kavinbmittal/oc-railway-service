@@ -57,7 +57,7 @@ function SidebarNavItem({ active, onClick, icon: Icon, label, badge, badgeTone =
  return (
   <button
    onClick={onClick}
-   className={`flex items-center gap-2.5 px-3 py-2 text-[13px] font-medium transition-colors w-full text-left ${
+   className={`flex items-center gap-2.5 px-3 py-2 rounded-md text-[13px] font-medium transition-colors w-full text-left ${
     active
      ?"bg-accent text-foreground"
      :"text-foreground/80 hover:bg-accent/50 hover:text-foreground"
@@ -140,9 +140,11 @@ export default function Sidebar({ page, selectedProject, navigate, refreshKey })
  return (
   <aside className="w-60 h-full min-h-0 border-r border-border bg-background flex flex-col">
    {/* ── Top bar: brand ──────────────────────────────────────── */}
-   <div className="flex items-center gap-1 px-3 h-12 shrink-0">
-    <div className="w-4 h-4 rounded-sm shrink-0 ml-1 bg-red-500/80" />
-    <span className="flex-1 text-sm font-bold text-foreground truncate pl-1">
+   <div className="flex items-center gap-2 px-5 h-[60px] shrink-0 border-b border-border">
+    <div className="w-6 h-6 rounded-md shrink-0 bg-red-500/80 flex items-center justify-center">
+     <span className="text-white text-[10px] font-bold">MC</span>
+    </div>
+    <span className="flex-1 text-sm font-semibold text-foreground truncate tracking-wide">
      Mission Control
     </span>
    </div>
@@ -208,7 +210,7 @@ export default function Sidebar({ page, selectedProject, navigate, refreshKey })
        <button
         key={slug}
         onClick={() => navigate("project", slug)}
-        className={`flex items-center gap-2.5 px-3 py-1.5 text-[13px] font-medium transition-colors w-full text-left ${
+        className={`flex items-center gap-2.5 px-3 py-1.5 rounded-md text-[13px] font-medium transition-colors w-full text-left ${
          isActive
           ?"bg-accent text-foreground"
           :"text-foreground/80 hover:bg-accent/50 hover:text-foreground"
