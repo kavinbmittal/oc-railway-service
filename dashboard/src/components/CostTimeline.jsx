@@ -36,7 +36,7 @@ export function CostTimeline({ entries = [] }) {
       className="grid grid-cols-[1fr_80px_80px_60px] gap-2 px-4 py-2.5 text-sm items-center"
      >
       <div className="min-w-0">
-       <p className="text-foreground/80 truncate text-[13px]">{entry.task ||"Untitled"}</p>
+       <p className="text-foreground/80 truncate text-[15px]">{entry.task ||"Untitled"}</p>
        {time && (
         <p className="text-[11px] text-muted-foreground/50 mt-0.5 font-mono tabular-nums">
          {time}
@@ -46,7 +46,7 @@ export function CostTimeline({ entries = [] }) {
       <span className="text-right text-xs text-muted-foreground truncate">
        {entry.agent ||"--"}
       </span>
-      <span className="text-right font-mono tabular-nums text-[13px]">
+      <span className="text-right font-mono tabular-nums text-[15px]">
        {entry.type ==="claude-code" ? (
         <span className="text-cyan-400">$0.00</span>
        ) : (

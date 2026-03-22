@@ -204,7 +204,7 @@ export function CreateIssue({ projectSlug, onCreated, onClose, themes = [] }) {
 
     {/* Error */}
     {error && (
-     <div className="mx-[20px] mb-4 border border-red-500/20 bg-red-500/5 rounded-[2px] px-4 py-3 text-[13px] text-red-400">
+     <div className="mx-[20px] mb-4 border border-red-500/20 bg-red-500/5 rounded-[2px] px-4 py-3 text-[15px] text-red-400">
       {error}
      </div>
     )}
@@ -215,7 +215,7 @@ export function CreateIssue({ projectSlug, onCreated, onClose, themes = [] }) {
       <button
        type="button"
        onClick={onClose}
-       className="px-4 py-2 rounded-[6px] border border-border bg-card text-[13px] font-medium text-foreground/80 hover:bg-accent transition-colors"
+       className="px-4 py-2 rounded-[6px] border border-border bg-card text-[15px] font-medium text-foreground/80 hover:bg-accent transition-colors"
       >
        Cancel
       </button>
@@ -223,7 +223,7 @@ export function CreateIssue({ projectSlug, onCreated, onClose, themes = [] }) {
      <button
       type="submit"
       disabled={!title.trim() || submitting}
-      className="px-4 py-2 rounded-[6px] border border-emerald-500/50 bg-emerald-500/10 text-[13px] font-medium text-emerald-300 hover:bg-emerald-500/20 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+      className="px-4 py-2 rounded-[6px] border border-emerald-500/50 bg-emerald-500/10 text-[15px] font-medium text-emerald-300 hover:bg-emerald-500/20 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
      >
       {submitting ?"Creating..." :"Create Issue"}
      </button>

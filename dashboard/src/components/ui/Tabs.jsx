@@ -37,7 +37,7 @@ export function TabsTrigger({ value, className ="", children, ...props }) {
    role="tab"
    aria-selected={isActive}
    onClick={() => onChange(value)}
-   className={`relative flex items-center gap-1.5 px-3 py-2.5 text-[13px] font-medium transition-colors ${
+   className={`relative flex items-center gap-1.5 px-3 py-2.5 text-[15px] font-medium transition-colors ${
     isActive
      ?"text-foreground after:absolute after:inset-x-0 after:bottom-[-1px] after:h-0.5 after:bg-foreground"
      :"text-muted-foreground hover:text-foreground"

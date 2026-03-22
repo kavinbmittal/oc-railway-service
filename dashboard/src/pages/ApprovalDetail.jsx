@@ -161,7 +161,7 @@ export default function ApprovalDetail({ approvalId, navigate }) {
    {/* Page Header — Aura: px-8 py-8 border-b, sticky */}
    <header className="px-8 py-8 border-b border-zinc-800 shrink-0 bg-[#09090b]">
     {/* Breadcrumb */}
-    <nav className="flex items-center text-[13px] text-zinc-400 mb-5 tracking-wide">
+    <nav className="flex items-center text-[15px] text-zinc-400 mb-5 tracking-wide">
      <button onClick={() => navigate("approvals")} className="hover:text-zinc-100 transition-colors">Approvals</button>
      {projectName && (
       <>
@@ -179,8 +179,8 @@ export default function ApprovalDetail({ approvalId, navigate }) {
      <StatusBadgeInline status={status} />
     </div>
 
-    {/* Metadata — Aura: text-[13px] with type label + dot separators */}
-    <div className="flex items-center gap-2 text-[13px] text-zinc-500">
+    {/* Metadata — Aura: text-[15px] with type label + dot separators */}
+    <div className="flex items-center gap-2 text-[15px] text-zinc-500">
      <TypeLabel type={itemType} />
      {approval.requester && (
       <>
@@ -303,7 +303,7 @@ export default function ApprovalDetail({ approvalId, navigate }) {
            : (isThemeProposal ? "Theme rejected" : isIssue ?"Issue rejected — removed" :"Rejected")}
          </span>
          {resolved.comment && (
-          <span className="text-[13px] text-zinc-500 ml-2">— {resolved.comment}</span>
+          <span className="text-[15px] text-zinc-500 ml-2">— {resolved.comment}</span>
          )}
         </div>
        </div>
@@ -386,7 +386,7 @@ export default function ApprovalDetail({ approvalId, navigate }) {
               <BarChart3 size={14} className="text-teal-400 mt-0.5 shrink-0" />
               <div>
                <p className="text-[14px] font-medium text-zinc-100">{pm.name}</p>
-               {pm.description && <p className="text-[13px] text-zinc-500 mt-0.5">{pm.description}</p>}
+               {pm.description && <p className="text-[15px] text-zinc-500 mt-0.5">{pm.description}</p>}
               </div>
              </div>
             ))}
@@ -426,7 +426,7 @@ export default function ApprovalDetail({ approvalId, navigate }) {
         <div className="flex items-center gap-2">
          {status ==="approved" ? <CheckCircle2 size={16} className="text-emerald-400" /> : <XCircle size={16} className="text-red-400" />}
          <span className="text-[14px] font-medium capitalize">{status}</span>
-         {approval.resolved_at && <span className="text-[13px] text-zinc-500 ml-2">{formatTimeAgo(approval.resolved_at)}</span>}
+         {approval.resolved_at && <span className="text-[15px] text-zinc-500 ml-2">{formatTimeAgo(approval.resolved_at)}</span>}
         </div>
         {approval.comment && <p className="text-[14px] text-zinc-500 mt-2">Note: {approval.comment}</p>}
        </div>
@@ -438,10 +438,10 @@ export default function ApprovalDetail({ approvalId, navigate }) {
         <div className="flex items-center gap-2">
          <RotateCcw size={16} className="text-amber-400" />
          <span className="text-[14px] font-medium text-amber-300">Revision Requested</span>
-         {approval.revision_requested_at && <span className="text-[13px] text-zinc-500 ml-2">{formatTimeAgo(approval.revision_requested_at)}</span>}
+         {approval.revision_requested_at && <span className="text-[15px] text-zinc-500 ml-2">{formatTimeAgo(approval.revision_requested_at)}</span>}
         </div>
         {approval.revision_feedback && <p className="text-[14px] text-zinc-500 mt-2">Feedback: {approval.revision_feedback}</p>}
-        <p className="text-[13px] text-zinc-500 mt-3">Waiting for {approval.requester ||"agent"} to resubmit.</p>
+        <p className="text-[15px] text-zinc-500 mt-3">Waiting for {approval.requester ||"agent"} to resubmit.</p>
        </div>
       )}
      </div>
@@ -501,7 +501,7 @@ export default function ApprovalDetail({ approvalId, navigate }) {
           </div>
          )}
 
-         {error && <p className="text-[13px] text-red-400 mt-2">{error}</p>}
+         {error && <p className="text-[15px] text-red-400 mt-2">{error}</p>}
         </div>
        </section>
       )}

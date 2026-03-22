@@ -226,7 +226,7 @@ export default function ProjectDetail({ projectId, navigate, initialTab }) {
   <div className="flex flex-col h-full">
    <header className="px-8 py-8 border-b border-zinc-800 shrink-0 bg-[#09090b]">
     {/* Breadcrumb */}
-    <nav className="flex items-center text-[13px] text-zinc-400 mb-5 tracking-wide">
+    <nav className="flex items-center text-[15px] text-zinc-400 mb-5 tracking-wide">
      <a href="#/overview" onClick={(e) => { e.preventDefault(); navigate("overview"); }} className="hover:text-zinc-200 transition-colors cursor-pointer">Projects</a>
      <span className="mx-2 text-zinc-600">&rsaquo;</span>
      <span className="text-zinc-100 font-semibold">{project.title || projectId}</span>
@@ -241,7 +241,7 @@ export default function ProjectDetail({ projectId, navigate, initialTab }) {
     </div>
 
     {/* Metadata */}
-    <div className="flex items-center gap-2 text-[13px] text-zinc-500">
+    <div className="flex items-center gap-2 text-[15px] text-zinc-500">
      <span
       className="hover:text-zinc-200 transition-colors cursor-pointer capitalize"
       onClick={() => {
@@ -581,11 +581,11 @@ function ProjectCostsTab({ costs, costSummary, budgetPolicy, totalCost, projectI
      <div className="flex justify-between items-end mb-3">
       <div>
        <h3 className="text-[14px] font-medium text-foreground mb-1">Budget Utilization</h3>
-       <p className="text-[13px] text-muted-foreground">${totalCost.toFixed(2)} used of ${budget} total allocation</p>
+       <p className="text-[15px] text-muted-foreground">${totalCost.toFixed(2)} used of ${budget} total allocation</p>
       </div>
       <button
        onClick={onEditBudget}
-       className="text-[13px] font-medium text-muted-foreground hover:text-foreground transition-colors"
+       className="text-[15px] font-medium text-muted-foreground hover:text-foreground transition-colors"
       >
        Edit Budget
       </button>
@@ -597,7 +597,7 @@ function ProjectCostsTab({ costs, costSummary, budgetPolicy, totalCost, projectI
       />
      </div>
      {exhaustionDate && (
-      <p className="text-[13px] text-muted-foreground mt-3">
+      <p className="text-[15px] text-muted-foreground mt-3">
        Projected exhaustion: <span className="font-mono tabular-nums">{exhaustionDate}</span>
       </p>
      )}
@@ -757,7 +757,7 @@ function ProjectApprovalsTab({ approvals, projectId, onResolved, navigate, theme
  return (
   <div className="space-y-4">
    {pendingCount > 0 && (
-    <p className="text-[13px] text-muted-foreground">{pendingCount} pending</p>
+    <p className="text-[15px] text-muted-foreground">{pendingCount} pending</p>
    )}
    {approvals.map((approval) => {
     const isPending = !approval.status || approval.status === "pending" || approval.status === "proposed";
@@ -875,7 +875,7 @@ function ExperimentsTab({ experiments, themes = [], projectSlug, onRefresh, navi
     <div />
     <button
      onClick={() => setShowCreate(!showCreate)}
-     className="rounded-[6px] border border-zinc-800 bg-[#121214] text-[13px] font-medium text-zinc-300 px-3 py-1.5 hover:bg-zinc-800 transition-colors focus:outline-none focus:ring-[3px] focus:ring-zinc-700/50"
+     className="rounded-[6px] border border-zinc-800 bg-[#121214] text-[15px] font-medium text-zinc-300 px-3 py-1.5 hover:bg-zinc-800 transition-colors focus:outline-none focus:ring-[3px] focus:ring-zinc-700/50"
     >
      New Experiment
     </button>

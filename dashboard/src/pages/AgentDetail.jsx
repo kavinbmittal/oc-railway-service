@@ -84,7 +84,7 @@ export default function AgentDetail({ agentId, navigate }) {
   <div className="flex flex-col h-full">
    <header className="px-8 py-8 border-b border-zinc-800 shrink-0 bg-[#09090b]">
     {/* Breadcrumb */}
-    <nav className="flex items-center text-[13px] text-zinc-400 mb-5 tracking-wide">
+    <nav className="flex items-center text-[15px] text-zinc-400 mb-5 tracking-wide">
      <a href="#/agents" onClick={(e) => { e.preventDefault(); navigate("agents"); }} className="hover:text-zinc-200 transition-colors cursor-pointer">Agents</a>
      <span className="mx-2 text-zinc-600">&rsaquo;</span>
      <span className="text-zinc-100 font-semibold">{agent.name}</span>
@@ -109,7 +109,7 @@ export default function AgentDetail({ agentId, navigate }) {
     </div>
 
     {/* Metadata */}
-    <div className="flex items-center gap-2 text-[13px] text-zinc-500">
+    <div className="flex items-center gap-2 text-[15px] text-zinc-500">
      {agent.role && <span>{agent.role}</span>}
      {agent.lastSeen && (
       <>

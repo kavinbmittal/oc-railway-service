@@ -10,13 +10,13 @@ export function AgentHeader({ agent, navigate }) {
       <div className="h-12 flex items-center gap-2">
         <button
           onClick={() => navigate("agents")}
-          className="flex items-center gap-1.5 text-[13px] text-muted-foreground hover:text-foreground transition-colors"
+          className="flex items-center gap-1.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors"
         >
           <ArrowLeft size={14} />
           Agents
         </button>
         <span className="text-muted-foreground/40">&rsaquo;</span>
-        <span className="text-[13px] font-semibold text-foreground truncate">
+        <span className="text-[15px] font-semibold text-foreground truncate">
           {agent.name}
         </span>
       </div>

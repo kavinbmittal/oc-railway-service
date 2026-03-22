@@ -211,7 +211,7 @@ export default function Overview({ navigate }) {
            <td className="px-[20px] py-3.5 hidden sm:table-cell">
             {project.lead && project.lead !=="unassigned" ? (
              <span
-              className="text-[13px] text-muted-foreground capitalize cursor-pointer hover:text-foreground transition-colors"
+              className="text-[15px] text-muted-foreground capitalize cursor-pointer hover:text-foreground transition-colors"
               onClick={(e) => {
                e.stopPropagation();
                const name = project.lead.toLowerCase();
@@ -222,12 +222,12 @@ export default function Overview({ navigate }) {
               {project.lead}
              </span>
             ) : (
-             <span className="text-[13px] text-muted-foreground">--</span>
+             <span className="text-[15px] text-muted-foreground">--</span>
             )}
            </td>
 
            {/* Milestone */}
-           <td className="px-[20px] py-3.5 hidden md:table-cell text-[13px] text-muted-foreground">
+           <td className="px-[20px] py-3.5 hidden md:table-cell text-[15px] text-muted-foreground">
             {project.currentMilestone
              ? truncate(project.currentMilestone, 40)
              : <span className="text-muted-foreground/40 italic">No milestones yet</span>}

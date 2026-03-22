@@ -62,7 +62,7 @@ export default function ApprovalCard({
     <p className={`text-[14px] text-foreground ${isRejected ?"line-through decoration-muted-foreground/40" :""}`}>
      {title}
     </p>
-    <div className="text-[13px] text-muted-foreground flex items-center gap-2">
+    <div className="text-[15px] text-muted-foreground flex items-center gap-2">
      {approval.requester && <span>Requested by: {approval.requester}</span>}
      {approval.requester && timeAgo && <span>·</span>}
      {timeAgo && <span>{timeAgo}</span>}
@@ -99,7 +99,7 @@ export default function ApprovalCard({
     )}
     {/* Rejection comment */}
     {isRejected && approval.comment && (
-     <div className="text-[13px] text-red-400 flex items-center gap-1.5 mt-2 bg-red-500/10 px-3 py-1.5 rounded-[4px] border border-red-500/20 w-fit">
+     <div className="text-[15px] text-red-400 flex items-center gap-1.5 mt-2 bg-red-500/10 px-3 py-1.5 rounded-[4px] border border-red-500/20 w-fit">
       <XCircle size={14} />
       Rejected: {approval.comment}
      </div>
@@ -114,13 +114,13 @@ export default function ApprovalCard({
     >
      <button
       onClick={() => onReject && onReject(approval)}
-      className="px-4 py-1.5 rounded-[6px] border border-red-500/30 text-red-400 bg-red-500/10 hover:bg-red-500/20 transition-colors text-[13px] font-medium focus:outline-none focus:ring-[3px] focus:ring-red-500/30"
+      className="px-4 py-1.5 rounded-[6px] border border-red-500/30 text-red-400 bg-red-500/10 hover:bg-red-500/20 transition-colors text-[15px] font-medium focus:outline-none focus:ring-[3px] focus:ring-red-500/30"
      >
       Reject
      </button>
      <button
       onClick={() => onApprove && onApprove(approval)}
-      className="px-4 py-1.5 rounded-[6px] border border-emerald-500/30 text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 transition-colors text-[13px] font-medium focus:outline-none focus:ring-[3px] focus:ring-emerald-500/30"
+      className="px-4 py-1.5 rounded-[6px] border border-emerald-500/30 text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 transition-colors text-[15px] font-medium focus:outline-none focus:ring-[3px] focus:ring-emerald-500/30"
      >
       Approve
      </button>

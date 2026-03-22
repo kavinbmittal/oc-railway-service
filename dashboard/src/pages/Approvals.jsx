@@ -163,7 +163,7 @@ export default function Approvals({ navigate }) {
      <div className="flex items-center gap-1 border-b border-zinc-800 pb-px">
       <button
        onClick={() => setTab("pending")}
-       className={`px-3 py-2 text-[13px] font-medium transition-colors border-b-2 -mb-px ${tab === "pending" ? "border-zinc-100 text-zinc-100" : "border-transparent text-zinc-500 hover:text-zinc-300"}`}
+       className={`px-3 py-2 text-[15px] font-medium transition-colors border-b-2 -mb-px ${tab === "pending" ? "border-zinc-100 text-zinc-100" : "border-transparent text-zinc-500 hover:text-zinc-300"}`}
       >
        Pending
        {pendingCount > 0 && (
@@ -174,7 +174,7 @@ export default function Approvals({ navigate }) {
       </button>
       <button
        onClick={() => setTab("all")}
-       className={`px-3 py-2 text-[13px] font-medium transition-colors border-b-2 -mb-px ${tab === "all" ? "border-zinc-100 text-zinc-100" : "border-transparent text-zinc-500 hover:text-zinc-300"}`}
+       className={`px-3 py-2 text-[15px] font-medium transition-colors border-b-2 -mb-px ${tab === "all" ? "border-zinc-100 text-zinc-100" : "border-transparent text-zinc-500 hover:text-zinc-300"}`}
       >
        All
       </button>
@@ -252,20 +252,20 @@ export default function Approvals({ navigate }) {
              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-zinc-500">
               <rect x="4" y="4" width="16" height="16" rx="2"/><path d="M9 9h6M9 13h6M9 17h6"/>
              </svg>
-             <span className="text-[13px] text-zinc-400">
+             <span className="text-[15px] text-zinc-400">
               Requested by {approval.requester || "agent"}
              </span>
             </div>
             <div className="flex items-center gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
              <button
               onClick={() => handleReject(approval)}
-              className="px-3 py-1.5 rounded-[6px] border border-red-500/30 bg-red-500/10 text-[13px] font-normal text-red-400 hover:bg-red-500/20 transition-colors"
+              className="px-3 py-1.5 rounded-[6px] border border-red-500/30 bg-red-500/10 text-[15px] font-normal text-red-400 hover:bg-red-500/20 transition-colors"
              >
               Reject
              </button>
              <button
               onClick={() => handleApprove(approval)}
-              className="px-3 py-1.5 rounded-[6px] border border-emerald-500/30 bg-emerald-500/10 text-[13px] font-normal text-emerald-400 hover:bg-emerald-500/20 transition-colors"
+              className="px-3 py-1.5 rounded-[6px] border border-emerald-500/30 bg-emerald-500/10 text-[15px] font-normal text-emerald-400 hover:bg-emerald-500/20 transition-colors"
              >
               Approve
              </button>

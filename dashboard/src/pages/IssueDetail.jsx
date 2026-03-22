@@ -128,7 +128,7 @@ export default function IssueDetail({ projectSlug, issueId, navigate }) {
   <div className="flex flex-col h-full">
    <header className="px-8 py-8 border-b border-zinc-800 shrink-0 bg-[#09090b]">
     {/* Breadcrumb */}
-    <nav className="flex items-center text-[13px] text-zinc-400 mb-5 tracking-wide">
+    <nav className="flex items-center text-[15px] text-zinc-400 mb-5 tracking-wide">
      <a href="#/overview" onClick={(e) => { e.preventDefault(); navigate("overview"); }} className="hover:text-zinc-200 transition-colors cursor-pointer">Projects</a>
      <span className="mx-2 text-zinc-600">&rsaquo;</span>
      <a href={`#/projects/${projectSlug}`} onClick={(e) => { e.preventDefault(); navigate("project", projectSlug); }} className="hover:text-zinc-200 transition-colors cursor-pointer capitalize">{projectSlug}</a>
@@ -162,7 +162,7 @@ export default function IssueDetail({ projectSlug, issueId, navigate }) {
     </div>
 
     {/* Metadata line */}
-    <div className="flex flex-wrap items-center gap-2 text-[13px] text-zinc-500">
+    <div className="flex flex-wrap items-center gap-2 text-[15px] text-zinc-500">
      <span className="font-mono">{issue.id}</span>
      {issue.priority && issue.priority !== "none" && (
       <>

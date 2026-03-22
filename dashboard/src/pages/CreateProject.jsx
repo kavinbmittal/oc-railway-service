@@ -78,7 +78,7 @@ export default function CreateProject({ navigate }) {
   <div className="flex flex-col h-full">
    <header className="px-8 py-8 border-b border-zinc-800 shrink-0 bg-[#09090b]">
     {/* Breadcrumb */}
-    <nav className="flex items-center text-[13px] text-zinc-400 mb-5 tracking-wide">
+    <nav className="flex items-center text-[15px] text-zinc-400 mb-5 tracking-wide">
      <a href="#/overview" onClick={(e) => { e.preventDefault(); navigate("overview"); }} className="hover:text-zinc-200 transition-colors cursor-pointer">Projects</a>
      <span className="mx-2 text-zinc-600">&rsaquo;</span>
      <span className="text-zinc-100 font-semibold">New Project</span>
@@ -241,7 +241,7 @@ export default function CreateProject({ navigate }) {
 
     {/* Error */}
     {error && (
-     <div className="mx-[20px] mb-4 border border-red-500/20 bg-red-500/5 rounded-[2px] px-4 py-3 text-[13px] text-red-400">
+     <div className="mx-[20px] mb-4 border border-red-500/20 bg-red-500/5 rounded-[2px] px-4 py-3 text-[15px] text-red-400">
       {error}
      </div>
     )}
@@ -251,14 +251,14 @@ export default function CreateProject({ navigate }) {
      <button
       type="button"
       onClick={() => navigate("overview")}
-      className="px-4 py-2 rounded-[6px] border border-border bg-card text-[13px] font-medium text-foreground/80 hover:bg-accent hover:text-white transition-colors"
+      className="px-4 py-2 rounded-[6px] border border-border bg-card text-[15px] font-medium text-foreground/80 hover:bg-accent hover:text-white transition-colors"
      >
       Cancel
      </button>
      <button
       type="submit"
       disabled={submitting || !name.trim() || !mission.trim()}
-      className="px-4 py-2 rounded-[6px] border border-emerald-500/50 bg-emerald-500/10 text-[13px] font-medium text-emerald-300 hover:bg-emerald-500/20 hover:text-emerald-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+      className="px-4 py-2 rounded-[6px] border border-emerald-500/50 bg-emerald-500/10 text-[15px] font-medium text-emerald-300 hover:bg-emerald-500/20 hover:text-emerald-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
      >
       {submitting && <Loader2 size={14} className="animate-spin" />}
       {submitting ?"Creating..." :"Create Project"}
