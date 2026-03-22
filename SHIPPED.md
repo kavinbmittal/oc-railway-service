@@ -1,6 +1,7 @@
 # SHIPPED.md
 
 ## 2026-03-22
+- **feat:** Paperclip-inspired visual refinements — card shadows, rounded-md on buttons/inputs, bigger entity names, upgraded section headers, 3px focus rings
 - **fix:** Design system enforcement pass — 9 fixes: removed all remaining rounded corners, shadows, gradients, added font-mono to all micro-labels, neutralized decorative colors
 - **feat:** Design system overhaul — 16 fixes: typography hierarchy, zero-radius consistency, focus rings, rejection modal, agent header rebalance
 - **docs:** DESIGN.md created — codifies the shipped design system as source of truth
