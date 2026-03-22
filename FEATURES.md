@@ -10,6 +10,7 @@
 - Strategy tab per project: NSM at top, approved themes with proxy metrics, pending theme proposals
 - Agents propose themes (with up to 3 proxy metrics each) for individual approval
 - Create experiments from the dashboard with name, hypothesis, proxy metric, target value, theme, and program
+- Click any experiment card to view full detail: hypothesis, program markdown, run history table with best-run highlighting, metrics sidebar, and action buttons
 - Issues and experiments tagged to themes with target proxy metrics (server-validated)
 - Experiment approvals show structured hypothesis, program, and proxy metric targets
 - Click any approved theme to see all issues tagged to it

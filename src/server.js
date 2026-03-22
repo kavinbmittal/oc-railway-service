@@ -2804,6 +2804,66 @@ app.get("/mc/api/experiments", requireSetupAuth, (req, res) => {
   return res.json({ experiments });
 });
 
+// Single experiment detail
+app.get("/mc/api/experiments/:dir", requireSetupAuth, (req, res) => {
+  const slug = req.query.project;
+  const dir = req.params.dir;
+  if (!slug || !dir) return res.status(400).json({ error: "Missing project or dir" });
+
+  const expPath = path.join(STATE_DIR, "shared", "projects", slug, "experiments", dir);
+  if (!fs.existsSync(expPath)) return res.status(404).json({ error: "Experiment not found" });
+
+  // Parse program.md (same logic as the list endpoint)
+  const programPath = path.join(expPath, "program.md");
+  const resultsPath = path.join(expPath, "results.tsv");
+
+  let programMd = null, name = dir, status = "unknown", hypothesis = null, proxyMetric = null, targetValue = null, theme = null;
+
+  if (fs.existsSync(programPath)) {
+    try {
+      programMd = fs.readFileSync(programPath, "utf8");
+      const titleMatch = programMd.match(/^#\s+(.+)/m);
+      if (titleMatch) name = titleMatch[1];
+      const statusMatch = programMd.match(/## Status\s*\n\s*(\S+)/);
+      if (statusMatch) status = statusMatch[1];
+      const hypoMatch = programMd.match(/## Hypothesis\s*\n([\s\S]*?)(?=\n##|$)/);
+      if (hypoMatch) hypothesis = hypoMatch[1].trim();
+      const metricMatch = programMd.match(/## Proxy Metric\s*\n\s*(.+)/);
+      if (metricMatch) {
+        const parts = metricMatch[1].split(":");
+        proxyMetric = parts[0].trim();
+        if (parts[1]) targetValue = parts[1].trim();
+      }
+      const themeMatch = programMd.match(/## Theme\s*\n\s*(.+)/);
+      if (themeMatch) theme = themeMatch[1].trim();
+    } catch {}
+  }
+
+  let results = [], bestMetric = null;
+  if (fs.existsSync(resultsPath)) {
+    try {
+      const raw = fs.readFileSync(resultsPath, "utf8");
+      const lines = raw.trim().split("\n");
+      if (lines.length > 1) {
+        const headers = lines[0].split("\t").map(h => h.trim());
+        for (let i = 1; i < lines.length; i++) {
+          const cols = lines[i].split("\t").map(c => c.trim());
+          const row = {};
+          for (let j = 0; j < headers.length; j++) row[headers[j]] = cols[j] || "";
+          results.push(row);
+        }
+        if (headers.length >= 3) {
+          const metricCol = headers[2];
+          const nums = results.map(r => parseFloat(r[metricCol])).filter(n => !isNaN(n));
+          if (nums.length > 0) bestMetric = Math.max(...nums);
+        }
+      }
+    } catch {}
+  }
+
+  res.json({ name, dir, status, hypothesis, proxy_metric: proxyMetric, target_value: targetValue, theme, program_md: programMd, results, result_count: results.length, best_metric: bestMetric });
+});
+
 // Create experiment
 app.post("/mc/api/experiments", requireSetupAuth, (req, res) => {
   const { project, name, hypothesis, proxy_metric, target_value, program_md, theme } = req.body;

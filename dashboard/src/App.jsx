@@ -13,6 +13,7 @@ import IssueDetail from"./pages/IssueDetail.jsx";
 import Costs from"./pages/Costs.jsx";
 import OrgChart from"./pages/OrgChart.jsx";
 import Workspaces from"./pages/Workspaces.jsx";
+import ExperimentDetail from"./pages/ExperimentDetail.jsx";
 
 /* ── Hash → state parser ──────────────────────────────────────────── */
 function parseHash(hash) {
@@ -47,6 +48,14 @@ function parseHash(hash) {
   case"projects": {
    const slug = parts[1];
    if (!slug) return { page:"overview" };
+   // #/projects/{slug}/experiments/{dir}
+   if (parts[2] ==="experiments" && parts[3]) {
+    return {
+     page:"experiment-detail",
+     selectedProject: slug,
+     experimentContext: { projectSlug: slug, experimentDir: parts[3] },
+    };
+   }
    // #/projects/{slug}/issues/{id}
    if (parts[2] ==="issues" && parts[3]) {
     return {
@@ -82,6 +91,9 @@ function buildHash(target, data) {
    return"#/agents";
   case"issues":
    return"#/issues";
+  case"experiment-detail":
+   // data = { slug, dir }
+   return `#/projects/${encodeURIComponent(data.slug)}/experiments/${encodeURIComponent(data.dir)}`;
   case"issue-detail":
    // data = { projectSlug, issueId }
    return `#/projects/${data.projectSlug}/issues/${data.issueId}`;
@@ -112,6 +124,7 @@ export default function App() {
  const [selectedProject, setSelectedProject] = useState(initial.selectedProject || null);
  const [selectedAgent, setSelectedAgent] = useState(initial.selectedAgent || null);
  const [issueContext, setIssueContext] = useState(initial.issueContext || null);
+ const [experimentContext, setExperimentContext] = useState(initial.experimentContext || null);
  const [projectTab, setProjectTab] = useState(initial.projectTab || null);
  const [approvalId, setApprovalId] = useState(initial.approvalId || null);
  const [refreshKey, setRefreshKey] = useState(0);
@@ -122,6 +135,7 @@ export default function App() {
   setSelectedProject(s.selectedProject || null);
   setSelectedAgent(s.selectedAgent || null);
   setIssueContext(s.issueContext || null);
+  setExperimentContext(s.experimentContext || null);
   setProjectTab(s.projectTab || null);
   setApprovalId(s.approvalId || null);
   setRefreshKey((k) => k + 1);
@@ -153,7 +167,7 @@ export default function App() {
     <Sidebar page={page} selectedProject={selectedProject} navigate={navigate} refreshKey={refreshKey} />
     <div className="flex min-w-0 flex-col h-full flex-1">
      {/* Detail pages manage their own padding and scrolling for sticky headers */}
-     {(page ==="approval-detail" || page ==="issue-detail" || page ==="agent-detail" || page ==="project" || page ==="create-project") ? (
+     {(page ==="approval-detail" || page ==="issue-detail" || page ==="experiment-detail" || page ==="agent-detail" || page ==="project" || page ==="create-project") ? (
       <main className="flex-1 overflow-hidden flex flex-col">
        {page ==="approval-detail" && approvalId && (
         <ApprovalDetail approvalId={approvalId} navigate={navigate} />
@@ -162,6 +176,13 @@ export default function App() {
         <IssueDetail
          projectSlug={issueContext.projectSlug}
          issueId={issueContext.issueId}
+         navigate={navigate}
+        />
+       )}
+       {page ==="experiment-detail" && experimentContext && (
+        <ExperimentDetail
+         projectSlug={experimentContext.projectSlug}
+         experimentDir={experimentContext.experimentDir}
          navigate={navigate}
         />
        )}

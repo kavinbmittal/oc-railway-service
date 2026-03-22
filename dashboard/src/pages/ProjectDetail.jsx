@@ -367,7 +367,7 @@ export default function ProjectDetail({ projectId, navigate, initialTab }) {
     {/* ──────────────── EXPERIMENTS TAB ──────────────── */}
     <TabsContent value="experiments">
      <div className="mt-6">
-      <ExperimentsTab experiments={experiments} themes={themes.filter((t) => t.status === "approved")} projectSlug={projectId} onRefresh={() => getExperiments(projectId).then(setExperiments)} />
+      <ExperimentsTab experiments={experiments} themes={themes.filter((t) => t.status === "approved")} projectSlug={projectId} onRefresh={() => getExperiments(projectId).then(setExperiments)} navigate={navigate} />
      </div>
     </TabsContent>
 
@@ -790,7 +790,7 @@ function ProjectApprovalsTab({ approvals, projectId, onResolved, navigate }) {
 
 /* ──────────────── EXPERIMENTS TAB COMPONENT ──────────────── */
 /* Aura: grid-cols-2 cards with hypothesis + metrics */
-function ExperimentsTab({ experiments, themes = [], projectSlug, onRefresh }) {
+function ExperimentsTab({ experiments, themes = [], projectSlug, onRefresh, navigate }) {
  const [showCreate, setShowCreate] = useState(false);
 
  const totalRuns = experiments.reduce((sum, e) => sum + e.result_count, 0);
@@ -833,7 +833,7 @@ function ExperimentsTab({ experiments, themes = [], projectSlug, onRefresh }) {
      {/* Experiment cards — Aura: grid-cols-2, compact with hypothesis */}
      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
       {experiments.map((exp) => (
-       <div key={exp.dir} className="bg-[#121214] border border-zinc-800 rounded-sm shadow-sm p-5 flex flex-col h-full">
+       <div key={exp.dir} onClick={() => navigate("experiment-detail", { slug: projectSlug, dir: exp.dir })} className="bg-[#121214] border border-zinc-800 rounded-sm shadow-sm p-5 flex flex-col h-full cursor-pointer hover:bg-zinc-800/30 transition-colors">
         <div className="flex justify-between items-start mb-3">
          <h3 className="text-sm font-medium text-zinc-100">{exp.name}</h3>
          <StatusBadge status={exp.status} />

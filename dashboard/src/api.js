@@ -267,6 +267,10 @@ export async function createExperiment({ project, name, hypothesis, proxy_metric
   return res.json();
 }
 
+export async function getExperiment(dir, projectSlug) {
+  return fetchJSON(`${BASE}/experiments/${encodeURIComponent(dir)}?project=${encodeURIComponent(projectSlug)}`);
+}
+
 // --- Themes API ---
 
 export async function getThemes(projectSlug) {
