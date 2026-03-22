@@ -100,7 +100,7 @@ export default function AgentDetail({ agentId, navigate }) {
        <div className="border border-border border-l-2 border-l-cyan-500 bg-accent/20 p-4">
         <div className="flex items-center gap-2 mb-3">
          <Briefcase size={14} className="text-cyan-400" />
-         <h3 className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+         <h3 className="text-[11px] uppercase tracking-[0.16em] font-mono text-muted-foreground">
           Current Work
          </h3>
         </div>
@@ -120,7 +120,7 @@ export default function AgentDetail({ agentId, navigate }) {
        <div className="border border-border p-4">
         <div className="flex items-center gap-2 mb-3">
          <Clock size={14} className="text-amber-400" />
-         <h3 className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+         <h3 className="text-[11px] uppercase tracking-[0.16em] font-mono text-muted-foreground">
           Waiting On
          </h3>
         </div>
@@ -140,7 +140,7 @@ export default function AgentDetail({ agentId, navigate }) {
        <div className="border border-border p-4">
         <div className="flex items-center gap-2 mb-3">
          <Briefcase size={14} className="text-muted-foreground/50" />
-         <h3 className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+         <h3 className="text-[11px] uppercase tracking-[0.16em] font-mono text-muted-foreground">
           Projects
          </h3>
         </div>
@@ -164,7 +164,7 @@ export default function AgentDetail({ agentId, navigate }) {
        <div className="border border-border p-4">
         <div className="flex items-center gap-2 mb-3">
          <Brain size={14} className="text-muted-foreground/50" />
-         <h3 className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+         <h3 className="text-[11px] uppercase tracking-[0.16em] font-mono text-muted-foreground">
           Identity
          </h3>
         </div>

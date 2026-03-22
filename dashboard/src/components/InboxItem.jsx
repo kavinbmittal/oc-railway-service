@@ -101,7 +101,7 @@ export function InboxItem({ item, onApprove, onReject, onNavigate }) {
    onClick={() => handleItemClick(item, onNavigate)}
   >
    {/* Type icon */}
-   <span className={`shrink-0 rounded-md p-1.5 mt-0.5 ${iconBg}`}>
+   <span className={`shrink-0 p-1.5 mt-0.5 ${iconBg}`}>
     <Icon className={`h-4 w-4 ${iconColor}`} />
    </span>
 

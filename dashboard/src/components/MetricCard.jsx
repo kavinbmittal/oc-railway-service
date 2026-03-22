@@ -18,7 +18,7 @@ export function MetricCard({ icon: Icon, value, label, description, mono, onClic
      >
       {value}
      </p>
-     <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground mt-1">
+     <p className="text-[11px] uppercase tracking-[0.16em] font-mono text-muted-foreground mt-1">
       {label}
      </p>
      {description && (

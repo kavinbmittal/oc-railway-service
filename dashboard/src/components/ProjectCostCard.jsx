@@ -84,7 +84,7 @@ export function ProjectCostCard({ project, onClick }) {
    {/* Status indicator */}
    {status && status !=="healthy" && (
     <div
-     className={`text-[11px] uppercase tracking-[0.16em] font-medium px-2 py-1 inline-block ${
+     className={`text-[11px] uppercase tracking-[0.16em] font-mono font-medium px-2 py-1 inline-block ${
       status ==="exceeded"
        ?"text-red-400 bg-red-500/10 border border-red-500/20"
        :"text-amber-400 bg-amber-500/10 border border-amber-500/20"

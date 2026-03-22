@@ -80,7 +80,7 @@ export default function CreateProject({ navigate }) {
    <form onSubmit={handleSubmit} className="space-y-5">
     {/* Name */}
     <div className="space-y-1.5">
-     <label className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+     <label className="text-[11px] uppercase tracking-[0.16em] font-mono text-muted-foreground">
       Project Name
      </label>
      <input
@@ -95,7 +95,7 @@ export default function CreateProject({ navigate }) {
 
     {/* Mission */}
     <div className="space-y-1.5">
-     <label className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+     <label className="text-[11px] uppercase tracking-[0.16em] font-mono text-muted-foreground">
       Mission / Goal
      </label>
      <textarea
@@ -110,7 +110,7 @@ export default function CreateProject({ navigate }) {
 
     {/* Lead */}
     <div className="space-y-1.5">
-     <label className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+     <label className="text-[11px] uppercase tracking-[0.16em] font-mono text-muted-foreground">
       Lead
      </label>
      <select
@@ -128,7 +128,7 @@ export default function CreateProject({ navigate }) {
 
     {/* Budget */}
     <div className="space-y-1.5">
-     <label className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+     <label className="text-[11px] uppercase tracking-[0.16em] font-mono text-muted-foreground">
       Budget ($/week)
      </label>
      <div className="flex items-center gap-2">
@@ -147,7 +147,7 @@ export default function CreateProject({ navigate }) {
 
     {/* Approval Gates */}
     <div className="space-y-1.5">
-     <label className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+     <label className="text-[11px] uppercase tracking-[0.16em] font-mono text-muted-foreground">
       Approval Gates
      </label>
      <div className="border border-border divide-y divide-border">

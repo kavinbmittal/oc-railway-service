@@ -17,7 +17,7 @@ export function CostTimeline({ entries = [] }) {
  return (
   <div className="border border-border divide-y divide-border">
    {/* Header */}
-   <div className="grid grid-cols-[1fr_80px_80px_60px] gap-2 px-4 py-2 text-[11px] uppercase tracking-[0.16em] text-muted-foreground/60 font-medium">
+   <div className="grid grid-cols-[1fr_80px_80px_60px] gap-2 px-4 py-2 text-[11px] uppercase tracking-[0.16em] font-mono text-muted-foreground/60 font-medium">
     <span>Task</span>
     <span className="text-right">Agent</span>
     <span className="text-right">Cost</span>

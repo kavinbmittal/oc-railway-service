@@ -165,12 +165,12 @@ export default function Overview({ navigate }) {
       <table className="w-full text-sm">
        <thead>
         <tr className="border-b border-border text-left">
-         <th className="px-4 py-2.5 text-[11px] uppercase tracking-[0.16em] text-muted-foreground/60 font-medium">Project</th>
-         <th className="px-4 py-2.5 text-[11px] uppercase tracking-[0.16em] text-muted-foreground/60 font-medium hidden lg:table-cell">Mission / Goal</th>
-         <th className="px-4 py-2.5 text-[11px] uppercase tracking-[0.16em] text-muted-foreground/60 font-medium hidden sm:table-cell">Lead</th>
-         <th className="px-4 py-2.5 text-[11px] uppercase tracking-[0.16em] text-muted-foreground/60 font-medium hidden md:table-cell">Milestone</th>
-         <th className="px-4 py-2.5 text-[11px] uppercase tracking-[0.16em] text-muted-foreground/60 font-medium">Issues</th>
-         <th className="px-4 py-2.5 text-[11px] uppercase tracking-[0.16em] text-muted-foreground/60 font-medium hidden sm:table-cell min-w-[140px]">Budget</th>
+         <th className="px-4 py-2.5 text-[11px] uppercase tracking-[0.16em] font-mono text-muted-foreground/60 font-medium">Project</th>
+         <th className="px-4 py-2.5 text-[11px] uppercase tracking-[0.16em] font-mono text-muted-foreground/60 font-medium hidden lg:table-cell">Mission / Goal</th>
+         <th className="px-4 py-2.5 text-[11px] uppercase tracking-[0.16em] font-mono text-muted-foreground/60 font-medium hidden sm:table-cell">Lead</th>
+         <th className="px-4 py-2.5 text-[11px] uppercase tracking-[0.16em] font-mono text-muted-foreground/60 font-medium hidden md:table-cell">Milestone</th>
+         <th className="px-4 py-2.5 text-[11px] uppercase tracking-[0.16em] font-mono text-muted-foreground/60 font-medium">Issues</th>
+         <th className="px-4 py-2.5 text-[11px] uppercase tracking-[0.16em] font-mono text-muted-foreground/60 font-medium hidden sm:table-cell min-w-[140px]">Budget</th>
         </tr>
        </thead>
        <tbody className="divide-y divide-border">

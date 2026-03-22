@@ -173,7 +173,7 @@ export default function Approvals({ navigate }) {
       <div key={project}>
        <button
         onClick={() => navigate("project", project)}
-        className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground hover:text-foreground transition-colors mb-1.5 px-1"
+        className="text-[11px] uppercase tracking-[0.16em] font-mono text-muted-foreground hover:text-foreground transition-colors mb-1.5 px-1"
        >
         {project}
        </button>

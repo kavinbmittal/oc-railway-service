@@ -287,7 +287,7 @@ export default function ApprovalDetail({ approvalId, navigate }) {
    {/* Proposed issue description */}
    {isIssue && approval.why && (
     <div className="border border-border p-6">
-     <h3 className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground mb-3">
+     <h3 className="text-[11px] uppercase tracking-[0.16em] font-mono text-muted-foreground mb-3">
       Proposed Issue
      </h3>
      <div className="mc-prose">
@@ -299,7 +299,7 @@ export default function ApprovalDetail({ approvalId, navigate }) {
    {/* Why / Body — for experiments, this is the agent's case */}
    {approval.why && !isDeliverable && (
     <div className="border border-border p-6">
-     <h3 className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground mb-3">
+     <h3 className="text-[11px] uppercase tracking-[0.16em] font-mono text-muted-foreground mb-3">
       {isExperiment ?"Approval Request" :"Details"}
      </h3>
      <div className="mc-prose">
@@ -311,7 +311,7 @@ export default function ApprovalDetail({ approvalId, navigate }) {
    {/* Experiment Plan — rendered from program.md (single source of truth) */}
    {isExperiment && approval.programMd && (
     <div className="border border-border p-6">
-     <h3 className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground mb-3">
+     <h3 className="text-[11px] uppercase tracking-[0.16em] font-mono text-muted-foreground mb-3">
       Experiment Plan
      </h3>
      <div className="border border-border/60 rounded p-4 bg-background max-h-[calc(100vh-400px)] overflow-y-auto mc-prose">
@@ -323,7 +323,7 @@ export default function ApprovalDetail({ approvalId, navigate }) {
    {/* Deliverable content */}
    {isDeliverable && approval.why && (
     <div className="border border-border p-6">
-     <h3 className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground mb-3">
+     <h3 className="text-[11px] uppercase tracking-[0.16em] font-mono text-muted-foreground mb-3">
       Deliverable
      </h3>
      <div className="border border-border/60 rounded p-4 bg-background max-h-[calc(100vh-400px)] overflow-y-auto mc-prose">
@@ -335,7 +335,7 @@ export default function ApprovalDetail({ approvalId, navigate }) {
    {/* Decision note / Actions */}
    {isPending && !resolved && (
     <div className="border border-border p-6 space-y-4">
-     <h3 className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+     <h3 className="text-[11px] uppercase tracking-[0.16em] font-mono text-muted-foreground">
       Decision
      </h3>
      {!isIssue && (

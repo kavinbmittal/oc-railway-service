@@ -230,7 +230,7 @@ export default function ProjectDetail({ projectId, navigate, initialTab }) {
        <div className="border border-border p-4">
         <div className="flex items-center gap-2 mb-3">
          <Target size={14} className="text-muted-foreground/50" />
-         <h3 className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+         <h3 className="text-[11px] uppercase tracking-[0.16em] font-mono text-muted-foreground">
           Mission / Goal
          </h3>
         </div>
@@ -240,7 +240,7 @@ export default function ProjectDetail({ projectId, navigate, initialTab }) {
 
       {milestones && (
        <div className="border border-border p-4">
-        <h3 className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground mb-3">
+        <h3 className="text-[11px] uppercase tracking-[0.16em] font-mono text-muted-foreground mb-3">
          Milestones
         </h3>
         <Markdown content={milestones} />
@@ -251,7 +251,7 @@ export default function ProjectDetail({ projectId, navigate, initialTab }) {
        <div className="border border-border p-4">
         <div className="flex items-center gap-2 mb-3">
          <ShieldCheck size={14} className="text-muted-foreground/50" />
-         <h3 className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+         <h3 className="text-[11px] uppercase tracking-[0.16em] font-mono text-muted-foreground">
           Approval Gates
          </h3>
         </div>
@@ -281,7 +281,7 @@ export default function ProjectDetail({ projectId, navigate, initialTab }) {
        <div className="border border-border p-4">
         <div className="flex items-center gap-2 mb-3">
          <Bot size={14} className="text-muted-foreground/50" />
-         <h3 className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+         <h3 className="text-[11px] uppercase tracking-[0.16em] font-mono text-muted-foreground">
           Sub-agents
          </h3>
         </div>
@@ -429,7 +429,7 @@ function ProjectCostsTab({ costs, costSummary, budgetPolicy, totalCost, projectI
     <div className="flex items-center justify-between">
      <div className="flex items-center gap-2">
       <Wallet size={14} className="text-muted-foreground/50" />
-      <h3 className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+      <h3 className="text-[11px] uppercase tracking-[0.16em] font-mono text-muted-foreground">
        Budget Policy
       </h3>
      </div>
@@ -453,23 +453,23 @@ function ProjectCostsTab({ costs, costSummary, budgetPolicy, totalCost, projectI
 
     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
      <div>
-      <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground/60">Spend</p>
+      <p className="text-[11px] uppercase tracking-[0.16em] font-mono text-muted-foreground/60">Spend</p>
       <p className="text-lg font-semibold font-mono tabular-nums mt-0.5">${totalCost.toFixed(2)}</p>
      </div>
      <div>
-      <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground/60">Budget</p>
+      <p className="text-[11px] uppercase tracking-[0.16em] font-mono text-muted-foreground/60">Budget</p>
       <p className="text-lg font-semibold font-mono tabular-nums mt-0.5">
        {budget > 0 ? `$${budget}/wk` :"No cap"}
       </p>
      </div>
      <div>
-      <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground/60">Remaining</p>
+      <p className="text-[11px] uppercase tracking-[0.16em] font-mono text-muted-foreground/60">Remaining</p>
       <p className="text-lg font-semibold font-mono tabular-nums mt-0.5">
        {budget > 0 ? `$${remaining.toFixed(2)}` :"--"}
       </p>
      </div>
      <div>
-      <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground/60">Burn Rate</p>
+      <p className="text-[11px] uppercase tracking-[0.16em] font-mono text-muted-foreground/60">Burn Rate</p>
       <div className="mt-0.5">
        <BurnRateIndicator dailyRate={dailyBurnRate} compact />
       </div>
@@ -513,7 +513,7 @@ function ProjectCostsTab({ costs, costSummary, budgetPolicy, totalCost, projectI
    {/* Per-agent breakdown */}
    {(agentSummaries.length > 0 || costs.length > 0) && (
     <div>
-     <h4 className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground mb-2">
+     <h4 className="text-[11px] uppercase tracking-[0.16em] font-mono text-muted-foreground mb-2">
       Per-Agent Breakdown
      </h4>
      <div className="border border-border divide-y divide-border">
@@ -554,7 +554,7 @@ function ProjectCostsTab({ costs, costSummary, budgetPolicy, totalCost, projectI
    {/* Cost timeline */}
    {entries.length > 0 && (
     <div>
-     <h4 className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground mb-2">
+     <h4 className="text-[11px] uppercase tracking-[0.16em] font-mono text-muted-foreground mb-2">
       Cost Timeline
      </h4>
      <CostTimeline entries={entries.slice(0, 50)} />
@@ -724,7 +724,7 @@ function ExperimentsTab({ experiments }) {
       {/* Results table */}
       {exp.results.length > 0 && (
        <div>
-        <h4 className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground mb-2">
+        <h4 className="text-[11px] uppercase tracking-[0.16em] font-mono text-muted-foreground mb-2">
          Results
         </h4>
         <div className="border border-border overflow-x-auto">
@@ -734,7 +734,7 @@ function ExperimentsTab({ experiments }) {
             {Object.keys(exp.results[0]).map((col) => (
              <th
               key={col}
-              className="px-3 py-2 text-left text-[11px] uppercase tracking-[0.16em] text-muted-foreground font-medium"
+              className="px-3 py-2 text-left text-[11px] uppercase tracking-[0.16em] font-mono text-muted-foreground font-medium"
              >
               {col}
              </th>
