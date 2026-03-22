@@ -20,10 +20,10 @@
 - **Code:** Same mono stack. `text-xs` (12px) for inline code, `text-sm` for code blocks.
 - **Loading:** None — system fonts only. Zero FOUT, zero latency.
 - **Scale:**
-  - Page entity name: `text-2xl` (24px) — commands the page
+  - Page entity name: `text-3xl font-semibold` (30px) — commands the page
   - Page title (list pages): `text-base uppercase tracking-wider` (16px) — distinct from section headers
-  - Section header: `text-sm font-semibold uppercase tracking-wide` (14px)
-  - Micro-label: `text-[11px] uppercase tracking-[0.16em] font-mono` (11px) — table headers, card labels, sidebar sections
+  - Section header: `text-sm font-semibold` (14px) — no uppercase, no mono. Used on h3/h4 section titles.
+  - Micro-label: `text-[11px] uppercase tracking-[0.16em] font-mono` (11px) — table column headers, metric card labels, form labels, sidebar section labels, budget breakdown labels
   - Body: `text-sm` (14px)
   - Small: `text-xs` (12px)
 
@@ -59,10 +59,13 @@
 - **Grid:** `grid-cols-2 xl:grid-cols-4` for metric cards. `grid-cols-2 sm:grid-cols-3` for smaller card sets. Data tables for project lists.
 - **Max content width:** None — content fills available space. Tables and cards reflow responsively.
 - **Border radius:**
-  - **Global: `--radius: 0`** — sharp corners on ALL containers, cards, buttons, inputs, progress bars. This is the single strongest design opinion in the system.
-  - **Exception: `rounded-full`** — status dots, badge pills. These are semantically circular (pills/indicators), not containers.
-  - **No other radius values.** No `rounded-md`, no `rounded-lg`, no `rounded-sm`. If it's a container, it's sharp.
+  - **Cards and sections: `rounded-sm`** (2px) — subtle softening. Not bubbly, not razor sharp. Adds warmth.
+  - **Buttons, inputs, dropdowns: sharp** (0px) — interactive elements stay crisp.
+  - **Exception: `rounded-full`** — status dots, badge pills. Semantically circular.
+  - **Exception: `rounded-sm`** — sidebar project dots (small color squares).
+  - **Never: `rounded-md`, `rounded-lg`** — these read as AI-generated.
 - **Borders:** `border border-border` (1px, `oklch(0.269 0 0)`) on all cards and sections. No shadows on cards (shadows are for elevation in light mode; borders are for dark mode).
+- **Card background:** `bg-card/50` — subtle lift from page background. Creates depth without shadows.
 - **Responsive strategy:** Hide table columns at breakpoints (`hidden sm:table-cell`, `hidden lg:table-cell`). Touch targets enforced at 44px via `@media (pointer: coarse)`.
 
 ## Motion
@@ -75,8 +78,8 @@
 ## Component Patterns
 
 ### Cards
-- Default: `border border-border p-4` — flat bordered box
-- Elevated (primary status): `border border-border border-l-2 border-l-{color} bg-accent/20 p-4` — left accent border + tinted background. Use for the single most important section on a page (e.g., "Current Work" on agent detail).
+- Default: `bg-card/50 rounded-sm border border-border p-5` — subtle lift, soft corners, generous padding
+- Elevated (primary status): `bg-card/50 rounded-sm border border-border border-l-2 border-l-{color} bg-accent/20 p-5` — left accent border + tinted background. Use for the single most important section on a page (e.g., "Current Work" on agent detail).
 - Never more than one elevated card per view.
 
 ### Status Badges
@@ -115,7 +118,7 @@
 
 ## Anti-Patterns (Never Do)
 
-1. **No border-radius on containers.** Not `rounded-sm`, not `rounded-md`, not `rounded-lg`. Sharp corners only. `rounded-full` is reserved for pills and dots.
+1. **No `rounded-md` or `rounded-lg` on containers.** Cards use `rounded-sm` (2px) only. Buttons/inputs stay sharp. `rounded-full` is reserved for pills and dots.
 2. **No gradients.** Not on buttons, not on backgrounds, not on anything.
 3. **No decorative color.** Every color must map to a semantic meaning.
 4. **No shadows on cards.** Use borders for separation in dark mode.
@@ -130,10 +133,13 @@
 | Date | Decision | Rationale |
 |------|----------|-----------|
 | 2026-03-22 | Initial design system created | Codified from shipped dashboard after design review + QA pass. Documents existing opinions rather than inventing new ones. |
-| 2026-03-22 | `--radius: 0` as global default | Strongest design opinion — separates from AI-generated UIs, communicates precision. Exceptions only for `rounded-full` on pills/dots. |
+| 2026-03-22 | `rounded-sm` on cards, sharp on buttons/inputs | Softened from zero-radius after Paperclip comparison. Cards get 2px warmth, interactive elements stay crisp. No `rounded-md` or `rounded-lg`. |
 | 2026-03-22 | System font stack only, no web fonts | Mac-first internal tool. Native feel, zero FOUT, zero latency. SF Pro + SF Mono. |
 | 2026-03-22 | Semantic-only color, no brand color | Ops dashboard — data speaks, chrome stays quiet. Every hue maps to a status meaning. |
 | 2026-03-22 | Dark mode only | Ops tools live in dark mode. No light mode planned or needed. |
-| 2026-03-22 | 11px uppercase mono micro-labels | Signature typographic choice. Military/industrial feel. Used for all section headers, table headers, sidebar labels. |
+| 2026-03-22 | 11px uppercase mono micro-labels | Signature typographic choice. Military/industrial feel. Used for table headers, metric labels, form labels, sidebar labels. Section headers upgraded to 14px semibold. |
 | 2026-03-22 | Left-border accent for primary status cards | Differentiates the most important section from uniform bordered boxes. Max one per view. |
-| 2026-03-22 | Entity names at 24px on detail pages | Per Paperclip comparison — entity names must command the page. |
+| 2026-03-22 | Entity names at 30px on detail pages | Per Paperclip comparison — entity names must command the page. Bumped from 24px to 30px for more presence. |
+| 2026-03-22 | Card background lift with `bg-card/50` | Subtle depth without shadows. Cards are visually distinct from page background. |
+| 2026-03-22 | Card padding increased to `p-5` | More breathing room inside cards. Inspired by Paperclip's generous spacing. |
+| 2026-03-22 | Section headers split from micro-labels | Section h3/h4 headers now 14px semibold (readable). Micro-labels (11px mono uppercase) reserved for table/metric/form/sidebar labels. |
