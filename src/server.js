@@ -1740,7 +1740,8 @@ app.get("/mc/api/approvals/:id", requireSetupAuth, (req, res) => {
                 const tData = JSON.parse(fs.readFileSync(tPath, "utf8"));
                 issuThemeTitle = tData.title || issue.theme;
                 if (Array.isArray(issue.proxy_metrics) && Array.isArray(tData.proxy_metrics)) {
-                  issuPMNames = issue.proxy_metrics.map((pmId) => {
+                  issuPMNames = issue.proxy_metrics.map((pm) => {
+                    const pmId = typeof pm === "string" ? pm : pm.id;
                     const found = tData.proxy_metrics.find((t) => t.id === pmId);
                     return found ? found.name : pmId;
                   });
@@ -1856,7 +1857,8 @@ app.get("/mc/api/approvals", requireSetupAuth, (req, res) => {
                   const tData = JSON.parse(fs.readFileSync(tPath, "utf8"));
                   listThemeTitle = tData.title || issue.theme;
                   if (Array.isArray(issue.proxy_metrics) && Array.isArray(tData.proxy_metrics)) {
-                    listPMNames = issue.proxy_metrics.map((pmId) => {
+                    listPMNames = issue.proxy_metrics.map((pm) => {
+                      const pmId = typeof pm === "string" ? pm : pm.id;
                       const found = tData.proxy_metrics.find((t) => t.id === pmId);
                       return found ? found.name : pmId;
                     });
