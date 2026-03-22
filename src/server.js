@@ -1775,7 +1775,7 @@ app.get("/mc/api/projects", requireSetupAuth, (_req, res) => {
   }
   const entries = fs.readdirSync(projectsDir, { withFileTypes: true });
   const projects = entries
-    .filter((e) => e.isDirectory())
+    .filter((e) => e.isDirectory() && !e.name.startsWith("_"))
     .map((e) => {
       const projectPath = path.join(projectsDir, e.name, "PROJECT.md");
       let meta = { id: e.name };
