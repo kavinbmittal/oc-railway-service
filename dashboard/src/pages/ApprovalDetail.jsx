@@ -354,7 +354,7 @@ export default function ApprovalDetail({ approvalId, navigate }) {
       <button
        onClick={() => handleResolve("approved")}
        disabled={submitting}
-       className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors disabled:opacity-50"
+       className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium bg-green-600 text-white hover:bg-green-700 transition-colors disabled:opacity-50"
       >
        {submitting ? (
         <Loader2 size={14} className="animate-spin" />
@@ -367,7 +367,7 @@ export default function ApprovalDetail({ approvalId, navigate }) {
        <button
         onClick={() => handleResolve("revision_requested")}
         disabled={submitting || !comment.trim()}
-        className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium bg-amber-600 text-white rounded-md hover:bg-amber-700 transition-colors disabled:opacity-50"
+        className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium bg-amber-600 text-white hover:bg-amber-700 transition-colors disabled:opacity-50"
        >
         {submitting ? (
          <Loader2 size={14} className="animate-spin" />
@@ -380,7 +380,7 @@ export default function ApprovalDetail({ approvalId, navigate }) {
       <button
        onClick={() => handleResolve("rejected")}
        disabled={submitting || (!isIssue && !comment.trim())}
-       className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors disabled:opacity-50"
+       className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium bg-red-600 text-white hover:bg-red-700 transition-colors disabled:opacity-50"
       >
        {submitting ? (
         <Loader2 size={14} className="animate-spin" />

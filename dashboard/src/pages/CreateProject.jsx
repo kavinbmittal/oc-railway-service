@@ -183,7 +183,7 @@ export default function CreateProject({ navigate }) {
      <button
       type="submit"
       disabled={submitting || !name.trim() || !mission.trim()}
-      className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium bg-foreground text-background rounded-md hover:bg-foreground/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+      className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium bg-foreground text-background hover:bg-foreground/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
      >
       {submitting ? (
        <Loader2 size={14} className="animate-spin" />
