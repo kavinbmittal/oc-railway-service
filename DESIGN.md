@@ -11,11 +11,11 @@
 - **Decoration level:** Minimal — zero decorative elements. No gradients, blobs, illustrations, or ornament. Every pixel conveys information.
 - **Mood:** A control surface. Serious, dense, trustworthy. Closer to a Bloomberg terminal than a Notion doc. The dashboard communicates authority through restraint — it doesn't need to sell you on anything.
 - **Reference sites:** Paperclip (same category), Linear (density/hierarchy), Vercel dashboard (dark-mode restraint).
-- **Zoom:** `html { zoom: 1.2 }` — 20% larger globally for readability on desktop.
+- **Zoom:** Removed. Base font-size set to `19.2px` on body (equivalent to 16px × 1.2) to avoid scroll calculation issues caused by CSS zoom.
 
 ## Typography
 - **Display/Hero:** System sans (`-apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, sans-serif`) — native feel on Mac, zero loading overhead.
-- **Body:** System sans (same stack). `text-[14px]` for most UI text, `text-[13px]` for sidebar items, breadcrumbs, and secondary cells.
+- **Body:** System sans (same stack). `text-[14px]` for most UI text, `text-[15px]` for sidebar items, breadcrumbs, buttons, tabs, and secondary cells.
 - **UI/Labels:** System mono (`"SF Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas`) for micro-labels: `text-[11px] uppercase tracking-[0.15em] font-mono`. This is the signature typographic choice — military/industrial micro-labels.
 - **Data/Tables:** System mono with `tabular-nums` for all numbers, budgets, costs, timestamps, issue counts.
 - **Code:** Same mono stack. `text-xs` (12px) for inline code, `text-sm` for code blocks.
@@ -27,7 +27,7 @@
   - Micro-label: `text-[11px] uppercase tracking-[0.15em] font-mono text-muted-foreground` — table column headers, metric labels, form labels, sidebar section labels
   - Body: `text-[14px]`
   - Small: `text-[12px]`
-  - Breadcrumb/secondary: `text-[13px]`
+  - Breadcrumb/secondary: `text-[15px]`
 
 ## Color
 - **Approach:** Restrained — achromatic base with semantic-only accent colors. No brand color. No decorative color.
@@ -113,16 +113,16 @@
 
 ### Breadcrumbs
 - Separator: `›` in `text-muted-foreground/40`
-- Current page: `text-[13px] font-semibold text-foreground`
-- Ancestor links: `text-[13px] text-muted-foreground hover:text-foreground`
+- Current page: `text-[15px] font-semibold text-foreground`
+- Ancestor links: `text-[15px] text-muted-foreground hover:text-foreground`
 
 ### Forms
 - Labels: `text-[11px] uppercase font-mono tracking-[0.15em] text-muted-foreground mb-2 block`
 - Inputs: `rounded-[6px] border border-border bg-background text-[14px] px-3 py-2 focus:ring-[3px] focus:ring-ring/50`
 - Selects: same as inputs with `appearance-none` and chevron overlay
 - Helper text: `text-[12px] text-muted-foreground mt-1.5`
-- Cancel button: `rounded-[6px] border border-border bg-card text-[13px] font-medium text-muted-foreground hover:bg-accent`
-- Submit button: `rounded-[6px] border border-emerald-500/50 bg-emerald-500/10 text-[13px] font-medium text-emerald-300 hover:bg-emerald-500/20`
+- Cancel button: `rounded-[6px] border border-border bg-card text-[15px] font-medium text-muted-foreground hover:bg-accent`
+- Submit button: `rounded-[6px] border border-emerald-500/50 bg-emerald-500/10 text-[15px] font-medium text-emerald-300 hover:bg-emerald-500/20`
 
 ### Tables
 - Container: `w-full text-left border-collapse whitespace-nowrap`
@@ -135,7 +135,7 @@
 - Brand header: `h-[60px] border-b border-border`
 - Nav container: `p-4 space-y-6`
 - Section labels: `text-[11px] font-mono uppercase tracking-[0.15em] text-muted-foreground mb-2 px-2`
-- Nav items: `px-2 py-1.5 rounded-[6px] text-[13px] font-medium`
+- Nav items: `px-2 py-1.5 rounded-[6px] text-[15px] font-medium`
 - Active: `bg-accent/60 text-foreground`
 - Inactive: `text-muted-foreground hover:bg-accent/40 hover:text-foreground`
 
@@ -150,12 +150,12 @@
 - Type badge: `rounded-full px-2.5 py-0.5 text-[11px] font-normal border` with semantic colors
 - Description: `text-[14px] text-foreground flex-1 truncate`
 - Timestamp: `text-[12px] font-mono text-muted-foreground`
-- Approve button: `rounded-[6px] border border-emerald-500/30 bg-emerald-500/10 text-[13px] text-emerald-400`
-- Reject button: `rounded-[6px] border border-red-500/30 bg-red-500/10 text-[13px] text-red-400`
+- Approve button: `rounded-[6px] border border-emerald-500/30 bg-emerald-500/10 text-[15px] text-emerald-400`
+- Reject button: `rounded-[6px] border border-red-500/30 bg-red-500/10 text-[15px] text-red-400`
 
 ### Detail Page Headers
 - Entity name: `text-[30px] font-semibold text-foreground leading-none tracking-tight`
-- Metadata line: `text-[13px] text-muted-foreground` with `·` separators
+- Metadata line: `text-[15px] text-muted-foreground` with `·` separators
 - Status badge inline with title
 
 ### Page Headers (List Pages)
@@ -196,3 +196,5 @@
 | 2026-03-22 | 20% global zoom (`html { zoom: 1.2 }`) | Desktop readability. Everything renders 20% larger |
 | 2026-03-22 | Sticky page headers with backdrop blur | `bg-background/80 backdrop-blur-sm` keeps context while scrolling |
 | 2026-03-22 | `max-w-4xl` for forms, `max-w-6xl` for details, `max-w-[1400px]` for lists | Content width varies by page density needs |
+| 2026-03-23 | Removed `html { zoom: 1.2 }`, set `body { font-size: 19.2px }` | CSS zoom broke scroll calculations on detail pages, clipping bottom content |
+| 2026-03-23 | Bumped all `text-[13px]` to `text-[15px]` | Sidebar, breadcrumbs, buttons, tabs, metadata, secondary text — all up 2px for readability |
