@@ -1,0 +1,27 @@
+{
+  "id": "theme-first-10-customers",
+  "title": "First 10 Customers",
+  "description": "Get Lia's first 10 paying customers through experiments and partnerships.",
+  "status": "approved",
+  "proposed_by": "kavin",
+  "proposed_at": "2026-03-22T15:00:00Z",
+  "resolved_at": "2026-03-22T15:00:00Z",
+  "resolved_by": "kavin",
+  "proxy_metrics": [
+    {
+      "id": "pm-weekly-signups",
+      "name": "Weekly signups",
+      "description": "Number of new Lia signups per week"
+    },
+    {
+      "id": "pm-7day-retention",
+      "name": "7-day retention rate",
+      "description": "Percentage of customers still active 7 days after signup"
+    },
+    {
+      "id": "pm-best-channel-conversion",
+      "name": "Best channel conversion rate",
+      "description": "Highest click-to-signup conversion rate across active channels"
+    }
+  ]
+}

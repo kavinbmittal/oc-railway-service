@@ -1,0 +1,27 @@
+{
+  "id": "theme-growth-engine-ops",
+  "title": "Growth Engine Operations",
+  "description": "Growth engine operational — Leslie posting autonomously, measuring via Supabase, running experiments.",
+  "status": "approved",
+  "proposed_by": "kavin",
+  "proposed_at": "2026-03-22T15:00:00Z",
+  "resolved_at": "2026-03-22T15:00:00Z",
+  "resolved_by": "kavin",
+  "proxy_metrics": [
+    {
+      "id": "pm-content-published-weekly",
+      "name": "Content pieces published per week",
+      "description": "Number of content pieces published across all channels per week"
+    },
+    {
+      "id": "pm-experiment-velocity",
+      "name": "Experiment velocity",
+      "description": "New experiments launched per week"
+    },
+    {
+      "id": "pm-partnership-targets",
+      "name": "Partnership targets researched",
+      "description": "Number of partnership targets researched and added to pipeline"
+    }
+  ]
+}

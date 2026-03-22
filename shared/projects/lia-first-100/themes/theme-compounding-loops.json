@@ -1,0 +1,27 @@
+{
+  "id": "theme-compounding-loops",
+  "title": "Compounding Loops",
+  "description": "Compounding loops driving autonomous growth to 1,000 paying customers.",
+  "status": "approved",
+  "proposed_by": "kavin",
+  "proposed_at": "2026-03-22T15:00:00Z",
+  "resolved_at": "2026-03-22T15:00:00Z",
+  "resolved_by": "kavin",
+  "proxy_metrics": [
+    {
+      "id": "pm-referral-rate",
+      "name": "Referral rate",
+      "description": "Percentage of customers who refer at least one other person"
+    },
+    {
+      "id": "pm-organic-traffic-mom",
+      "name": "Organic traffic MoM growth",
+      "description": "Month-over-month percentage growth in organic search traffic"
+    },
+    {
+      "id": "pm-experiment-throughput",
+      "name": "Experiment throughput",
+      "description": "New experiments launched per week at scale"
+    }
+  ]
+}

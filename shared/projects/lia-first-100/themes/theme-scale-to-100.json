@@ -1,0 +1,27 @@
+{
+  "id": "theme-scale-to-100",
+  "title": "Scale to 100",
+  "description": "Hit 100 paying customers by scaling winning channels and partnerships.",
+  "status": "approved",
+  "proposed_by": "kavin",
+  "proposed_at": "2026-03-22T15:00:00Z",
+  "resolved_at": "2026-03-22T15:00:00Z",
+  "resolved_by": "kavin",
+  "proxy_metrics": [
+    {
+      "id": "pm-wow-growth-rate",
+      "name": "Week-over-week growth rate",
+      "description": "Percentage growth in paying customers week over week"
+    },
+    {
+      "id": "pm-2week-retention",
+      "name": "2-week retention rate",
+      "description": "Percentage of customers still active 14 days after signup"
+    },
+    {
+      "id": "pm-proven-channels",
+      "name": "Proven channels",
+      "description": "Number of channels converting above 2% click-to-signup"
+    }
+  ]
+}
