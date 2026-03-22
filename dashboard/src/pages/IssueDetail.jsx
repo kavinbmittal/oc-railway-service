@@ -382,7 +382,7 @@ export default function IssueDetail({ projectSlug, issueId, navigate }) {
      {/* Actions Card — Aura: p-4 with edit + delete buttons */}
      <div className="bg-app-card border border-zinc-800 rounded-sm shadow-sm p-4 space-y-2">
       <button
-       onClick={() => setEditingTitle(true)}
+       onClick={() => navigate("edit-issue", { slug: projectSlug, issueId })}
        className="w-full py-2 rounded-sm border border-zinc-700 bg-zinc-800 text-sm font-medium text-zinc-200 hover:bg-zinc-700 transition-colors flex items-center justify-center gap-2"
       >
        <Pencil size={14} />

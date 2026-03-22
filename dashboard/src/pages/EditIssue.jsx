@@ -1,0 +1,480 @@
+/**
+ * EditIssue — form page for editing an existing issue.
+ * UI classes ported directly from Aura HTML reference.
+ */
+import { useState, useEffect, useRef } from "react";
+import { getIssue, updateIssue, deleteIssue, getThemes } from "../api.js";
+import { AGENTS } from "../components/AssigneeSelect.jsx";
+import { ALL_PRIORITIES } from "../components/PriorityIcon.jsx";
+import { formatTimeAgo } from "../utils/formatDate.js";
+
+// Status badge color map matching Aura HTML
+const STATUS_COLORS = {
+  proposed: "border-violet-500/30 bg-violet-500/10 text-violet-400",
+  backlog: "border-zinc-700/50 bg-zinc-800/50 text-zinc-400",
+  todo: "border-blue-500/30 bg-blue-500/10 text-blue-400",
+  in_progress: "border-blue-500/30 bg-blue-500/10 text-blue-400",
+  in_review: "border-violet-500/30 bg-violet-500/10 text-violet-400",
+  blocked: "border-red-500/30 bg-red-500/10 text-red-400",
+  done: "border-emerald-500/30 bg-emerald-500/10 text-emerald-400",
+  cancelled: "border-zinc-700/50 bg-zinc-800/50 text-zinc-400",
+};
+const STATUS_DOT = {
+  proposed: "bg-violet-400",
+  backlog: "bg-zinc-400",
+  todo: "bg-blue-400",
+  in_progress: "bg-blue-400 animate-pulse",
+  in_review: "bg-violet-400",
+  blocked: "bg-red-400",
+  done: "bg-emerald-400",
+  cancelled: "bg-zinc-400",
+};
+
+export default function EditIssue({ projectSlug, issueId, navigate }) {
+  // Form state
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [priority, setPriority] = useState("none");
+  const [assignee, setAssignee] = useState("");
+  const [theme, setTheme] = useState("");
+  const [selectedMetrics, setSelectedMetrics] = useState(new Set());
+  const [labels, setLabels] = useState("");
+  const [status, setStatus] = useState("");
+
+  // Data state
+  const [themes, setThemes] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [hasChanges, setHasChanges] = useState(false);
+
+  // Original values for change detection
+  const originalRef = useRef(null);
+
+  useEffect(() => {
+    setLoading(true);
+    Promise.all([
+      getIssue(issueId, projectSlug),
+      getThemes(projectSlug).catch(() => []),
+    ])
+      .then(([issue, themeList]) => {
+        setTitle(issue.title || "");
+        setDescription(issue.description || "");
+        setPriority(issue.priority || "none");
+        setAssignee(issue.assignee || "");
+        setTheme(issue.theme || "");
+        setStatus(issue.status || "");
+        setLabels((issue.labels || []).join(", "));
+        const metricIds = (issue.proxy_metrics || []).map((pm) =>
+          typeof pm === "string" ? pm : pm.id
+        );
+        setSelectedMetrics(new Set(metricIds));
+        setThemes(themeList);
+
+        originalRef.current = {
+          title: issue.title || "",
+          description: issue.description || "",
+          priority: issue.priority || "none",
+          assignee: issue.assignee || "",
+          theme: issue.theme || "",
+          labels: (issue.labels || []).join(", "),
+          metrics: new Set(metricIds),
+          updated: issue.updated,
+        };
+      })
+      .catch((err) => console.error("Failed to load issue:", err))
+      .finally(() => setLoading(false));
+  }, [issueId, projectSlug]);
+
+  // Track changes against original values
+  useEffect(() => {
+    if (!originalRef.current) return;
+    const o = originalRef.current;
+    const metricsChanged =
+      selectedMetrics.size !== o.metrics.size ||
+      [...selectedMetrics].some((m) => !o.metrics.has(m));
+    const changed =
+      title !== o.title ||
+      description !== o.description ||
+      priority !== o.priority ||
+      assignee !== o.assignee ||
+      theme !== o.theme ||
+      labels !== o.labels ||
+      metricsChanged;
+    setHasChanges(changed);
+  }, [title, description, priority, assignee, theme, selectedMetrics, labels]);
+
+  // Get proxy metrics for the currently selected theme
+  const currentTheme = themes.find((t) => t.id === theme || t.title === theme);
+  const themeMetrics = currentTheme
+    ? (currentTheme.proxy_metrics || []).sort(
+        (a, b) => (a.order ?? 999) - (b.order ?? 999)
+      )
+    : [];
+
+  // When theme changes, reset selected metrics
+  function handleThemeChange(newTheme) {
+    setTheme(newTheme);
+    setSelectedMetrics(new Set());
+  }
+
+  function toggleMetric(metricId) {
+    setSelectedMetrics((prev) => {
+      const next = new Set(prev);
+      if (next.has(metricId)) next.delete(metricId);
+      else next.add(metricId);
+      return next;
+    });
+  }
+
+  async function handleSave() {
+    if (!hasChanges || saving) return;
+    setSaving(true);
+    try {
+      await updateIssue(issueId, projectSlug, {
+        title,
+        description,
+        priority,
+        assignee: assignee || null,
+        theme: theme || null,
+        proxy_metrics: [...selectedMetrics],
+        labels: labels
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean),
+      });
+      navigate("issue-detail", { projectSlug, issueId });
+    } catch (err) {
+      console.error("Failed to save issue:", err);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleDelete() {
+    if (!window.confirm("Are you sure you want to delete this issue? This action cannot be undone.")) return;
+    setDeleting(true);
+    try {
+      await deleteIssue(issueId, projectSlug);
+      navigate("project-tab", { slug: projectSlug, tab: "issues" });
+    } catch (err) {
+      console.error("Failed to delete issue:", err);
+    } finally {
+      setDeleting(false);
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex flex-col h-full">
+        <header className="sticky top-0 z-10 px-8 py-8 border-b border-zinc-800 shrink-0 bg-[#09090b] flex flex-col gap-4">
+          <div className="text-sm text-zinc-400 tracking-wide flex items-center flex-wrap">
+            <span className="text-zinc-500">Loading...</span>
+          </div>
+          <div className="flex items-end gap-3">
+            <h1 className="text-3xl font-semibold text-zinc-100 leading-none tracking-tight">Edit Issue</h1>
+          </div>
+        </header>
+        <div className="flex-1 overflow-y-auto p-8">
+          <div className="max-w-[800px] mx-auto w-full bg-[#121214] border border-zinc-800 rounded-sm shadow-sm p-5">
+            <div className="animate-pulse space-y-4">
+              <div className="h-4 bg-zinc-800 rounded w-1/3"></div>
+              <div className="h-10 bg-zinc-800 rounded"></div>
+              <div className="h-4 bg-zinc-800 rounded w-1/4"></div>
+              <div className="h-32 bg-zinc-800 rounded"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const statusLabel = (status || "unknown").replace(/_/g, " ");
+  const statusColors = STATUS_COLORS[status] || "border-zinc-700/50 bg-zinc-800/50 text-zinc-400";
+  const statusDot = STATUS_DOT[status] || "bg-zinc-400";
+  const approvedThemes = themes.filter((t) => t.status === "approved").sort((a, b) => (a.order ?? 999) - (b.order ?? 999));
+
+  return (
+    <div className="flex flex-col h-full">
+      {/* Sticky Page Header */}
+      <header className="sticky top-0 z-10 px-8 py-8 border-b border-zinc-800 shrink-0 bg-[#09090b] flex flex-col gap-4">
+        {/* Breadcrumb */}
+        <div className="text-sm text-zinc-400 tracking-wide flex items-center flex-wrap">
+          <a
+            href="#/overview"
+            onClick={(e) => { e.preventDefault(); navigate("overview"); }}
+            className="hover:text-zinc-200 transition-colors"
+          >
+            Projects
+          </a>
+          <span className="mx-2 text-zinc-600">&rsaquo;</span>
+          <a
+            href={`#/projects/${projectSlug}`}
+            onClick={(e) => { e.preventDefault(); navigate("project", projectSlug); }}
+            className="hover:text-zinc-200 transition-colors capitalize"
+          >
+            {projectSlug}
+          </a>
+          <span className="mx-2 text-zinc-600">&rsaquo;</span>
+          <a
+            href={`#/projects/${projectSlug}/issues`}
+            onClick={(e) => { e.preventDefault(); navigate("project-tab", { slug: projectSlug, tab: "issues" }); }}
+            className="hover:text-zinc-200 transition-colors"
+          >
+            Issues
+          </a>
+          <span className="mx-2 text-zinc-600">&rsaquo;</span>
+          <a
+            href={`#/projects/${projectSlug}/issues/${issueId}`}
+            onClick={(e) => { e.preventDefault(); navigate("issue-detail", { projectSlug, issueId }); }}
+            className="text-zinc-300 hover:text-zinc-100 transition-colors font-mono"
+          >
+            {issueId}
+          </a>
+          <span className="mx-2 text-zinc-600">&rsaquo;</span>
+          <span className="text-zinc-100 font-medium">Edit</span>
+        </div>
+
+        {/* Title Area */}
+        <div className="flex items-end gap-3">
+          <h1 className="text-3xl font-semibold text-zinc-100 leading-none tracking-tight">Edit Issue</h1>
+          <span className="text-sm font-mono text-zinc-500 mb-0.5">{issueId}</span>
+        </div>
+      </header>
+
+      {/* Scrollable Content */}
+      <div className="flex-1 overflow-y-auto p-8">
+        {/* Form Card */}
+        <form
+          className="max-w-[800px] mx-auto w-full bg-[#121214] border border-zinc-800 rounded-sm shadow-sm flex flex-col relative overflow-hidden"
+          onSubmit={(e) => { e.preventDefault(); handleSave(); }}
+        >
+          {/* Subtle top highlight */}
+          <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-zinc-700/50 to-transparent"></div>
+
+          {/* Card Header */}
+          <div className="p-5 border-b border-zinc-800 flex items-center justify-between bg-[#121214]">
+            <h2 className="text-sm font-semibold text-zinc-100 tracking-tight">Issue Details</h2>
+            <span className={`px-2.5 py-1 rounded-full text-xs font-medium border ${statusColors} flex items-center gap-1.5 shadow-sm`}>
+              <span className={`w-1.5 h-1.5 rounded-full ${statusDot}`}></span>
+              {statusLabel.charAt(0).toUpperCase() + statusLabel.slice(1)}
+            </span>
+          </div>
+
+          {/* Form Body */}
+          <div className="p-5 space-y-6">
+            {/* Title Field */}
+            <div>
+              <label className="block text-xs font-medium text-zinc-400 mb-2">Title</label>
+              <input
+                type="text"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                className="w-full bg-[#09090b] border border-zinc-800 rounded-md px-3 py-2 text-sm text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-600 focus:ring-1 focus:ring-zinc-600 outline-none transition-colors shadow-sm"
+                placeholder="Issue title"
+              />
+            </div>
+
+            {/* Description Field with Markdown Toolbar */}
+            <div>
+              <label className="block text-xs font-medium text-zinc-400 mb-2">Description</label>
+              <div className="border border-zinc-800 rounded-md overflow-hidden shadow-sm focus-within:border-zinc-600 focus-within:ring-1 focus-within:ring-zinc-600 transition-all bg-[#09090b]">
+                {/* Toolbar */}
+                <div className="bg-zinc-900/50 border-b border-zinc-800 px-3 py-1.5 flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => setDescription((d) => d + "**bold**")}
+                    className="p-1 text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800 rounded transition-colors flex items-center justify-center"
+                    title="Bold"
+                  >
+                    <span className="text-xs font-bold">B</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setDescription((d) => d + "*italic*")}
+                    className="p-1 text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800 rounded transition-colors flex items-center justify-center"
+                    title="Italic"
+                  >
+                    <span className="text-xs italic">I</span>
+                  </button>
+                  <div className="w-[1px] h-4 bg-zinc-700 mx-1"></div>
+                  <button
+                    type="button"
+                    onClick={() => setDescription((d) => d + "[link](url)")}
+                    className="p-1 text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800 rounded transition-colors flex items-center justify-center"
+                    title="Link"
+                  >
+                    <span className="text-xs">🔗</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setDescription((d) => d + "`code`")}
+                    className="p-1 text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800 rounded transition-colors flex items-center justify-center"
+                    title="Code"
+                  >
+                    <span className="text-xs font-mono">&lt;/&gt;</span>
+                  </button>
+                </div>
+                {/* Textarea */}
+                <textarea
+                  rows="6"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  className="w-full bg-transparent px-3 py-2 text-sm text-zinc-200 placeholder:text-zinc-600 outline-none resize-y min-h-[120px]"
+                  placeholder="Describe the issue..."
+                />
+              </div>
+            </div>
+
+            {/* Two-column row: Priority & Assignee */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Priority */}
+              <div>
+                <label className="block text-xs font-medium text-zinc-400 mb-2">Priority</label>
+                <select
+                  value={priority}
+                  onChange={(e) => setPriority(e.target.value)}
+                  className="w-full bg-[#09090b] border border-zinc-800 rounded-md px-3 py-2 text-sm text-zinc-200 shadow-sm hover:border-zinc-700 transition-colors focus:border-zinc-600 focus:ring-1 focus:ring-zinc-600 outline-none"
+                >
+                  {ALL_PRIORITIES.map((p) => (
+                    <option key={p} value={p}>
+                      {p.charAt(0).toUpperCase() + p.slice(1)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Assignee */}
+              <div>
+                <label className="block text-xs font-medium text-zinc-400 mb-2">Assignee</label>
+                <select
+                  value={assignee}
+                  onChange={(e) => setAssignee(e.target.value)}
+                  className="w-full bg-[#09090b] border border-zinc-800 rounded-md px-3 py-2 text-sm text-zinc-200 shadow-sm hover:border-zinc-700 transition-colors focus:border-zinc-600 focus:ring-1 focus:ring-zinc-600 outline-none"
+                >
+                  <option value="">Unassigned</option>
+                  {AGENTS.map((a) => (
+                    <option key={a.id} value={a.id}>
+                      {a.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* Theme */}
+            <div className="w-full md:w-1/2 pr-0 md:pr-3">
+              <label className="block text-xs font-medium text-zinc-400 mb-2">Theme</label>
+              <select
+                value={theme}
+                onChange={(e) => handleThemeChange(e.target.value)}
+                className="w-full bg-[#09090b] border border-zinc-800 rounded-md px-3 py-2 text-sm text-zinc-200 shadow-sm hover:border-zinc-700 transition-colors focus:border-zinc-600 focus:ring-1 focus:ring-zinc-600 outline-none"
+              >
+                <option value="">No theme</option>
+                {approvedThemes.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.title}
+                  </option>
+                ))}
+              </select>
+              <p className="text-xs text-zinc-500 mt-2">Tag this issue to a strategic theme</p>
+            </div>
+
+            {/* Proxy Metrics */}
+            {themeMetrics.length > 0 && (
+              <div>
+                <label className="block text-xs font-medium text-zinc-400 mb-2">Proxy Metrics</label>
+                <div className="space-y-2">
+                  {themeMetrics.map((metric, idx) => {
+                    const isChecked = selectedMetrics.has(metric.id);
+                    const letter = String.fromCharCode(65 + idx); // A, B, C...
+                    return (
+                      <label
+                        key={metric.id}
+                        className="flex items-center gap-3 p-2.5 rounded-md border border-zinc-800 bg-[#09090b] hover:border-zinc-700 cursor-pointer transition-colors group shadow-sm"
+                        onClick={() => toggleMetric(metric.id)}
+                      >
+                        {isChecked ? (
+                          <div className="relative flex items-center justify-center w-4 h-4 rounded border border-indigo-500 bg-indigo-500 text-white shrink-0">
+                            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <polyline points="2,6 5,9 10,3" />
+                            </svg>
+                          </div>
+                        ) : (
+                          <div className="relative flex items-center justify-center w-4 h-4 rounded border border-zinc-600 bg-transparent group-hover:border-zinc-500 shrink-0 transition-colors"></div>
+                        )}
+                        <span className="w-5 h-5 shrink-0 rounded bg-zinc-800/50 border border-zinc-700/50 flex items-center justify-center text-xs font-mono text-zinc-500">
+                          {letter}
+                        </span>
+                        <span className={`text-sm ${isChecked ? "text-zinc-300" : "text-zinc-400"} group-hover:text-zinc-${isChecked ? "200" : "300"} transition-colors truncate`}>
+                          {metric.name}
+                        </span>
+                      </label>
+                    );
+                  })}
+                </div>
+                <p className="text-xs text-zinc-500 mt-2">Select which proxy metrics this issue impacts</p>
+              </div>
+            )}
+
+            {/* Labels */}
+            <div>
+              <label className="block text-xs font-medium text-zinc-400 mb-2">Labels</label>
+              <input
+                type="text"
+                value={labels}
+                onChange={(e) => setLabels(e.target.value)}
+                className="w-full bg-[#09090b] border border-zinc-800 rounded-md px-3 py-2 text-sm text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-600 focus:ring-1 focus:ring-zinc-600 outline-none transition-colors shadow-sm"
+                placeholder="e.g. infra, database, scaling"
+              />
+              <p className="text-xs text-zinc-500 mt-2">Optional tags for categorization</p>
+            </div>
+
+            {/* Danger Zone */}
+            <div className="pt-6 mt-6 border-t border-red-500/10">
+              <h3 className="text-xs font-medium text-red-400 mb-3">Danger Zone</h3>
+              <button
+                type="button"
+                onClick={handleDelete}
+                disabled={deleting}
+                className="px-4 py-2 rounded-md border border-red-500/20 bg-red-500/10 text-sm font-medium text-red-400 hover:bg-red-500/20 transition-colors flex items-center gap-2 outline-none focus:ring-2 focus:ring-red-500/30"
+              >
+                {deleting ? "Deleting..." : "Delete Issue"}
+              </button>
+            </div>
+          </div>
+
+          {/* Card Footer */}
+          <div className="p-5 border-t border-zinc-800 bg-[#121214] flex justify-between items-center">
+            <span className="text-xs text-zinc-500">
+              {originalRef.current?.updated
+                ? `Last updated ${formatTimeAgo(originalRef.current.updated)}`
+                : ""}
+            </span>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => navigate("issue-detail", { projectSlug, issueId })}
+                className="px-4 py-2 rounded-md border border-zinc-800 bg-[#121214] text-sm font-medium text-zinc-300 hover:bg-zinc-800 hover:text-white transition-colors shadow-sm outline-none focus:ring-2 focus:ring-zinc-700"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleSave}
+                disabled={!hasChanges || saving}
+                className={`px-4 py-2 rounded-md border border-emerald-500/50 bg-emerald-500/10 text-sm font-medium text-emerald-300 shadow-sm flex items-center gap-2 outline-none ${
+                  hasChanges && !saving
+                    ? "hover:bg-emerald-500/20 hover:border-emerald-400 transition-colors"
+                    : "opacity-50 cursor-not-allowed"
+                }`}
+              >
+                {saving ? "Saving..." : "Save Changes"}
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}

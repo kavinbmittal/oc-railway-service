@@ -14,6 +14,7 @@ import Costs from"./pages/Costs.jsx";
 import OrgChart from"./pages/OrgChart.jsx";
 import Workspaces from"./pages/Workspaces.jsx";
 import ExperimentDetail from"./pages/ExperimentDetail.jsx";
+import EditIssue from"./pages/EditIssue.jsx";
 
 /* ── Hash → state parser ──────────────────────────────────────────── */
 function parseHash(hash) {
@@ -56,6 +57,14 @@ function parseHash(hash) {
      experimentContext: { projectSlug: slug, experimentDir: parts[3] },
     };
    }
+   // #/projects/{slug}/issues/{id}/edit
+   if (parts[2] ==="issues" && parts[3] && parts[4] ==="edit") {
+    return {
+     page:"edit-issue",
+     selectedProject: slug,
+     issueContext: { projectSlug: slug, issueId: parts[3] },
+    };
+   }
    // #/projects/{slug}/issues/{id}
    if (parts[2] ==="issues" && parts[3]) {
     return {
@@ -94,6 +103,9 @@ function buildHash(target, data) {
   case"experiment-detail":
    // data = { slug, dir }
    return `#/projects/${encodeURIComponent(data.slug)}/experiments/${encodeURIComponent(data.dir)}`;
+  case"edit-issue":
+   // data = { slug, issueId }
+   return `#/projects/${encodeURIComponent(data.slug)}/issues/${encodeURIComponent(data.issueId)}/edit`;
   case"issue-detail":
    // data = { projectSlug, issueId }
    return `#/projects/${data.projectSlug}/issues/${data.issueId}`;
@@ -167,13 +179,20 @@ export default function App() {
     <Sidebar page={page} selectedProject={selectedProject} navigate={navigate} refreshKey={refreshKey} />
     <div className="flex min-w-0 flex-col h-full flex-1">
      {/* Detail pages manage their own padding and scrolling for sticky headers */}
-     {(page ==="approval-detail" || page ==="issue-detail" || page ==="experiment-detail" || page ==="agent-detail" || page ==="project" || page ==="create-project") ? (
+     {(page ==="approval-detail" || page ==="issue-detail" || page ==="edit-issue" || page ==="experiment-detail" || page ==="agent-detail" || page ==="project" || page ==="create-project") ? (
       <main className="flex-1 overflow-hidden flex flex-col">
        {page ==="approval-detail" && approvalId && (
         <ApprovalDetail approvalId={approvalId} navigate={navigate} />
        )}
        {page ==="issue-detail" && issueContext && (
         <IssueDetail
+         projectSlug={issueContext.projectSlug}
+         issueId={issueContext.issueId}
+         navigate={navigate}
+        />
+       )}
+       {page ==="edit-issue" && issueContext && (
+        <EditIssue
          projectSlug={issueContext.projectSlug}
          issueId={issueContext.issueId}
          navigate={navigate}
