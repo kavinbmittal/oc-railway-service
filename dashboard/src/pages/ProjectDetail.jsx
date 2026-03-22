@@ -310,15 +310,24 @@ export default function ProjectDetail({ projectId, navigate, initialTab }) {
           <div className="p-5 flex flex-col gap-4">
            <div className="flex justify-between items-center">
             <span className="text-xs font-mono uppercase tracking-widest text-zinc-500">Status</span>
-            <span className="text-sm text-zinc-200">{project.status || "Unknown"}</span>
+            <span className="text-sm text-zinc-200 capitalize">{project.status || "Unknown"}</span>
            </div>
            <div className="flex justify-between items-center">
             <span className="text-xs font-mono uppercase tracking-widest text-zinc-500">Lead</span>
-            <span className="text-sm text-zinc-200">{project.lead || "Unassigned"}</span>
+            <a href={`#/agents/workspace-${(project.lead || "").toLowerCase()}`} className="text-sm text-indigo-400 hover:text-indigo-300 transition-colors flex items-center gap-2">
+             <div className="w-5 h-5 rounded-full bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center text-xs font-medium text-indigo-300">
+              {(project.lead || "?")[0].toUpperCase()}
+             </div>
+             {project.lead || "Unassigned"}
+            </a>
+           </div>
+           <div className="flex justify-between items-start">
+            <span className="text-xs font-mono uppercase tracking-widest text-zinc-500 shrink-0 mt-0.5">Budget</span>
+            <span className="text-sm text-zinc-200 text-right ml-4">{project.budget || "None"}</span>
            </div>
            <div className="flex justify-between items-center">
-            <span className="text-xs font-mono uppercase tracking-widest text-zinc-500">Budget</span>
-            <span className="text-sm text-zinc-200">{project.budget || "None"}</span>
+            <span className="text-xs font-mono uppercase tracking-widest text-zinc-500">Created</span>
+            <span className="text-sm text-zinc-200">{project.created || "—"}</span>
            </div>
           </div>
          </div>
