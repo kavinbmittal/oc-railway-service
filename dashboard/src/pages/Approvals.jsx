@@ -211,9 +211,9 @@ export default function Approvals({ navigate }) {
       </div>
      ) : (
       grouped.map(([project, items]) => (
-       <div key={project}>
+       <div key={project} className="bg-[#121214] border border-zinc-800 rounded-[2px] shadow-[0_2px_8px_rgba(0,0,0,0.3)]">
         {/* Group Header */}
-        <div className="flex items-center gap-3 px-5 py-3 mb-3 bg-[#121214] border border-zinc-800 rounded-[2px]">
+        <div className="flex items-center gap-3 px-5 py-3 border-b border-zinc-800">
          <div className="w-6 h-6 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
           <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
          </div>
@@ -228,8 +228,8 @@ export default function Approvals({ navigate }) {
          </span>
         </div>
 
-        {/* Approval Cards — exact same rendering as ProjectApprovalsTab */}
-        <div className="space-y-4">
+        {/* Approval Cards — nested inside project card */}
+        <div className="p-4 space-y-3">
          {items.map((approval) => {
           const isPending = !approval.status || approval.status === "pending" || approval.status === "proposed";
           const isRejected = approval.status === "rejected";
@@ -242,7 +242,7 @@ export default function Approvals({ navigate }) {
           return (
            <div
             key={approval.id || approval._file}
-            className={`bg-[#121214] border border-zinc-800 rounded-[2px] p-5 flex flex-col sm:flex-row justify-between sm:items-center gap-4 shadow-sm ${isRejected ? "opacity-60" : ""}`}
+            className={`bg-zinc-900/50 border border-zinc-800/60 rounded-[2px] p-5 flex flex-col sm:flex-row justify-between sm:items-center gap-4 ${isRejected ? "opacity-60" : ""}`}
             onClick={() => navigate && navigate("approval-detail", approval.id)}
            >
             <div className="space-y-2.5 cursor-pointer">
