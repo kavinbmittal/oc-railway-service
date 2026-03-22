@@ -87,49 +87,7 @@ export function CreateExperiment({ projectSlug, themes = [], onCreated, onClose 
       />
      </div>
 
-     {/* 3. Two-column: Primary Metric & Target Value — Aura */}
-     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <div>
-       <label className="block text-xs font-medium text-zinc-400 mb-2">Primary Metric</label>
-       <input
-        type="text"
-        value={primaryMetric}
-        onChange={(e) => setPrimaryMetric(e.target.value)}
-        placeholder="e.g. CPU utilization %"
-        className="w-full bg-transparent border border-zinc-800 rounded-md px-3 py-2 text-sm text-zinc-200 placeholder:text-zinc-600 focus:outline-none focus:border-zinc-600 focus:ring-1 focus:ring-zinc-600 transition-all"
-       />
-      </div>
-      <div>
-       <label className="block text-xs font-medium text-zinc-400 mb-2">Target Value</label>
-       <div className="relative">
-        <input
-         type="text"
-         value={targetValue}
-         onChange={(e) => setTargetValue(e.target.value)}
-         placeholder="e.g. -15"
-         className="w-full bg-transparent border border-zinc-800 rounded-md pl-3 pr-8 py-2 text-sm text-zinc-200 placeholder:text-zinc-600 focus:outline-none focus:border-zinc-600 focus:ring-1 focus:ring-zinc-600 transition-all"
-        />
-        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 text-sm font-medium">%</span>
-       </div>
-      </div>
-     </div>
-
-     {/* 4. Experiment Program — Aura: textarea with helper */}
-     <div>
-      <label className="block text-xs font-medium text-zinc-400 mb-2">Experiment Program</label>
-      <textarea
-       value={programMd}
-       onChange={(e) => setProgramMd(e.target.value)}
-       rows={6}
-       placeholder="Describe the experiment methodology, variables, and success criteria. Markdown supported."
-       className="w-full bg-transparent border border-zinc-800 rounded-md px-3 py-2 text-sm text-zinc-200 placeholder:text-zinc-600 focus:outline-none focus:border-zinc-600 focus:ring-1 focus:ring-zinc-600 transition-all resize-y font-mono leading-relaxed"
-      />
-      <p className="text-[12px] text-zinc-500 mt-2">
-       This becomes the experiment's program.md — the source of truth for what to test and how.
-      </p>
-     </div>
-
-     {/* 5. Theme — Aura */}
+     {/* 3. Theme — moved above metrics */}
      {themes.length > 0 && (
       <div>
        <label className="block text-xs font-medium text-zinc-400 mb-2">Theme</label>
@@ -152,6 +110,61 @@ export function CreateExperiment({ projectSlug, themes = [], onCreated, onClose 
       </div>
      )}
 
+     {/* 4. Two-column: Proxy Metric & Target Value — Aura */}
+     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div>
+       <label className="block text-xs font-medium text-zinc-400 mb-2">Proxy Metric</label>
+       <div className="relative group w-full">
+        <select
+         value={primaryMetric}
+         onChange={(e) => setPrimaryMetric(e.target.value)}
+         className="w-full bg-transparent border border-zinc-800 rounded-md px-3 py-2 text-sm text-zinc-200 pr-10 focus:outline-none focus:border-zinc-600 focus:ring-1 focus:ring-zinc-600 transition-all cursor-pointer appearance-none"
+        >
+         <option value="">Select a metric...</option>
+         <option value="CPU utilization %">CPU utilization %</option>
+         <option value="Memory usage %">Memory usage %</option>
+         <option value="Request latency (p95)">Request latency (p95)</option>
+         <option value="Error rate %">Error rate %</option>
+         <option value="Throughput (req/s)">Throughput (req/s)</option>
+         <option value="Cost per query ($)">Cost per query ($)</option>
+         <option value="Cache hit rate %">Cache hit rate %</option>
+         <option value="Token usage">Token usage</option>
+        </select>
+        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-zinc-400">
+         <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+        </div>
+       </div>
+      </div>
+      <div>
+       <label className="block text-xs font-medium text-zinc-400 mb-2">Target Value</label>
+       <div className="relative">
+        <input
+         type="text"
+         value={targetValue}
+         onChange={(e) => setTargetValue(e.target.value)}
+         placeholder="e.g. -15"
+         className="w-full bg-transparent border border-zinc-800 rounded-md pl-3 pr-8 py-2 text-sm text-zinc-200 placeholder:text-zinc-600 focus:outline-none focus:border-zinc-600 focus:ring-1 focus:ring-zinc-600 transition-all"
+        />
+        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 text-sm font-medium">%</span>
+       </div>
+      </div>
+     </div>
+
+     {/* 5. Experiment Program — Aura: textarea with helper */}
+     <div>
+      <label className="block text-xs font-medium text-zinc-400 mb-2">Experiment Program</label>
+      <textarea
+       value={programMd}
+       onChange={(e) => setProgramMd(e.target.value)}
+       rows={6}
+       placeholder="Describe the experiment methodology, variables, and success criteria. Markdown supported."
+       className="w-full bg-transparent border border-zinc-800 rounded-md px-3 py-2 text-sm text-zinc-200 placeholder:text-zinc-600 focus:outline-none focus:border-zinc-600 focus:ring-1 focus:ring-zinc-600 transition-all resize-y font-mono leading-relaxed"
+      />
+      <p className="text-[12px] text-zinc-500 mt-2">
+       This becomes the experiment's program.md — the source of truth for what to test and how.
+      </p>
+     </div>
+
      {/* Metrics Preview — Aura: dashed border, conditional */}
      {primaryMetric && (
       <div className="mt-8 border border-dashed border-zinc-800 rounded-sm p-4 bg-zinc-900/10 relative overflow-hidden">
@@ -161,7 +174,7 @@ export function CreateExperiment({ projectSlug, themes = [], onCreated, onClose 
        </div>
        <div className="grid grid-cols-2 gap-4 relative">
         <div className="flex flex-col">
-         <div className="text-xs font-medium text-zinc-400 mb-1">Primary Metric</div>
+         <div className="text-xs font-medium text-zinc-400 mb-1">Proxy Metric</div>
          <div className="text-sm font-medium text-zinc-100">{primaryMetric}</div>
         </div>
         {targetValue && (
