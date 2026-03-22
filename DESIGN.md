@@ -50,7 +50,7 @@
 - **Scale:** `gap-0.5`(2) `gap-1`(4) `gap-2`(8) `gap-3`(12) `p-4`(16) `p-6`(24) `space-y-6`(24) between major sections
 - **Metric card gaps:** `gap-1 sm:gap-2` (4-8px) — intentionally tight
 - **Section spacing:** `space-y-6` (24px) between top-level sections
-- **Content padding:** `p-4 md:p-6` on main content area
+- **Content padding:** `p-6 md:p-8` on main content area
 - **Sidebar width:** `w-60` (240px) fixed
 
 ## Layout
@@ -80,9 +80,11 @@
 ## Component Patterns
 
 ### Cards
-- Default: `bg-card rounded-sm border border-border shadow-sm p-5` — full card background, soft corners, subtle shadow, generous padding
-- Elevated (primary status): `bg-card rounded-sm border border-border shadow-sm border-l-2 border-l-{color} bg-accent/20 p-5` — left accent border + tinted background. Use for the single most important section on a page (e.g., "Current Work" on agent detail).
+- Default: `bg-card rounded-sm border border-border shadow-sm` — full card background, soft corners, subtle shadow
+- Card with header: Section title inside `px-5 py-4 border-b border-border`, content below. Section headers are `text-sm font-semibold text-foreground` (not uppercase, not mono).
+- Elevated (primary status): `bg-card rounded-sm border border-border shadow-sm border-l-2 border-l-{color} bg-accent/20` — left accent border + tinted background. Use for the single most important section on a page (e.g., "Current Work" on agent detail).
 - Never more than one elevated card per view.
+- Table cells inside cards use `px-5 py-3.5` padding to align with card header padding.
 
 ### Status Badges
 - Pill shape: `rounded-full px-2.5 py-0.5 text-xs font-medium`
@@ -112,11 +114,12 @@
 - No zebra striping. Hover state is sufficient.
 
 ### Sidebar
+- Brand header: `h-[60px]` with `border-b border-border`, branded icon in `w-6 h-6 rounded-md`, title in `text-sm font-semibold tracking-wide`
 - Section labels: `text-[11px] uppercase tracking-widest font-mono text-muted-foreground/80`
-- Nav items: `text-[13px] font-medium` with `h-4 w-4` icons
+- Nav items: `text-[13px] font-medium rounded-md` with `h-4 w-4` icons
 - Active: `bg-accent text-foreground`
 - Hover: `bg-accent/50`
-- Project items: colored dot (`h-3.5 w-3.5 rounded-sm`) + name
+- Project items: colored dot (`h-3.5 w-3.5 rounded-sm`) + name, `rounded-md` on hover
 
 ## Anti-Patterns (Never Do)
 
@@ -149,3 +152,8 @@
 | 2026-03-22 | `bg-card` full opacity on cards | Upgraded from `bg-card/50`. Cards are now clearly distinct from page background. |
 | 2026-03-22 | `rounded-md` on buttons, inputs, dropdowns | Adopted from Paperclip. Soft interactive elements feel more polished. Cards stay `rounded-sm`. |
 | 2026-03-22 | Focus ring: 3px box-shadow at 50% opacity | Adopted from Paperclip. More polished than 1px outline. Uses ring color at half opacity. |
+| 2026-03-22 | Sections wrapped in cards with headers inside | Per Aura reference. Section title lives inside the card (px-5 py-4 border-b), not as standalone h3 above. |
+| 2026-03-22 | Table cell padding px-5 py-3.5 | Matches card header padding. More breathing room than px-4 py-3. |
+| 2026-03-22 | Main content padding p-6 md:p-8 | Bumped from p-4 md:p-6. Matches Aura's p-8 for generous spacing. |
+| 2026-03-22 | Sidebar nav items rounded-md | Per Aura reference. Softens nav items without being bubbly. |
+| 2026-03-22 | Sidebar brand header h-[60px] with border-b | Per Aura reference. Taller header with clear separation. |
