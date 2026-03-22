@@ -739,12 +739,14 @@ function ProjectApprovalsTab({ approvals, projectId, onResolved, navigate, theme
  // Find theme data for an approval
  function getApprovalThemeData(approval) {
   const allThemes = themes || [];
-  const expTheme = allThemes.find((t) => t.id === approval.theme);
+  const expTheme = allThemes.find((t) => t.id === approval.theme || t.title === approval.theme || t.id === approval.theme_id);
   if (!expTheme) return null;
-  const themeIdx = allThemes.indexOf(expTheme);
-  const themeColors = THEME_COLORS[themeIdx % THEME_COLORS.length];
-  const proxyMetric = expTheme.proxy_metrics?.find((pm) => pm.id === approval.proxy_metric);
-  const pmIdx = proxyMetric && expTheme.proxy_metrics ? expTheme.proxy_metrics.indexOf(proxyMetric) : -1;
+  const sortedThemes = allThemes.filter((t) => t.status === "approved").sort((a, b) => (a.order ?? 999) - (b.order ?? 999));
+  const themeIdx = sortedThemes.indexOf(expTheme);
+  const themeColors = THEME_COLORS[themeIdx >= 0 ? themeIdx % THEME_COLORS.length : 0];
+  const sortedPms = (expTheme.proxy_metrics || []).sort((a, b) => (a.order ?? 999) - (b.order ?? 999));
+  const proxyMetric = sortedPms.find((pm) => pm.id === approval.proxy_metric || pm.name === approval.proxy_metric || (approval.proxy_metrics && approval.proxy_metrics.some((apm) => (apm.id || apm) === pm.id)));
+  const pmIdx = proxyMetric ? sortedPms.indexOf(proxyMetric) : -1;
   return { expTheme, themeIdx, themeColors, proxyMetric, pmIdx };
  }
 
@@ -906,11 +908,11 @@ function ExperimentsTab({ experiments, themes = [], projectSlug, onRefresh, navi
      {/* Experiment cards — Aura: grid-cols-2, compact with hypothesis */}
      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
       {experiments.map((exp) => {
-       const expTheme = themes.find((t) => t.id === exp.theme);
-       const themeIdx = expTheme ? themes.indexOf(expTheme) : -1;
+       const expTheme = themes.find((t) => t.id === exp.theme || t.title === exp.theme);
+       const themeIdx = expTheme ? themes.filter((t) => t.status === "approved").sort((a, b) => (a.order ?? 999) - (b.order ?? 999)).indexOf(expTheme) : -1;
        const themeColors = themeIdx >= 0 ? THEME_COLORS[themeIdx % THEME_COLORS.length] : null;
-       const proxyMetric = expTheme?.proxy_metrics?.find((pm) => pm.id === exp.proxy_metric);
-       const pmIdx = proxyMetric && expTheme?.proxy_metrics ? expTheme.proxy_metrics.indexOf(proxyMetric) : -1;
+       const proxyMetric = expTheme?.proxy_metrics?.find((pm) => pm.id === exp.proxy_metric || pm.name === exp.proxy_metric);
+       const pmIdx = proxyMetric && expTheme?.proxy_metrics ? expTheme.proxy_metrics.sort((a, b) => (a.order ?? 999) - (b.order ?? 999)).indexOf(proxyMetric) : -1;
 
        return (
        <div key={exp.dir} onClick={() => navigate("experiment-detail", { slug: projectSlug, dir: exp.dir })} className="bg-[#121214] border border-zinc-800 rounded-[2px] shadow-sm p-5 flex flex-col h-full gap-4 cursor-pointer hover:bg-zinc-800/30 transition-colors">
