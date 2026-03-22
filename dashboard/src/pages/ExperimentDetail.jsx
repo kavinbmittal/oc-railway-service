@@ -20,7 +20,7 @@ function StatusBadge({ status }) {
  };
  const cls = map[s] || "border-zinc-700 bg-zinc-800/50 text-zinc-400";
  return (
-  <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-medium ${cls}`}>
+  <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[12px] font-medium ${cls}`}>
    {s === "running" && (
     <span className="relative flex h-2 w-2">
      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75" />
@@ -60,7 +60,7 @@ export default function ExperimentDetail({ projectSlug, experimentDir, navigate 
  if (loading) {
   return (
    <div className="flex flex-col h-full">
-    <header className="sticky top-0 z-10 px-8 py-8 border-b border-zinc-800 shrink-0 bg-background/80 backdrop-blur-sm">
+    <header className="sticky top-0 z-10 px-8 py-8 border-b border-border shrink-0 bg-background/80 backdrop-blur-sm">
      <Skeleton className="h-4 w-48 mb-4" />
      <Skeleton className="h-8 w-72" />
     </header>
@@ -83,15 +83,15 @@ export default function ExperimentDetail({ projectSlug, experimentDir, navigate 
  if (error) {
   return (
    <div className="flex flex-col h-full">
-    <header className="sticky top-0 z-10 px-8 py-8 border-b border-zinc-800 shrink-0 bg-background/80 backdrop-blur-sm">
-     <div className="text-sm text-zinc-400 tracking-wide">
+    <header className="sticky top-0 z-10 px-8 py-8 border-b border-border shrink-0 bg-background/80 backdrop-blur-sm">
+     <div className="text-[14px] text-zinc-400 tracking-wide">
       <a href="#/overview" onClick={(e) => { e.preventDefault(); navigate("overview"); }} className="hover:text-zinc-200 transition-colors cursor-pointer">Projects</a>
       <span className="mx-2 text-zinc-600">&rsaquo;</span>
       <span>{projectSlug}</span>
      </div>
     </header>
     <div className="flex-1 flex items-center justify-center">
-     <p className="text-sm text-red-400">{error}</p>
+     <p className="text-[14px] text-red-400">{error}</p>
     </div>
    </div>
   );
@@ -119,9 +119,9 @@ export default function ExperimentDetail({ projectSlug, experimentDir, navigate 
  return (
   <div className="flex flex-col h-full">
    {/* ── Sticky Header ── */}
-   <header className="sticky top-0 z-10 px-8 py-8 border-b border-zinc-800 shrink-0 bg-background/80 backdrop-blur-sm flex flex-col gap-4">
+   <header className="sticky top-0 z-10 px-8 py-8 border-b border-border shrink-0 bg-background/80 backdrop-blur-sm flex flex-col gap-4">
     {/* Breadcrumb */}
-    <div className="text-sm text-zinc-400 tracking-wide">
+    <div className="text-[14px] text-zinc-400 tracking-wide">
      <a href="#/overview" onClick={(e) => { e.preventDefault(); navigate("overview"); }} className="hover:text-zinc-200 transition-colors cursor-pointer">Projects</a>
      <span className="mx-2 text-zinc-600">&rsaquo;</span>
      <a href={`#/projects/${projectSlug}`} onClick={(e) => { e.preventDefault(); navigate("project", projectSlug); }} className="hover:text-zinc-200 transition-colors cursor-pointer">{projectSlug}</a>
@@ -138,7 +138,7 @@ export default function ExperimentDetail({ projectSlug, experimentDir, navigate 
     </div>
 
     {/* Metadata pills */}
-    <div className="flex items-center gap-4 text-sm text-zinc-400 flex-wrap">
+    <div className="flex items-center gap-4 text-[14px] text-zinc-400 flex-wrap">
      {theme && (
       <span className="flex items-center gap-1.5">
        <ThemeDot theme={theme} />
@@ -163,37 +163,37 @@ export default function ExperimentDetail({ projectSlug, experimentDir, navigate 
      <div className="xl:col-span-2 flex flex-col gap-6">
 
       {/* Created box */}
-      <div className="bg-[#121214] border border-zinc-800 rounded-sm shadow-sm p-[20px]">
-       <div className="text-xs uppercase font-mono tracking-widest text-zinc-500 mb-1.5">Created</div>
-       <div className="text-sm text-zinc-200">{data.created || "Unknown"}</div>
+      <div className="bg-card border border-border rounded-sm shadow-sm p-[20px]">
+       <div className="text-[12px] uppercase font-mono tracking-widest text-zinc-500 mb-1.5">Created</div>
+       <div className="text-[14px] text-zinc-200">{data.created || "Unknown"}</div>
       </div>
 
       {/* Theme & Proxy Metric grid */}
       {(theme || proxy_metric) && (
        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
         {theme && (
-         <div className="bg-[#121214] border border-zinc-800 rounded-sm shadow-sm p-[20px]">
-          <div className="text-xs uppercase font-mono tracking-widest text-zinc-500 mb-1.5">Theme</div>
-          <div className="text-sm text-zinc-200 flex items-center gap-2">
+         <div className="bg-card border border-border rounded-sm shadow-sm p-[20px]">
+          <div className="text-[12px] uppercase font-mono tracking-widest text-zinc-500 mb-1.5">Theme</div>
+          <div className="text-[14px] text-zinc-200 flex items-center gap-2">
            <ThemeDot theme={theme} />
            {theme}
           </div>
          </div>
         )}
         {(proxy_metrics?.length > 0 || proxy_metric) && (
-         <div className="bg-[#121214] border border-zinc-800 rounded-sm shadow-sm p-[20px]">
-          <div className="text-xs uppercase font-mono tracking-widest text-zinc-500 mb-1.5">Proxy Metrics</div>
+         <div className="bg-card border border-border rounded-sm shadow-sm p-[20px]">
+          <div className="text-[12px] uppercase font-mono tracking-widest text-zinc-500 mb-1.5">Proxy Metrics</div>
           {proxy_metrics?.length > 0 ? (
            <div className="space-y-2">
             {proxy_metrics.map((pm) => (
-             <div key={pm.id} className="flex items-baseline justify-between text-sm">
+             <div key={pm.id} className="flex items-baseline justify-between text-[14px]">
               <span className="text-zinc-200">{pm.name}</span>
-              {pm.target && <span className="text-zinc-400 text-xs font-mono">{pm.target}</span>}
+              {pm.target && <span className="text-zinc-400 text-[12px] font-mono">{pm.target}</span>}
              </div>
             ))}
            </div>
           ) : (
-           <div className="text-sm text-zinc-200">{proxy_metric}{target_value && <span className="text-zinc-400 ml-2 text-xs font-mono">{target_value}</span>}</div>
+           <div className="text-[14px] text-zinc-200">{proxy_metric}{target_value && <span className="text-zinc-400 ml-2 text-[12px] font-mono">{target_value}</span>}</div>
           )}
          </div>
         )}
@@ -202,7 +202,7 @@ export default function ExperimentDetail({ projectSlug, experimentDir, navigate 
 
       {/* Hypothesis card */}
       {hypothesis && (
-       <div className="bg-[#121214] border border-zinc-800 rounded-sm shadow-sm">
+       <div className="bg-card border border-border rounded-sm shadow-sm">
         <div className="flex items-center gap-3 px-5 py-3 bg-cyan-500/[0.02] transition-colors">
          <div className="w-6 h-6 rounded-full bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center">
           <Lightbulb className="w-3.5 h-3.5 text-cyan-400" />
@@ -210,7 +210,7 @@ export default function ExperimentDetail({ projectSlug, experimentDir, navigate 
          <div className="text-[15px] font-medium text-cyan-100">Hypothesis</div>
         </div>
         <div className="p-[20px]">
-         <div className="border-l-2 border-zinc-700 pl-4 py-1 text-sm text-zinc-300 leading-relaxed italic">
+         <div className="border-l-2 border-zinc-700 pl-4 py-1 text-[14px] text-zinc-300 leading-relaxed italic">
           {hypothesis}
          </div>
         </div>
@@ -219,39 +219,39 @@ export default function ExperimentDetail({ projectSlug, experimentDir, navigate 
 
       {/* Program card — renders only the ## Program section, not the full file */}
       {(program || program_md) && (
-       <div className="bg-[#121214] border border-zinc-800 rounded-sm shadow-sm">
+       <div className="bg-card border border-border rounded-sm shadow-sm">
         <div className="flex items-center gap-3 px-5 py-3 bg-cyan-500/[0.02] transition-colors">
          <div className="w-6 h-6 rounded-full bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center">
           <Code className="w-3.5 h-3.5 text-cyan-400" />
          </div>
          <div className="text-[15px] font-medium text-cyan-100 flex-1">Program</div>
-         <button className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors">Edit</button>
+         <button className="text-[12px] text-zinc-500 hover:text-zinc-300 transition-colors">Edit</button>
         </div>
-        <div className="p-[20px] text-sm text-zinc-300 leading-relaxed space-y-4">
+        <div className="p-[20px] text-[14px] text-zinc-300 leading-relaxed space-y-4">
          <Markdown content={program || program_md} />
         </div>
        </div>
       )}
 
       {/* Run History card */}
-      <div className="bg-[#121214] border border-zinc-800 rounded-sm shadow-sm">
+      <div className="bg-card border border-border rounded-sm shadow-sm">
        <div className="flex items-center gap-3 px-5 py-3 bg-cyan-500/[0.02] transition-colors">
         <div className="w-6 h-6 rounded-full bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center">
          <History className="w-3.5 h-3.5 text-cyan-400" />
         </div>
         <div className="text-[15px] font-medium text-cyan-100">Run History</div>
-        <span className="text-xs font-mono bg-zinc-800 px-1.5 py-0.5 rounded-sm text-zinc-400">{result_count}</span>
+        <span className="text-[12px] font-mono bg-zinc-800 px-1.5 py-0.5 rounded-sm text-zinc-400">{result_count}</span>
        </div>
        {results.length === 0 ? (
-        <div className="p-8 text-center text-sm text-zinc-500">No runs recorded yet</div>
+        <div className="p-8 text-center text-[14px] text-zinc-500">No runs recorded yet</div>
        ) : (
         <div className="overflow-x-auto">
          <table className="w-full text-left border-collapse">
           <thead>
            <tr>
-            <th className="text-xs font-mono uppercase tracking-widest text-zinc-500 py-3 px-5 border-b border-zinc-800 font-normal">#</th>
+            <th className="text-[12px] font-mono uppercase tracking-widest text-zinc-500 py-3 px-5 border-b border-border font-normal">#</th>
             {resultHeaders.map((h) => (
-             <th key={h} className="text-xs font-mono uppercase tracking-widest text-zinc-500 py-3 px-5 border-b border-zinc-800 font-normal">{h}</th>
+             <th key={h} className="text-[12px] font-mono uppercase tracking-widest text-zinc-500 py-3 px-5 border-b border-border font-normal">{h}</th>
             ))}
            </tr>
           </thead>
@@ -260,8 +260,8 @@ export default function ExperimentDetail({ projectSlug, experimentDir, navigate 
             const metricVal = metricCol ? parseFloat(row[metricCol]) : NaN;
             const isBest = metricCol && !isNaN(metricVal) && best_metric !== null && metricVal === best_metric;
             return (
-             <tr key={idx} className={`border-b border-zinc-800/50 hover:bg-zinc-800/30 transition-colors ${isBest ? "bg-zinc-800/10" : ""}`}>
-              <td className={`px-5 py-3.5 text-sm text-zinc-400 font-mono ${isBest ? "border-l-2 border-emerald-500 pl-[18px]" : ""}`}>
+             <tr key={idx} className={`border-b border-border/50 hover:bg-zinc-800/30 transition-colors ${isBest ? "bg-zinc-800/10" : ""}`}>
+              <td className={`px-5 py-3.5 text-[14px] text-zinc-400 font-mono ${isBest ? "border-l-2 border-emerald-500 pl-[18px]" : ""}`}>
                {idx + 1}
               </td>
               {resultHeaders.map((h) => {
@@ -272,7 +272,7 @@ export default function ExperimentDetail({ projectSlug, experimentDir, navigate 
                 if (isBest) colorClass = "text-emerald-400 font-medium";
                }
                return (
-                <td key={h} className={`px-5 py-3.5 text-sm ${colorClass}`}>
+                <td key={h} className={`px-5 py-3.5 text-[14px] ${colorClass}`}>
                  {val}
                 </td>
                );
@@ -291,47 +291,47 @@ export default function ExperimentDetail({ projectSlug, experimentDir, navigate 
      <div className="xl:col-span-1 sticky top-0 flex flex-col gap-6">
 
       {/* Metrics card */}
-      <div className="bg-[#121214] border border-zinc-800 rounded-sm shadow-sm p-[20px] space-y-6">
+      <div className="bg-card border border-border rounded-sm shadow-sm p-[20px] space-y-6">
        {target_value && (
         <div>
-         <div className="text-xs uppercase font-mono tracking-widest text-zinc-500 mb-1.5">Target Value</div>
-         <div className="text-sm font-normal text-cyan-400">{target_value}</div>
+         <div className="text-[12px] uppercase font-mono tracking-widest text-zinc-500 mb-1.5">Target Value</div>
+         <div className="text-[14px] font-normal text-cyan-400">{target_value}</div>
         </div>
        )}
        {best_metric !== null && (
         <div>
-         <div className="text-xs uppercase font-mono tracking-widest text-zinc-500 mb-1.5">Current Best</div>
+         <div className="text-[12px] uppercase font-mono tracking-widest text-zinc-500 mb-1.5">Current Best</div>
          <div className="flex items-baseline gap-3">
           <div className="text-3xl font-medium text-emerald-400 font-mono tracking-tight">{best_metric}</div>
          </div>
          {trend && (
           <div className={`flex items-center gap-1 mt-2 ${trend.direction === "up" ? "text-emerald-400" : "text-red-400"}`}>
-           <span className="text-xs font-medium">{trend.direction === "up" ? "+" : ""}{trend.value.toFixed(1)}% vs baseline</span>
+           <span className="text-[12px] font-medium">{trend.direction === "up" ? "+" : ""}{trend.value.toFixed(1)}% vs baseline</span>
           </div>
          )}
         </div>
        )}
-       <div className="pt-4 border-t border-zinc-800/50 flex justify-between items-center">
-        <span className="text-xs uppercase font-mono tracking-widest text-zinc-500">Total Runs</span>
-        <span className="text-sm font-mono text-zinc-200">{result_count}</span>
+       <div className="pt-4 border-t border-border/50 flex justify-between items-center">
+        <span className="text-[12px] uppercase font-mono tracking-widest text-zinc-500">Total Runs</span>
+        <span className="text-[14px] font-mono text-zinc-200">{result_count}</span>
        </div>
       </div>
 
       {/* Last Run card */}
-      <div className="bg-[#121214] border border-zinc-800 rounded-sm shadow-sm p-[20px]">
-       <div className="text-xs uppercase font-mono tracking-widest text-zinc-500 mb-1.5">Last Run</div>
-       <div className="text-sm text-zinc-200">{results.length > 0 ? "Just now" : "No runs yet"}</div>
+      <div className="bg-card border border-border rounded-sm shadow-sm p-[20px]">
+       <div className="text-[12px] uppercase font-mono tracking-widest text-zinc-500 mb-1.5">Last Run</div>
+       <div className="text-[14px] text-zinc-200">{results.length > 0 ? "Just now" : "No runs yet"}</div>
       </div>
 
       {/* Actions card */}
-      <div className="bg-[#121214] border border-zinc-800 rounded-sm shadow-sm p-[20px] flex flex-col gap-2">
-       <button className="w-full py-2 px-3 rounded-md border border-cyan-500/30 bg-cyan-500/10 text-sm text-cyan-400 hover:bg-cyan-500/20 transition-colors">
+      <div className="bg-card border border-border rounded-sm shadow-sm p-[20px] flex flex-col gap-2">
+       <button className="w-full py-2 px-3 rounded-md border border-cyan-500/30 bg-cyan-500/10 text-[14px] text-cyan-400 hover:bg-cyan-500/20 transition-colors">
         Re-run Experiment
        </button>
-       <button className="w-full py-2 px-3 rounded-md border border-amber-500/30 bg-amber-500/10 text-sm text-amber-400 hover:bg-amber-500/20 transition-colors">
+       <button className="w-full py-2 px-3 rounded-md border border-amber-500/30 bg-amber-500/10 text-[14px] text-amber-400 hover:bg-amber-500/20 transition-colors">
         Pause Experiment
        </button>
-       <button className="w-full py-2 px-3 rounded-md border border-red-500/20 bg-red-500/10 text-sm text-red-400 hover:bg-red-500/20 transition-colors mt-2">
+       <button className="w-full py-2 px-3 rounded-md border border-red-500/20 bg-red-500/10 text-[14px] text-red-400 hover:bg-red-500/20 transition-colors mt-2">
         Delete Experiment
        </button>
       </div>

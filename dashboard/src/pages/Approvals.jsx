@@ -128,13 +128,13 @@ export default function Approvals({ navigate }) {
  /* Loading skeleton — Aura style */
  if (loading && approvals.length === 0) {
   return (
-   <div className="flex-1 flex flex-col h-full overflow-hidden bg-[#09090b] relative">
-    <header className="h-16 flex items-center justify-between px-8 border-b border-zinc-800 shrink-0 bg-[#09090b]/80 backdrop-blur-sm z-10 sticky top-0">
+   <div className="flex-1 flex flex-col h-full overflow-hidden bg-background relative">
+    <header className="h-16 flex items-center justify-between px-8 border-b border-border shrink-0 bg-background/80 backdrop-blur-sm z-10 sticky top-0">
      <h1 className="text-[16px] font-medium uppercase tracking-[0.2em] text-zinc-100">Approvals</h1>
     </header>
     <div className="flex-1 overflow-y-auto p-8">
      <div className="max-w-4xl mx-auto">
-      <div className="bg-[#121214] border border-zinc-800 rounded-[2px] shadow-sm p-[20px]">
+      <div className="bg-card border border-border rounded-[2px] shadow-sm p-[20px]">
        <div className="bg-zinc-800/50 h-4 w-48 mb-3 rounded-sm" />
        <div className="bg-zinc-800/50 h-4 w-32 rounded-sm" />
       </div>
@@ -147,9 +147,9 @@ export default function Approvals({ navigate }) {
  const pendingCount = pendingApprovals.length;
 
  return (
-  <div className="flex-1 flex flex-col h-full overflow-hidden bg-[#09090b] relative">
+  <div className="flex-1 flex flex-col h-full overflow-hidden bg-background relative">
    {/* Page Header — Aura */}
-   <header className="h-16 flex items-center justify-between px-8 border-b border-zinc-800 shrink-0 bg-[#09090b]/80 backdrop-blur-sm z-10 sticky top-0">
+   <header className="h-16 flex items-center justify-between px-8 border-b border-border shrink-0 bg-background/80 backdrop-blur-sm z-10 sticky top-0">
     <h1 className="text-[16px] font-medium uppercase tracking-[0.2em] text-zinc-100">Approvals</h1>
     <span className="text-[14px] text-zinc-400">
      {pendingCount > 0 ? `${pendingCount} pending` : "All clear"}
@@ -161,7 +161,7 @@ export default function Approvals({ navigate }) {
     <div className="max-w-4xl mx-auto space-y-8 pb-12">
 
      {/* Tab toggle */}
-     <div className="flex items-center gap-1 border-b border-zinc-800 pb-px">
+     <div className="flex items-center gap-1 border-b border-border pb-px">
       <button
        onClick={() => setTab("pending")}
        className={`px-3 py-2 text-[15px] font-medium transition-colors border-b-2 -mb-px ${tab === "pending" ? "border-zinc-100 text-zinc-100" : "border-transparent text-zinc-500 hover:text-zinc-300"}`}
@@ -182,7 +182,7 @@ export default function Approvals({ navigate }) {
      </div>
 
      {error && (
-      <div className="border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400 rounded-[2px]">
+      <div className="border border-red-500/30 bg-red-500/10 px-4 py-3 text-[14px] text-red-400 rounded-[2px]">
        {error}
       </div>
      )}
@@ -200,7 +200,7 @@ export default function Approvals({ navigate }) {
      ) : (
       /* Project groups — Aura */
       grouped.map(([project, items]) => (
-       <div key={project} className="bg-[#121214] border border-zinc-800 rounded-[2px] shadow-sm flex flex-col">
+       <div key={project} className="bg-card border border-border rounded-[2px] shadow-sm flex flex-col">
         {/* Group Header — Aura */}
         <div className="flex items-center gap-3 px-5 py-3 bg-amber-500/[0.02] transition-colors">
          <div className="w-6 h-6 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
@@ -212,7 +212,7 @@ export default function Approvals({ navigate }) {
          >
           {project}
          </button>
-         <span className="text-[10px] font-mono bg-zinc-800 px-1.5 py-0.5 rounded-[2px] text-zinc-400">
+         <span className="text-[11px] font-mono bg-zinc-800 px-1.5 py-0.5 rounded-[2px] text-zinc-400">
           {items.length}
          </span>
         </div>
@@ -222,7 +222,7 @@ export default function Approvals({ navigate }) {
          {items.map((approval, i) => (
           <div
            key={approval.id || approval._file || i}
-           className={`flex flex-col gap-3 px-[20px] py-4 hover:bg-zinc-800/40 transition-colors cursor-pointer ${i < items.length - 1 ? "border-b border-zinc-800/50" : ""}`}
+           className={`flex flex-col gap-3 px-[20px] py-4 hover:bg-zinc-800/40 transition-colors cursor-pointer ${i < items.length - 1 ? "border-b border-border/50" : ""}`}
            onClick={() => navigate("approval-detail", approval.id || approval._file)}
           >
            <div className="flex items-center gap-4">

@@ -76,7 +76,7 @@ export default function CreateProject({ navigate }) {
 
  return (
   <div className="flex flex-col h-full">
-   <header className="px-8 py-8 border-b border-zinc-800 shrink-0 bg-[#09090b]">
+   <header className="px-8 py-8 border-b border-border shrink-0 bg-background">
     {/* Breadcrumb */}
     <nav className="flex items-center text-[15px] text-zinc-400 mb-5 tracking-wide">
      <a href="#/overview" onClick={(e) => { e.preventDefault(); navigate("overview"); }} className="hover:text-zinc-200 transition-colors cursor-pointer">Projects</a>
@@ -250,7 +250,7 @@ export default function CreateProject({ navigate }) {
     )}
 
     {/* Card Footer — Aura: p-[20px] border-t, cancel + create buttons */}
-    <div className="p-[20px] border-t border-border bg-[#121214] flex justify-end gap-3">
+    <div className="p-[20px] border-t border-border bg-card flex justify-end gap-3">
      <button
       type="button"
       onClick={() => navigate("overview")}

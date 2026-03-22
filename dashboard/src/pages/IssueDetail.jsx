@@ -117,7 +117,7 @@ export default function IssueDetail({ projectSlug, issueId, navigate }) {
  if (!issue) {
   return (
    <div className="max-w-6xl mx-auto p-6 md:p-10 lg:p-12">
-    <p className="text-sm text-zinc-500">Issue not found</p>
+    <p className="text-[14px] text-zinc-500">Issue not found</p>
    </div>
   );
  }
@@ -126,7 +126,7 @@ export default function IssueDetail({ projectSlug, issueId, navigate }) {
 
  return (
   <div className="flex flex-col h-full">
-   <header className="px-8 py-8 border-b border-zinc-800 shrink-0 bg-[#09090b]">
+   <header className="px-8 py-8 border-b border-border shrink-0 bg-background">
     {/* Breadcrumb */}
     <nav className="flex items-center text-[15px] text-zinc-400 mb-5 tracking-wide">
      <a href="#/overview" onClick={(e) => { e.preventDefault(); navigate("overview"); }} className="hover:text-zinc-200 transition-colors cursor-pointer">Projects</a>
@@ -147,7 +147,7 @@ export default function IssueDetail({ projectSlug, issueId, navigate }) {
        onChange={(e) => setTitleDraft(e.target.value)}
        onBlur={handleTitleBlur}
        onKeyDown={handleTitleKeyDown}
-       className="flex-1 bg-transparent text-[30px] font-semibold text-zinc-100 leading-none tracking-tight outline-none border-b border-zinc-800 pb-1"
+       className="flex-1 bg-transparent text-[30px] font-semibold text-zinc-100 leading-none tracking-tight outline-none border-b border-border pb-1"
        autoFocus
       />
      ) : (
@@ -207,32 +207,32 @@ export default function IssueDetail({ projectSlug, issueId, navigate }) {
     return (
      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
       {issueTheme && (
-       <div className="bg-app-card border border-zinc-800 rounded-sm shadow-sm p-[20px] flex items-start gap-4">
+       <div className="bg-app-card border border-border rounded-sm shadow-sm p-[20px] flex items-start gap-4">
         <div className={`w-10 h-10 rounded-full ${colors.iconBg} border ${colors.iconBorder} flex items-center justify-center shrink-0`}>
          <span className={`text-lg font-mono font-medium ${colors.iconText}`}>{issueTheme.order ?? themeIdx + 1}</span>
         </div>
         <div>
-         <h3 className="text-xs uppercase font-mono tracking-widest text-zinc-500 mb-1">Theme</h3>
+         <h3 className="text-[12px] uppercase font-mono tracking-widest text-zinc-500 mb-1">Theme</h3>
          <p className="text-base font-medium text-zinc-100 mb-1">{issueTheme.title}</p>
          {issueTheme.description && (
-          <p className="text-xs text-zinc-400 leading-relaxed">{issueTheme.description}</p>
+          <p className="text-[12px] text-zinc-400 leading-relaxed">{issueTheme.description}</p>
          )}
         </div>
        </div>
       )}
       {issuePms.length > 0 && (
-       <div className="bg-app-card border border-zinc-800 rounded-sm shadow-sm p-[20px]">
-        <h3 className="text-xs uppercase font-mono tracking-widest text-zinc-500 mb-3">Proxy Metrics</h3>
+       <div className="bg-app-card border border-border rounded-sm shadow-sm p-[20px]">
+        <h3 className="text-[12px] uppercase font-mono tracking-widest text-zinc-500 mb-3">Proxy Metrics</h3>
         <div className="space-y-2">
          {issuePms.map((pm, i) => {
           const pmIdx = sortedPms.findIndex((p) => p.id === pm.id);
           return (
            <div key={i} className="flex items-center gap-3">
-            <span className="w-6 h-6 rounded-full bg-zinc-800/50 border border-zinc-700/50 flex items-center justify-center shrink-0 text-xs font-mono text-zinc-400">{pmIdx >= 0 ? String.fromCharCode(97 + pmIdx) : "—"}</span>
+            <span className="w-6 h-6 rounded-full bg-zinc-800/50 border border-zinc-700/50 flex items-center justify-center shrink-0 text-[12px] font-mono text-zinc-400">{pmIdx >= 0 ? String.fromCharCode(97 + pmIdx) : "—"}</span>
             <div>
-             <p className="text-sm font-medium text-zinc-100">{pm.name}</p>
-             {pm.target && <p className="text-xs text-zinc-500">Theme target: {pm.target}</p>}
-             {pm.contribution && <p className="text-xs text-teal-400">Contribution: {pm.contribution}</p>}
+             <p className="text-[14px] font-medium text-zinc-100">{pm.name}</p>
+             {pm.target && <p className="text-[12px] text-zinc-500">Theme target: {pm.target}</p>}
+             {pm.contribution && <p className="text-[12px] text-teal-400">Contribution: {pm.contribution}</p>}
             </div>
            </div>
           );
@@ -249,14 +249,14 @@ export default function IssueDetail({ projectSlug, issueId, navigate }) {
     {/* Left Column — 2/3 */}
     <div className="xl:col-span-2 space-y-6">
      {/* Description Card — Aura card */}
-     <div className="bg-app-card border border-zinc-800 rounded-sm shadow-sm">
+     <div className="bg-app-card border border-border rounded-sm shadow-sm">
       <div className="flex items-center gap-3 px-5 py-3 bg-indigo-500/[0.02] transition-colors">
        <div className="w-6 h-6 rounded-full bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center">
         <FileText className="w-3.5 h-3.5 text-indigo-400" />
        </div>
        <div className="text-[15px] font-medium text-indigo-100">Description</div>
       </div>
-      <div className="p-[20px] text-sm text-zinc-300 leading-relaxed prose">
+      <div className="p-[20px] text-[14px] text-zinc-300 leading-relaxed prose">
        {issue.description ? (
         <Markdown content={issue.description} />
        ) : (
@@ -269,7 +269,7 @@ export default function IssueDetail({ projectSlug, issueId, navigate }) {
      {issue.labels && issue.labels.length > 0 && (
       <div className="flex flex-wrap gap-1.5">
        {issue.labels.map((label, i) => (
-        <span key={i} className="inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-medium border border-zinc-800 bg-zinc-800 text-zinc-300">
+        <span key={i} className="inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-medium border border-border bg-zinc-800 text-zinc-300">
          {label}
         </span>
        ))}
@@ -277,14 +277,14 @@ export default function IssueDetail({ projectSlug, issueId, navigate }) {
      )}
 
      {/* Comments Card — Aura card with divide-y */}
-     <div className="bg-app-card border border-zinc-800 rounded-sm shadow-sm">
+     <div className="bg-app-card border border-border rounded-sm shadow-sm">
       <div className="flex items-center gap-3 px-5 py-3 bg-blue-500/[0.02] transition-colors">
        <div className="w-6 h-6 rounded-full bg-blue-500/10 border border-blue-500/20 flex items-center justify-center">
         <MessageSquare className="w-3.5 h-3.5 text-blue-400" />
        </div>
        <div className="text-[15px] font-medium text-blue-100">Comments</div>
        {comments.length > 0 && (
-        <span className="px-1.5 py-0.5 rounded bg-zinc-800 text-xs text-zinc-400 font-mono">{comments.length}</span>
+        <span className="px-1.5 py-0.5 rounded bg-zinc-800 text-[12px] text-zinc-400 font-mono">{comments.length}</span>
        )}
       </div>
 
@@ -295,13 +295,13 @@ export default function IssueDetail({ projectSlug, issueId, navigate }) {
           <div className="flex justify-between items-center mb-2">
            <div className="flex items-center gap-2">
             <div className="w-5 h-5 rounded-full bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center">
-             <span className="text-[10px] text-indigo-400 font-medium uppercase">{(c.author ||"S")[0]}</span>
+             <span className="text-[11px] text-indigo-400 font-medium uppercase">{(c.author ||"S")[0]}</span>
             </div>
-            <span className="text-sm font-medium text-zinc-200 capitalize">{c.author ||"system"}</span>
+            <span className="text-[14px] font-medium text-zinc-200 capitalize">{c.author ||"system"}</span>
            </div>
-           <span className="text-xs font-mono text-zinc-500">{timeAgo(c.timestamp)}</span>
+           <span className="text-[12px] font-mono text-zinc-500">{timeAgo(c.timestamp)}</span>
           </div>
-          <div className="text-sm text-zinc-300 mc-prose">
+          <div className="text-[14px] text-zinc-300 mc-prose">
            <Markdown content={c.text || c.body ||""} />
           </div>
          </div>
@@ -310,11 +310,11 @@ export default function IssueDetail({ projectSlug, issueId, navigate }) {
       )}
 
       {/* Add comment area — Aura: bg-zinc-900/30 border-t */}
-      <div className="p-[20px] bg-zinc-900/30 border-t border-zinc-800">
+      <div className="p-[20px] bg-zinc-900/30 border-t border-border">
        <textarea
         value={commentText}
         onChange={(e) => setCommentText(e.target.value)}
-        className="w-full rounded-sm border border-zinc-800 bg-[#09090b] text-sm text-zinc-200 p-3 placeholder:text-zinc-600 focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 transition-all resize-y min-h-[100px]"
+        className="w-full rounded-sm border border-border bg-background text-[14px] text-zinc-200 p-3 placeholder:text-zinc-600 focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 transition-all resize-y min-h-[100px]"
         placeholder="Leave a comment or instruction for the agents..."
        />
        <div className="flex justify-between items-center mt-3">
@@ -322,7 +322,7 @@ export default function IssueDetail({ projectSlug, issueId, navigate }) {
         <button
          onClick={handleAddComment}
          disabled={submittingComment || !commentText.trim()}
-         className="px-4 py-1.5 rounded-sm border border-zinc-700 bg-zinc-800 text-sm font-medium text-zinc-200 hover:bg-zinc-700 transition-colors disabled:opacity-50"
+         className="px-4 py-1.5 rounded-sm border border-zinc-700 bg-zinc-800 text-[14px] font-medium text-zinc-200 hover:bg-zinc-700 transition-colors disabled:opacity-50"
         >
          Add Comment
         </button>
@@ -334,11 +334,11 @@ export default function IssueDetail({ projectSlug, issueId, navigate }) {
     {/* Right Column — 1/3 */}
     <div className="xl:col-span-1 space-y-6">
      {/* Details Card — Aura: p-5 space-y-5 with flex-col gap-1.5 */}
-     <div className="bg-app-card border border-zinc-800 rounded-sm shadow-sm">
+     <div className="bg-app-card border border-border rounded-sm shadow-sm">
       <div className="p-[20px] space-y-5">
        <div className="flex flex-col gap-1.5">
-        <label className="text-xs uppercase font-mono tracking-widest text-zinc-500">Status</label>
-        <div className="p-2 rounded-sm border border-zinc-800/50 hover:border-zinc-700 bg-zinc-900/50">
+        <label className="text-[12px] uppercase font-mono tracking-widest text-zinc-500">Status</label>
+        <div className="p-2 rounded-sm border border-border/50 hover:border-zinc-700 bg-zinc-900/50">
          <StatusSelect
           value={issue.status}
           onChange={(status) => handleUpdate({ status })}
@@ -347,8 +347,8 @@ export default function IssueDetail({ projectSlug, issueId, navigate }) {
        </div>
 
        <div className="flex flex-col gap-1.5">
-        <label className="text-xs uppercase font-mono tracking-widest text-zinc-500">Priority</label>
-        <div className="p-2 rounded-sm border border-zinc-800/50 hover:border-zinc-700 bg-zinc-900/50">
+        <label className="text-[12px] uppercase font-mono tracking-widest text-zinc-500">Priority</label>
+        <div className="p-2 rounded-sm border border-border/50 hover:border-zinc-700 bg-zinc-900/50">
          <PrioritySelect
           value={issue.priority}
           onChange={(priority) => handleUpdate({ priority })}
@@ -357,8 +357,8 @@ export default function IssueDetail({ projectSlug, issueId, navigate }) {
        </div>
 
        <div className="flex flex-col gap-1.5">
-        <label className="text-xs uppercase font-mono tracking-widest text-zinc-500">Assignee</label>
-        <div className="p-2 rounded-sm border border-zinc-800/50 hover:border-zinc-700 bg-zinc-900/50">
+        <label className="text-[12px] uppercase font-mono tracking-widest text-zinc-500">Assignee</label>
+        <div className="p-2 rounded-sm border border-border/50 hover:border-zinc-700 bg-zinc-900/50">
          <AssigneeSelect
           value={issue.assignee}
           onChange={(assignee) => handleUpdate({ assignee })}
@@ -366,11 +366,11 @@ export default function IssueDetail({ projectSlug, issueId, navigate }) {
         </div>
        </div>
 
-       <div className="pt-4 border-t border-zinc-800/50 space-y-4">
+       <div className="pt-4 border-t border-border/50 space-y-4">
         <div className="flex flex-col gap-1">
-         <label className="text-xs uppercase font-mono tracking-widest text-zinc-500">Project</label>
+         <label className="text-[12px] uppercase font-mono tracking-widest text-zinc-500">Project</label>
          <span
-          className="text-sm text-zinc-300 hover:underline cursor-pointer capitalize"
+          className="text-[14px] text-zinc-300 hover:underline cursor-pointer capitalize"
           onClick={() => navigate("project", projectSlug)}
          >
           {projectSlug}
@@ -378,23 +378,23 @@ export default function IssueDetail({ projectSlug, issueId, navigate }) {
         </div>
 
         <div className="flex flex-col gap-1">
-         <label className="text-xs uppercase font-mono tracking-widest text-zinc-500">Created</label>
-         <span className="text-sm text-zinc-300">{formatDate(issue.created)}</span>
+         <label className="text-[12px] uppercase font-mono tracking-widest text-zinc-500">Created</label>
+         <span className="text-[14px] text-zinc-300">{formatDate(issue.created)}</span>
         </div>
 
         <div className="flex flex-col gap-1">
-         <label className="text-xs uppercase font-mono tracking-widest text-zinc-500">Updated</label>
-         <span className="text-sm text-zinc-300">{timeAgo(issue.updated)}</span>
+         <label className="text-[12px] uppercase font-mono tracking-widest text-zinc-500">Updated</label>
+         <span className="text-[14px] text-zinc-300">{timeAgo(issue.updated)}</span>
         </div>
        </div>
       </div>
      </div>
 
      {/* Actions Card — Aura: p-4 with edit + delete buttons */}
-     <div className="bg-app-card border border-zinc-800 rounded-sm shadow-sm p-[20px] space-y-2">
+     <div className="bg-app-card border border-border rounded-sm shadow-sm p-[20px] space-y-2">
       <button
        onClick={() => navigate("edit-issue", { slug: projectSlug, issueId })}
-       className="w-full py-2 rounded-sm border border-zinc-700 bg-zinc-800 text-sm font-medium text-zinc-200 hover:bg-zinc-700 transition-colors flex items-center justify-center gap-2"
+       className="w-full py-2 rounded-sm border border-zinc-700 bg-zinc-800 text-[14px] font-medium text-zinc-200 hover:bg-zinc-700 transition-colors flex items-center justify-center gap-2"
       >
        <Pencil size={14} />
        Edit Issue

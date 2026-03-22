@@ -172,7 +172,7 @@ export default function ProjectDetail({ projectId, navigate, initialTab }) {
     </div>
 
     {/* Tabs Skeleton */}
-    <div className="flex gap-8 mt-8 border-b border-zinc-800 pb-3">
+    <div className="flex gap-8 mt-8 border-b border-border pb-3">
      <div className="h-5 w-24 bg-zinc-800/60 rounded-[4px]"></div>
      <div className="h-5 w-20 bg-zinc-800/40 rounded-[4px]"></div>
      <div className="h-5 w-28 bg-zinc-800/40 rounded-[4px]"></div>
@@ -183,14 +183,14 @@ export default function ProjectDetail({ projectId, navigate, initialTab }) {
     <div className="mt-6 grid grid-cols-1 xl:grid-cols-3 gap-6 pb-12">
      {/* Left Column Skeleton */}
      <div className="xl:col-span-2 space-y-6">
-      <div className="h-32 bg-[#121214] border border-zinc-800/60 rounded-[2px] p-[20px] flex flex-col justify-between">
+      <div className="h-32 bg-card border border-border/60 rounded-[2px] p-[20px] flex flex-col justify-between">
        <div className="h-4 w-20 bg-zinc-800/60 rounded-[4px]"></div>
        <div className="space-y-2.5">
         <div className="h-3 w-full bg-zinc-800/40 rounded-[4px]"></div>
         <div className="h-3 w-3/4 bg-zinc-800/40 rounded-[4px]"></div>
        </div>
       </div>
-      <div className="h-32 bg-[#121214] border border-zinc-800/60 rounded-[2px] p-[20px] flex flex-col justify-between">
+      <div className="h-32 bg-card border border-border/60 rounded-[2px] p-[20px] flex flex-col justify-between">
        <div className="h-4 w-40 bg-zinc-800/60 rounded-[4px]"></div>
        <div className="flex items-center gap-4">
         <div className="h-12 w-12 rounded-full bg-zinc-800/50"></div>
@@ -200,18 +200,18 @@ export default function ProjectDetail({ projectId, navigate, initialTab }) {
         </div>
        </div>
       </div>
-      <div className="h-[400px] bg-[#121214] border border-zinc-800/60 rounded-[2px]"></div>
+      <div className="h-[400px] bg-card border border-border/60 rounded-[2px]"></div>
      </div>
      {/* Right Column Skeleton */}
      <div className="space-y-6">
-      <div className="h-48 bg-[#121214] border border-zinc-800/60 rounded-[2px] p-[20px] flex flex-col gap-4">
+      <div className="h-48 bg-card border border-border/60 rounded-[2px] p-[20px] flex flex-col gap-4">
        <div className="h-4 w-20 bg-zinc-800/60 rounded-[4px] mb-2"></div>
        <div className="flex justify-between"><div className="h-3 w-16 bg-zinc-800/40 rounded-[4px]"></div><div className="h-3 w-24 bg-zinc-800/60 rounded-[4px]"></div></div>
        <div className="flex justify-between"><div className="h-3 w-12 bg-zinc-800/40 rounded-[4px]"></div><div className="h-3 w-20 bg-zinc-800/60 rounded-[4px]"></div></div>
        <div className="flex justify-between"><div className="h-3 w-14 bg-zinc-800/40 rounded-[4px]"></div><div className="h-3 w-16 bg-zinc-800/60 rounded-[4px]"></div></div>
        <div className="flex justify-between"><div className="h-3 w-20 bg-zinc-800/40 rounded-[4px]"></div><div className="h-3 w-24 bg-zinc-800/60 rounded-[4px]"></div></div>
       </div>
-      <div className="h-64 bg-[#121214] border border-zinc-800/60 rounded-[2px] p-[20px] flex flex-col gap-3">
+      <div className="h-64 bg-card border border-border/60 rounded-[2px] p-[20px] flex flex-col gap-3">
        <div className="h-4 w-24 bg-zinc-800/60 rounded-[4px] mb-2"></div>
        <div className="h-10 bg-zinc-800/40 rounded-[4px]"></div>
        <div className="h-10 bg-zinc-800/40 rounded-[4px]"></div>
@@ -225,7 +225,7 @@ export default function ProjectDetail({ projectId, navigate, initialTab }) {
 
  return (
   <div className="flex flex-col h-full">
-   <header className="px-8 py-8 border-b border-zinc-800 shrink-0 bg-[#09090b]">
+   <header className="px-8 py-8 border-b border-border shrink-0 bg-background">
     {/* Breadcrumb */}
     <nav className="flex items-center text-[15px] text-zinc-400 mb-5 tracking-wide">
      <a href="#/overview" onClick={(e) => { e.preventDefault(); navigate("overview"); }} className="hover:text-zinc-200 transition-colors cursor-pointer">Projects</a>
@@ -302,20 +302,20 @@ export default function ProjectDetail({ projectId, navigate, initialTab }) {
         {/* Left column */}
         <div className="xl:col-span-2 space-y-6">
          {/* Mission */}
-         <div className="bg-[#121214] border border-zinc-800 rounded-[2px] shadow-sm">
+         <div className="bg-card border border-border rounded-[2px] shadow-sm">
           <div className="flex items-center gap-3 px-5 py-3 bg-indigo-500/[0.02] transition-colors">
            <div className="w-6 h-6 rounded-full bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center">
             <Target className="w-3.5 h-3.5 text-indigo-400" />
            </div>
            <div className="text-[15px] font-medium text-indigo-100">Mission</div>
           </div>
-          <div className="p-[20px] text-sm text-zinc-300 space-y-4">
+          <div className="p-[20px] text-[14px] text-zinc-300 space-y-4">
            <p>{project.mission || "No mission defined."}</p>
           </div>
          </div>
 
          {/* NSM */}
-         <div className="bg-[#121214] border border-zinc-800 rounded-[2px] shadow-sm flex flex-col justify-center">
+         <div className="bg-card border border-border rounded-[2px] shadow-sm flex flex-col justify-center">
           <div className="flex items-center gap-3 px-5 py-3 bg-indigo-500/[0.02] transition-colors">
            <div className="w-6 h-6 rounded-full bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center">
             <Target className="w-3.5 h-3.5 text-indigo-400" />
@@ -328,13 +328,13 @@ export default function ProjectDetail({ projectId, navigate, initialTab }) {
            </div>
            <div>
             <div className="text-2xl font-semibold text-white tracking-tight">{project.nsm || "Not set"}</div>
-            {project.mission && <div className="text-sm text-zinc-400 mt-1">{project.mission}</div>}
+            {project.mission && <div className="text-[14px] text-zinc-400 mt-1">{project.mission}</div>}
            </div>
           </div>
          </div>
 
          {/* Themes */}
-         <div className="bg-[#121214] border border-zinc-800 rounded-[2px] shadow-sm">
+         <div className="bg-card border border-border rounded-[2px] shadow-sm">
           <div className="flex items-center gap-3 px-5 py-3 bg-indigo-500/[0.02] transition-colors">
            <div className="w-6 h-6 rounded-full bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center">
             <FileText className="w-3.5 h-3.5 text-indigo-400" />
@@ -345,23 +345,23 @@ export default function ProjectDetail({ projectId, navigate, initialTab }) {
            {approvedThemes.map((theme, idx, arr) => {
             const colors = THEME_COLORS[idx % THEME_COLORS.length];
             return (
-             <div key={theme.id} className={`px-5 py-4 ${idx < arr.length - 1 ? "border-b border-zinc-800/50" : ""}`}>
+             <div key={theme.id} className={`px-5 py-4 ${idx < arr.length - 1 ? "border-b border-border/50" : ""}`}>
               <div className="flex items-center gap-3 mb-1.5">
-               <div className={`w-6 h-6 rounded-full ${colors.badgeBg} border ${colors.badgeBorder} flex items-center justify-center text-xs font-mono font-medium ${colors.text} flex-shrink-0`}>
+               <div className={`w-6 h-6 rounded-full ${colors.badgeBg} border ${colors.badgeBorder} flex items-center justify-center text-[12px] font-mono font-medium ${colors.text} flex-shrink-0`}>
                 {theme.order ?? idx + 1}
                </div>
                <h3 className="text-[15px] font-medium text-zinc-200">{theme.title}</h3>
               </div>
               {theme.description && (
-               <p className="text-xs text-zinc-500 ml-9 mb-3">{theme.description}</p>
+               <p className="text-[12px] text-zinc-500 ml-9 mb-3">{theme.description}</p>
               )}
               <div className="ml-9 space-y-2.5">
                {(theme.proxy_metrics || []).sort((a, b) => (a.order ?? 999) - (b.order ?? 999)).map((pm, pmIdx) => (
-                <div key={pm.id} className="flex items-start gap-3 text-sm text-zinc-400">
-                 <div className="w-4 h-4 rounded bg-zinc-800/50 border border-zinc-700/50 flex items-center justify-center text-[10px] font-mono text-zinc-500 flex-shrink-0 mt-0.5">
+                <div key={pm.id} className="flex items-start gap-3 text-[14px] text-zinc-400">
+                 <div className="w-4 h-4 rounded bg-zinc-800/50 border border-zinc-700/50 flex items-center justify-center text-[11px] font-mono text-zinc-500 flex-shrink-0 mt-0.5">
                   {String.fromCharCode(97 + pmIdx)}
                  </div>
-                 <span>{pm.name}{pm.target && <span className="text-zinc-500 font-mono text-xs ml-2">→ {pm.target}</span>}</span>
+                 <span>{pm.name}{pm.target && <span className="text-zinc-500 font-mono text-[12px] ml-2">→ {pm.target}</span>}</span>
                 </div>
                ))}
               </div>
@@ -375,38 +375,38 @@ export default function ProjectDetail({ projectId, navigate, initialTab }) {
         {/* Right column */}
         <div className="space-y-6">
          {/* Details */}
-         <div className="bg-[#121214] border border-zinc-800 rounded-[2px] shadow-sm">
-          <div className="px-5 py-4 border-b border-zinc-800">
-           <h2 className="text-sm font-medium text-zinc-100">Details</h2>
+         <div className="bg-card border border-border rounded-[2px] shadow-sm">
+          <div className="px-5 py-4 border-b border-border">
+           <h2 className="text-[14px] font-medium text-zinc-100">Details</h2>
           </div>
           <div className="p-[20px] flex flex-col gap-4">
            <div className="flex justify-between items-center">
-            <span className="text-xs font-mono uppercase tracking-widest text-zinc-500">Status</span>
-            <span className="text-sm text-zinc-200 capitalize">{project.status || "Unknown"}</span>
+            <span className="text-[12px] font-mono uppercase tracking-widest text-zinc-500">Status</span>
+            <span className="text-[14px] text-zinc-200 capitalize">{project.status || "Unknown"}</span>
            </div>
            <div className="flex justify-between items-center">
-            <span className="text-xs font-mono uppercase tracking-widest text-zinc-500">Lead</span>
-            <a href={`#/agents/workspace-${(project.lead || "").toLowerCase()}`} className="text-sm text-indigo-400 hover:text-indigo-300 transition-colors flex items-center gap-2">
-             <div className="w-5 h-5 rounded-full bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center text-xs font-medium text-indigo-300">
+            <span className="text-[12px] font-mono uppercase tracking-widest text-zinc-500">Lead</span>
+            <a href={`#/agents/workspace-${(project.lead || "").toLowerCase()}`} className="text-[14px] text-indigo-400 hover:text-indigo-300 transition-colors flex items-center gap-2">
+             <div className="w-5 h-5 rounded-full bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center text-[12px] font-medium text-indigo-300">
               {(project.lead || "?")[0].toUpperCase()}
              </div>
              {project.lead || "Unassigned"}
             </a>
            </div>
            <div className="flex justify-between items-center">
-            <span className="text-xs font-mono uppercase tracking-widest text-zinc-500">Budget</span>
-            <span className="text-sm text-zinc-200">{project.budget || "None"}</span>
+            <span className="text-[12px] font-mono uppercase tracking-widest text-zinc-500">Budget</span>
+            <span className="text-[14px] text-zinc-200">{project.budget || "None"}</span>
            </div>
            <div className="flex justify-between items-center">
-            <span className="text-xs font-mono uppercase tracking-widest text-zinc-500">Created</span>
-            <span className="text-sm text-zinc-200">{project.created || "—"}</span>
+            <span className="text-[12px] font-mono uppercase tracking-widest text-zinc-500">Created</span>
+            <span className="text-[14px] text-zinc-200">{project.created || "—"}</span>
            </div>
           </div>
          </div>
 
          {/* Sub-agents */}
          {project.subagents && !project.subagents.includes("(none") && (
-          <div className="bg-[#121214] border border-zinc-800 rounded-[2px] shadow-sm">
+          <div className="bg-card border border-border rounded-[2px] shadow-sm">
            <div className="flex items-center gap-3 px-5 py-3 bg-cyan-500/[0.02] transition-colors">
             <div className="w-6 h-6 rounded-full bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center">
              <Cpu className="w-3.5 h-3.5 text-cyan-400" />
@@ -421,14 +421,14 @@ export default function ProjectDetail({ projectId, navigate, initialTab }) {
 
          {/* Approval Gates */}
          {project.gates && (
-          <div className="bg-[#121214] border border-zinc-800 rounded-[2px] shadow-sm">
+          <div className="bg-card border border-border rounded-[2px] shadow-sm">
            <div className="flex items-center gap-3 px-5 py-3 bg-amber-500/[0.02] transition-colors">
             <div className="w-6 h-6 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
              <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
             </div>
             <div className="text-[15px] font-medium text-amber-100">Approval Gates</div>
            </div>
-           <div className="p-[20px] text-sm text-zinc-400 space-y-3">
+           <div className="p-[20px] text-[14px] text-zinc-400 space-y-3">
             {project.gates
              .split("\n")
              .filter(Boolean)
@@ -806,13 +806,13 @@ function ProjectApprovalsTab({ approvals, projectId, onResolved, navigate, theme
     return (
      <div
       key={approval.id || approval._file}
-      className={`bg-[#121214] border border-zinc-800 rounded-[2px] p-[20px] flex flex-col sm:flex-row justify-between sm:items-center gap-4 shadow-sm ${isRejected ? "opacity-60" : ""}`}
+      className={`bg-card border border-border rounded-[2px] p-[20px] flex flex-col sm:flex-row justify-between sm:items-center gap-4 shadow-sm ${isRejected ? "opacity-60" : ""}`}
       onClick={() => navigate && navigate("approval-detail", approval.id)}
      >
       <div className="space-y-2.5 cursor-pointer">
        {badge && (
         <div>
-         <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium border ${badge.cls}`}>{badge.label}</span>
+         <span className={`px-2.5 py-0.5 rounded-full text-[12px] font-medium border ${badge.cls}`}>{badge.label}</span>
         </div>
        )}
        <p className={`text-[15px] font-medium text-zinc-100 ${isRejected ? "line-through decoration-zinc-500" : ""}`}>{title}</p>
@@ -824,23 +824,23 @@ function ProjectApprovalsTab({ approvals, projectId, onResolved, navigate, theme
           <div className={`w-3.5 h-3.5 rounded-full ${td.themeColors.badgeBg} border ${td.themeColors.badgeBorder} flex items-center justify-center text-[9px] font-mono font-medium ${td.themeColors.text} flex-shrink-0`}>
            {td.expTheme.order ?? td.themeIdx + 1}
           </div>
-          <span className="text-xs text-zinc-300">{td.expTheme.title}</span>
+          <span className="text-[12px] text-zinc-300">{td.expTheme.title}</span>
          </div>
          {td.proxyMetric && (
           <>
-           <span className="text-zinc-600 text-sm">{"\u203A"}</span>
+           <span className="text-zinc-600 text-[14px]">{"\u203A"}</span>
            <div className="flex items-center gap-1.5 px-2 py-1 rounded-[4px] bg-zinc-800/40 border border-zinc-700/30">
             <div className="w-3.5 h-3.5 rounded bg-zinc-800/50 border border-zinc-700/50 flex items-center justify-center text-[9px] font-mono text-zinc-500 flex-shrink-0">
              {String.fromCharCode(97 + (td.pmIdx >= 0 ? td.pmIdx : 0))}
             </div>
-            <span className="text-xs text-zinc-400">{td.proxyMetric.name}</span>
+            <span className="text-[12px] text-zinc-400">{td.proxyMetric.name}</span>
            </div>
           </>
          )}
         </div>
        )}
 
-       <div className="text-xs text-zinc-500 flex items-center gap-2 pt-0.5">
+       <div className="text-[12px] text-zinc-500 flex items-center gap-2 pt-0.5">
         {approval.requester && <span>Requested by: {approval.requester}</span>}
         {approval.requester && timeAgo && <span>&middot;</span>}
         {timeAgo && <span>{timeAgo}</span>}
@@ -848,7 +848,7 @@ function ProjectApprovalsTab({ approvals, projectId, onResolved, navigate, theme
 
        {/* Rejection comment */}
        {isRejected && approval.comment && (
-        <div className="text-xs text-red-400 flex items-center gap-1.5 mt-2 bg-red-500/10 px-3 py-1.5 rounded-[4px] border border-red-500/20 inline-flex w-fit">
+        <div className="text-[12px] text-red-400 flex items-center gap-1.5 mt-2 bg-red-500/10 px-3 py-1.5 rounded-[4px] border border-red-500/20 inline-flex w-fit">
          Rejected: {approval.comment}
         </div>
        )}
@@ -859,13 +859,13 @@ function ProjectApprovalsTab({ approvals, projectId, onResolved, navigate, theme
        <div className="flex items-center gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
         <button
          onClick={() => handleReject(approval)}
-         className="px-4 py-1.5 rounded-[6px] border border-red-500/30 text-red-400 bg-red-500/10 hover:bg-red-500/20 transition-colors text-sm font-medium focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-red-500/30"
+         className="px-4 py-1.5 rounded-[6px] border border-red-500/30 text-red-400 bg-red-500/10 hover:bg-red-500/20 transition-colors text-[14px] font-medium focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-red-500/30"
         >
          Reject
         </button>
         <button
          onClick={() => handleApprove(approval)}
-         className="px-4 py-1.5 rounded-[6px] border border-emerald-500/30 text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 transition-colors text-sm font-medium focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-emerald-500/30"
+         className="px-4 py-1.5 rounded-[6px] border border-emerald-500/30 text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 transition-colors text-[14px] font-medium focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-emerald-500/30"
         >
          Approve
         </button>
@@ -900,7 +900,7 @@ function ExperimentsTab({ experiments, themes = [], projectSlug, onRefresh, navi
     <div />
     <button
      onClick={() => setShowCreate(!showCreate)}
-     className="rounded-[6px] border border-zinc-800 bg-[#121214] text-[15px] font-medium text-zinc-300 px-3 py-1.5 hover:bg-zinc-800 transition-colors focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+     className="rounded-[6px] border border-border bg-card text-[15px] font-medium text-zinc-300 px-3 py-1.5 hover:bg-zinc-800 transition-colors focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
     >
      New Experiment
     </button>
@@ -920,10 +920,10 @@ function ExperimentsTab({ experiments, themes = [], projectSlug, onRefresh, navi
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
      <button
       onClick={() => setShowCreate(true)}
-      className="border border-dashed border-zinc-800 hover:border-zinc-700 hover:bg-zinc-800/20 transition-colors rounded-[2px] p-[20px] flex flex-col items-center justify-center text-zinc-500 hover:text-zinc-400 min-h-[160px] h-full focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 lg:col-span-2"
+      className="border border-dashed border-border hover:border-zinc-700 hover:bg-zinc-800/20 transition-colors rounded-[2px] p-[20px] flex flex-col items-center justify-center text-zinc-500 hover:text-zinc-400 min-h-[160px] h-full focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 lg:col-span-2"
      >
       <Plus size={24} className="mb-2" />
-      <span className="text-sm font-medium">Propose New Experiment</span>
+      <span className="text-[14px] font-medium">Propose New Experiment</span>
      </button>
     </div>
    ) : experiments.length > 0 && (
@@ -944,7 +944,7 @@ function ExperimentsTab({ experiments, themes = [], projectSlug, onRefresh, navi
        const pmIdx = proxyMetric && expTheme?.proxy_metrics ? expTheme.proxy_metrics.sort((a, b) => (a.order ?? 999) - (b.order ?? 999)).indexOf(proxyMetric) : -1;
 
        return (
-       <div key={exp.dir} onClick={() => navigate("experiment-detail", { slug: projectSlug, dir: exp.dir })} className="bg-[#121214] border border-zinc-800 rounded-[2px] shadow-sm p-[20px] flex flex-col h-full gap-4 cursor-pointer hover:bg-zinc-800/30 transition-colors">
+       <div key={exp.dir} onClick={() => navigate("experiment-detail", { slug: projectSlug, dir: exp.dir })} className="bg-card border border-border rounded-[2px] shadow-sm p-[20px] flex flex-col h-full gap-4 cursor-pointer hover:bg-zinc-800/30 transition-colors">
         <div className="space-y-2.5">
          {exp.status && exp.status !== "unknown" && (
           <div>
@@ -960,16 +960,16 @@ function ExperimentsTab({ experiments, themes = [], projectSlug, onRefresh, navi
             <div className={`w-3.5 h-3.5 rounded-full ${themeColors?.badgeBg || "bg-zinc-800/50"} border ${themeColors?.badgeBorder || "border-zinc-700/50"} flex items-center justify-center text-[9px] font-mono font-medium ${themeColors?.text || "text-zinc-500"} flex-shrink-0`}>
              {expTheme.order ?? themeIdx + 1}
             </div>
-            <span className="text-xs text-zinc-300">{expTheme.title}</span>
+            <span className="text-[12px] text-zinc-300">{expTheme.title}</span>
            </div>
            {proxyMetric && (
             <>
-             <span className="text-zinc-600 text-sm">{"\u203A"}</span>
+             <span className="text-zinc-600 text-[14px]">{"\u203A"}</span>
              <div className="flex items-center gap-1.5 px-2 py-1 rounded-[4px] bg-zinc-800/40 border border-zinc-700/30">
               <div className="w-3.5 h-3.5 rounded bg-zinc-800/50 border border-zinc-700/50 flex items-center justify-center text-[9px] font-mono text-zinc-500 flex-shrink-0">
                {String.fromCharCode(97 + (pmIdx >= 0 ? pmIdx : 0))}
               </div>
-              <span className="text-xs text-zinc-400">{proxyMetric.name}</span>
+              <span className="text-[12px] text-zinc-400">{proxyMetric.name}</span>
              </div>
             </>
            )}
@@ -978,22 +978,22 @@ function ExperimentsTab({ experiments, themes = [], projectSlug, onRefresh, navi
         </div>
 
         {exp.hypothesis && (
-         <p className="text-sm text-zinc-400 flex-1">
+         <p className="text-[14px] text-zinc-400 flex-1">
           Hypothesis: {exp.hypothesis}
          </p>
         )}
-        <div className="grid grid-cols-2 gap-4 border-t border-zinc-800/50 pt-4 mt-auto">
+        <div className="grid grid-cols-2 gap-4 border-t border-border/50 pt-4 mt-auto">
          {exp.proxy_metric && (
           <div>
-           <div className="text-xs font-mono uppercase tracking-widest text-zinc-500 mb-1">{proxyMetric?.name || exp.proxy_metric}</div>
-           <div className={`text-sm font-medium ${exp.best_metric !== null ? "text-emerald-400" : "text-zinc-400"}`}>
+           <div className="text-[12px] font-mono uppercase tracking-widest text-zinc-500 mb-1">{proxyMetric?.name || exp.proxy_metric}</div>
+           <div className={`text-[14px] font-medium ${exp.best_metric !== null ? "text-emerald-400" : "text-zinc-400"}`}>
             {exp.best_metric !== null ? exp.best_metric : "\u2014"}
            </div>
           </div>
          )}
          <div>
-          <div className="text-xs font-mono uppercase tracking-widest text-zinc-500 mb-1">Runs</div>
-          <div className="text-sm font-medium text-zinc-200">{exp.result_count}</div>
+          <div className="text-[12px] font-mono uppercase tracking-widest text-zinc-500 mb-1">Runs</div>
+          <div className="text-[14px] font-medium text-zinc-200">{exp.result_count}</div>
          </div>
         </div>
        </div>
@@ -1002,10 +1002,10 @@ function ExperimentsTab({ experiments, themes = [], projectSlug, onRefresh, navi
       {/* Propose New Experiment card */}
       <button
        onClick={() => setShowCreate(true)}
-       className="border border-dashed border-zinc-800 hover:border-zinc-700 hover:bg-zinc-800/20 transition-colors rounded-[2px] p-[20px] flex flex-col items-center justify-center text-zinc-500 hover:text-zinc-400 min-h-[160px] h-full focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 lg:col-span-2"
+       className="border border-dashed border-border hover:border-zinc-700 hover:bg-zinc-800/20 transition-colors rounded-[2px] p-[20px] flex flex-col items-center justify-center text-zinc-500 hover:text-zinc-400 min-h-[160px] h-full focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 lg:col-span-2"
       >
        <Plus size={24} className="mb-2" />
-       <span className="text-sm font-medium">Propose New Experiment</span>
+       <span className="text-[14px] font-medium">Propose New Experiment</span>
       </button>
      </div>
     </>

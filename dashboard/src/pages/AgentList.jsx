@@ -95,7 +95,7 @@ export default function AgentList({ navigate }) {
    </div>
 
    <div>
-    <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
+    <h3 className="text-[14px] font-semibold text-muted-foreground uppercase tracking-wide mb-3">
      Project Leads
     </h3>
     <div className="border border-border divide-y divide-border">
@@ -106,7 +106,7 @@ export default function AgentList({ navigate }) {
    </div>
 
    <div>
-    <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
+    <h3 className="text-[14px] font-semibold text-muted-foreground uppercase tracking-wide mb-3">
      Specialists
     </h3>
     <div className="border border-border divide-y divide-border">
@@ -143,17 +143,17 @@ function AgentRow({ agent, rawTasks, navigate }) {
   <div>
    <div
     onClick={handleClick}
-    className="flex items-center gap-3 px-4 py-2.5 text-sm w-full text-left transition-colors hover:bg-accent/50 cursor-pointer"
+    className="flex items-center gap-3 px-4 py-2.5 text-[14px] w-full text-left transition-colors hover:bg-accent/50 cursor-pointer"
    >
     {/* Status dot */}
     <span className="relative flex h-2 w-2 shrink-0">
      {isActive ? (
       <>
-       <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#22c55e] opacity-50" />
-       <span className="relative inline-flex rounded-full h-2 w-2 bg-[#22c55e]" />
+       <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-50" />
+       <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
       </>
      ) : (
-      <span className="relative inline-flex rounded-full h-2 w-2 bg-[#6b7280]" />
+      <span className="relative inline-flex rounded-full h-2 w-2 bg-gray-500" />
      )}
     </span>
 
@@ -161,18 +161,18 @@ function AgentRow({ agent, rawTasks, navigate }) {
     <div className="flex-1 min-w-0">
      <div className="flex items-center gap-2">
       <span className="font-medium text-foreground shrink-0">{agent.name}</span>
-      <span className="text-xs text-muted-foreground truncate">{agent.role}</span>
+      <span className="text-[12px] text-muted-foreground truncate">{agent.role}</span>
      </div>
      {/* Current work subtitle */}
      {firstTask && (
-      <p className="text-xs text-muted-foreground/60 truncate mt-0.5">
+      <p className="text-[12px] text-muted-foreground/60 truncate mt-0.5">
        {firstTask}
       </p>
      )}
     </div>
 
     {inProgressCount > 0 && (
-     <span className="text-xs text-cyan-400 font-mono tabular-nums shrink-0">
+     <span className="text-[12px] text-cyan-400 font-mono tabular-nums shrink-0">
       {inProgressCount} active
      </span>
     )}
@@ -186,7 +186,7 @@ function AgentRow({ agent, rawTasks, navigate }) {
     {/* Expand toggle */}
     <button
      onClick={handleExpandToggle}
-     className="text-muted-foreground/50 text-xs shrink-0 p-1 hover:text-foreground transition-colors"
+     className="text-muted-foreground/50 text-[12px] shrink-0 p-1 hover:text-foreground transition-colors"
     >
      {rawTasks !== undefined ? (expanded ?"\u25BE" :"\u25B8") :""}
     </button>
@@ -218,10 +218,10 @@ function AgentRow({ agent, rawTasks, navigate }) {
            {items.map((item, i) => (
             <div
              key={i}
-             className="flex items-start gap-2 py-1 pl-1 text-xs"
+             className="flex items-start gap-2 py-1 pl-1 text-[12px]"
             >
              <span className={`w-1 h-1 rounded-full mt-1.5 shrink-0 ${config.dotColor}`} />
-             <span className="text-foreground/80 flex-1"><Markdown content={item.text} className="text-xs" /></span>
+             <span className="text-foreground/80 flex-1"><Markdown content={item.text} className="text-[12px]" /></span>
              {item.date && (
               <span className="text-[11px] text-muted-foreground/50 font-mono tabular-nums shrink-0">
                {item.date}
@@ -235,12 +235,12 @@ function AgentRow({ agent, rawTasks, navigate }) {
        })}
       </div>
      ) : rawTasks ? (
-      <pre className="text-xs text-muted-foreground whitespace-pre-wrap font-mono bg-muted/30 p-3 max-h-[calc(100vh-300px)] overflow-y-auto scrollbar-auto-hide">
+      <pre className="text-[12px] text-muted-foreground whitespace-pre-wrap font-mono bg-muted/30 p-3 max-h-[calc(100vh-300px)] overflow-y-auto scrollbar-auto-hide">
        {rawTasks.slice(0, 800)}
        {rawTasks.length > 800 ?"\n..." :""}
       </pre>
      ) : (
-      <p className="text-xs text-muted-foreground/60 py-2">No active tasks file</p>
+      <p className="text-[12px] text-muted-foreground/60 py-2">No active tasks file</p>
      )}
     </div>
    )}
