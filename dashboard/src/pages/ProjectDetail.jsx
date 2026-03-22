@@ -4,6 +4,7 @@ import { formatDate as formatDateUtil, formatTimeAgo } from"../utils/formatDate.
 import {
  ArrowLeft, FileText, Activity, DollarSign, Clock,
  User, Wallet, Target, ShieldCheck, Bot, CircleDot, Pencil, FlaskConical, Plus,
+ Cpu, MessageSquare, TrendingUp,
 } from"lucide-react";
 import Markdown from"../components/Markdown.jsx";
 import { Skeleton } from"../components/ui/Skeleton.jsx";
@@ -302,8 +303,11 @@ export default function ProjectDetail({ projectId, navigate, initialTab }) {
         <div className="xl:col-span-2 space-y-6">
          {/* Mission */}
          <div className="bg-[#121214] border border-zinc-800 rounded-[2px] shadow-sm">
-          <div className="px-5 py-4 border-b border-zinc-800">
-           <h2 className="text-sm font-medium text-zinc-100">Mission</h2>
+          <div className="flex items-center gap-3 px-5 py-3 bg-indigo-500/[0.02] transition-colors">
+           <div className="w-6 h-6 rounded-full bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center">
+            <Target className="w-3.5 h-3.5 text-indigo-400" />
+           </div>
+           <div className="text-[15px] font-medium text-indigo-100">Mission</div>
           </div>
           <div className="p-5 text-sm text-zinc-300 space-y-4">
            <p>{project.mission || "No mission defined."}</p>
@@ -312,8 +316,11 @@ export default function ProjectDetail({ projectId, navigate, initialTab }) {
 
          {/* NSM */}
          <div className="bg-[#121214] border border-zinc-800 rounded-[2px] shadow-sm flex flex-col justify-center">
-          <div className="px-5 py-4 border-b border-zinc-800">
-           <h2 className="text-sm font-medium text-zinc-100">North Star Metric (NSM)</h2>
+          <div className="flex items-center gap-3 px-5 py-3 bg-indigo-500/[0.02] transition-colors">
+           <div className="w-6 h-6 rounded-full bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center">
+            <Target className="w-3.5 h-3.5 text-indigo-400" />
+           </div>
+           <div className="text-[15px] font-medium text-indigo-100">North Star Metric (NSM)</div>
           </div>
           <div className="p-5 flex items-center gap-4">
            <div className="w-12 h-12 rounded-full bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400">
@@ -328,8 +335,11 @@ export default function ProjectDetail({ projectId, navigate, initialTab }) {
 
          {/* Themes */}
          <div className="bg-[#121214] border border-zinc-800 rounded-[2px] shadow-sm">
-          <div className="px-5 py-4 border-b border-zinc-800">
-           <h2 className="text-sm font-medium text-zinc-100">Themes</h2>
+          <div className="flex items-center gap-3 px-5 py-3 bg-indigo-500/[0.02] transition-colors">
+           <div className="w-6 h-6 rounded-full bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center">
+            <FileText className="w-3.5 h-3.5 text-indigo-400" />
+           </div>
+           <div className="text-[15px] font-medium text-indigo-100">Themes</div>
           </div>
           <div className="flex flex-col">
            {approvedThemes.map((theme, idx, arr) => {
@@ -397,8 +407,11 @@ export default function ProjectDetail({ projectId, navigate, initialTab }) {
          {/* Sub-agents */}
          {project.subagents && !project.subagents.includes("(none") && (
           <div className="bg-[#121214] border border-zinc-800 rounded-[2px] shadow-sm">
-           <div className="px-5 py-4 border-b border-zinc-800 flex justify-between items-center">
-            <h2 className="text-sm font-medium text-zinc-100">Sub-agents</h2>
+           <div className="flex items-center gap-3 px-5 py-3 bg-cyan-500/[0.02] transition-colors">
+            <div className="w-6 h-6 rounded-full bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center">
+             <Cpu className="w-3.5 h-3.5 text-cyan-400" />
+            </div>
+            <div className="text-[15px] font-medium text-cyan-100">Sub-agents</div>
            </div>
            <div className="p-5">
             <Markdown content={project.subagents} />
@@ -409,8 +422,11 @@ export default function ProjectDetail({ projectId, navigate, initialTab }) {
          {/* Approval Gates */}
          {project.gates && (
           <div className="bg-[#121214] border border-zinc-800 rounded-[2px] shadow-sm">
-           <div className="px-5 py-4 border-b border-zinc-800">
-            <h2 className="text-sm font-medium text-zinc-100">Approval Gates</h2>
+           <div className="flex items-center gap-3 px-5 py-3 bg-amber-500/[0.02] transition-colors">
+            <div className="w-6 h-6 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
+             <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
+            </div>
+            <div className="text-[15px] font-medium text-amber-100">Approval Gates</div>
            </div>
            <div className="p-5 text-sm text-zinc-400 space-y-3">
             {project.gates
@@ -464,8 +480,11 @@ export default function ProjectDetail({ projectId, navigate, initialTab }) {
          })();
          return (
           <div key={s.name} className="bg-card border border-border rounded-[2px] shadow-sm">
-           <div className="px-5 py-4 border-b border-border">
-            <h2 className="text-[14px] font-medium text-foreground">{displayDate}</h2>
+           <div className="flex items-center gap-3 px-5 py-3 bg-emerald-500/[0.02] transition-colors">
+            <div className="w-6 h-6 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
+             <MessageSquare className="w-3.5 h-3.5 text-emerald-400" />
+            </div>
+            <div className="text-[15px] font-medium text-emerald-100">{displayDate}</div>
            </div>
            <div className="p-5">
             <Markdown content={s.content} />
@@ -613,8 +632,11 @@ function ProjectCostsTab({ costs, costSummary, budgetPolicy, totalCost, projectI
    {/* Per-agent breakdown — Aura table */}
    {(agentSummaries.length > 0 || costs.length > 0) && (
     <div className="bg-card border border-border rounded-[2px] shadow-sm flex flex-col">
-     <div className="px-5 py-4 border-b border-border">
-      <h2 className="text-[14px] font-medium text-foreground">Cost Breakdown by Agent</h2>
+     <div className="flex items-center gap-3 px-5 py-3 bg-amber-500/[0.02] transition-colors">
+      <div className="w-6 h-6 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
+       <Wallet className="w-3.5 h-3.5 text-amber-400" />
+      </div>
+      <div className="text-[15px] font-medium text-amber-100">Cost Breakdown by Agent</div>
      </div>
      <div className="overflow-x-auto">
       <table className="w-full text-left border-collapse whitespace-nowrap">
@@ -655,8 +677,11 @@ function ProjectCostsTab({ costs, costSummary, budgetPolicy, totalCost, projectI
    {/* Cost timeline */}
    {entries.length > 0 && (
     <div className="bg-card border border-border rounded-[2px] shadow-sm">
-     <div className="px-5 py-4 border-b border-border">
-      <h2 className="text-[14px] font-medium text-foreground">Cost Timeline</h2>
+     <div className="flex items-center gap-3 px-5 py-3 bg-amber-500/[0.02] transition-colors">
+      <div className="w-6 h-6 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
+       <Clock className="w-3.5 h-3.5 text-amber-400" />
+      </div>
+      <div className="text-[15px] font-medium text-amber-100">Cost Timeline</div>
      </div>
      <div className="p-5">
       <CostTimeline entries={entries.slice(0, 50)} />

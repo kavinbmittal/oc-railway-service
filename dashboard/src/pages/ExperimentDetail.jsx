@@ -5,6 +5,7 @@
  */
 import { useState, useEffect } from"react";
 import { getExperiment } from"../api.js";
+import { Lightbulb, Code, History } from"lucide-react";
 import { Skeleton } from"../components/ui/Skeleton.jsx";
 import Markdown from"../components/Markdown.jsx";
 
@@ -202,8 +203,11 @@ export default function ExperimentDetail({ projectSlug, experimentDir, navigate 
       {/* Hypothesis card */}
       {hypothesis && (
        <div className="bg-[#121214] border border-zinc-800 rounded-sm shadow-sm">
-        <div className="px-5 py-4 border-b border-zinc-800">
-         <h2 className="text-sm font-medium text-zinc-100">Hypothesis</h2>
+        <div className="flex items-center gap-3 px-5 py-3 bg-cyan-500/[0.02] transition-colors">
+         <div className="w-6 h-6 rounded-full bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center">
+          <Lightbulb className="w-3.5 h-3.5 text-cyan-400" />
+         </div>
+         <div className="text-[15px] font-medium text-cyan-100">Hypothesis</div>
         </div>
         <div className="p-5">
          <div className="border-l-2 border-zinc-700 pl-4 py-1 text-sm text-zinc-300 leading-relaxed italic">
@@ -216,8 +220,11 @@ export default function ExperimentDetail({ projectSlug, experimentDir, navigate 
       {/* Program card — renders only the ## Program section, not the full file */}
       {(program || program_md) && (
        <div className="bg-[#121214] border border-zinc-800 rounded-sm shadow-sm">
-        <div className="px-5 py-4 border-b border-zinc-800 flex justify-between items-center">
-         <h2 className="text-sm font-medium text-zinc-100">Program</h2>
+        <div className="flex items-center gap-3 px-5 py-3 bg-cyan-500/[0.02] transition-colors">
+         <div className="w-6 h-6 rounded-full bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center">
+          <Code className="w-3.5 h-3.5 text-cyan-400" />
+         </div>
+         <div className="text-[15px] font-medium text-cyan-100 flex-1">Program</div>
          <button className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors">Edit</button>
         </div>
         <div className="p-5 text-sm text-zinc-300 leading-relaxed space-y-4">
@@ -228,8 +235,11 @@ export default function ExperimentDetail({ projectSlug, experimentDir, navigate 
 
       {/* Run History card */}
       <div className="bg-[#121214] border border-zinc-800 rounded-sm shadow-sm">
-       <div className="px-5 py-4 border-b border-zinc-800 flex items-center gap-2">
-        <h2 className="text-sm font-medium text-zinc-100">Run History</h2>
+       <div className="flex items-center gap-3 px-5 py-3 bg-cyan-500/[0.02] transition-colors">
+        <div className="w-6 h-6 rounded-full bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center">
+         <History className="w-3.5 h-3.5 text-cyan-400" />
+        </div>
+        <div className="text-[15px] font-medium text-cyan-100">Run History</div>
         <span className="text-xs font-mono bg-zinc-800 px-1.5 py-0.5 rounded-sm text-zinc-400">{result_count}</span>
        </div>
        {results.length === 0 ? (

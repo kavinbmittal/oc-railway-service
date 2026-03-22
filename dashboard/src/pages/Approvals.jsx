@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from"react";
-import { Compass } from"lucide-react";
+import { Compass, ShieldCheck } from"lucide-react";
 import { getApprovals, resolveApproval, updateIssue, deleteIssue } from"../api.js";
 import { RejectModal } from "../components/RejectModal.jsx";
 
@@ -202,10 +202,13 @@ export default function Approvals({ navigate }) {
       grouped.map(([project, items]) => (
        <div key={project} className="bg-[#121214] border border-zinc-800 rounded-[2px] shadow-sm flex flex-col">
         {/* Group Header — Aura */}
-        <div className="flex items-center justify-between p-[20px] border-b border-zinc-800 bg-[#121214]">
+        <div className="flex items-center gap-3 px-5 py-3 bg-amber-500/[0.02] transition-colors">
+         <div className="w-6 h-6 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
+          <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
+         </div>
          <button
           onClick={() => navigate("project", project)}
-          className="text-[14px] font-medium text-zinc-100 hover:text-white transition-colors"
+          className="text-[15px] font-medium text-amber-100 hover:text-white transition-colors flex-1 text-left"
          >
           {project}
          </button>

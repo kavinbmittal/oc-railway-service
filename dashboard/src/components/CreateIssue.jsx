@@ -3,7 +3,7 @@
  * UI ported from Aura HTML reference.
  */
 import { useState } from"react";
-import { X } from"lucide-react";
+import { X, CircleDot } from"lucide-react";
 import { createIssue } from"../api.js";
 import { ALL_PRIORITIES } from"./PriorityIcon.jsx";
 import { AGENTS } from"./AssigneeSelect.jsx";
@@ -57,8 +57,11 @@ export function CreateIssue({ projectSlug, onCreated, onClose, themes = [] }) {
  return (
   <div className="bg-card border border-border rounded-[2px] shadow-sm mb-4">
    {/* Card Header — Aura */}
-   <div className="p-[20px] border-b border-border flex justify-between items-center">
-    <h2 className="text-[14px] font-semibold text-foreground tracking-tight">New Issue</h2>
+   <div className="flex items-center gap-3 px-5 py-3 bg-violet-500/[0.02] transition-colors">
+    <div className="w-6 h-6 rounded-full bg-violet-500/10 border border-violet-500/20 flex items-center justify-center">
+     <CircleDot className="w-3.5 h-3.5 text-violet-400" />
+    </div>
+    <div className="text-[15px] font-medium text-violet-100 flex-1">New Issue</div>
     {onClose && (
      <button onClick={onClose} className="text-muted-foreground hover:text-foreground transition-colors">
       <X size={18} />

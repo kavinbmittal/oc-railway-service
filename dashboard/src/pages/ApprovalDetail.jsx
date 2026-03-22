@@ -3,7 +3,7 @@
  * UI ported from Aura HTML reference.
  */
 import { useState, useEffect } from"react";
-import { CheckCircle2, XCircle, RotateCcw, Loader2, CircleDot, FlaskConical, FileText, Compass, BarChart3, Clock } from"lucide-react";
+import { CheckCircle2, XCircle, RotateCcw, Loader2, CircleDot, FlaskConical, FileText, Compass, BarChart3, Clock, ShieldCheck } from"lucide-react";
 import { getApprovalDetail, resolveApproval, requestRevision, updateIssue, deleteIssue, resolveTheme, getThemes } from"../api.js";
 import { formatTimeAgo } from"../utils/formatDate.js";
 import Markdown from"../components/Markdown.jsx";
@@ -314,8 +314,11 @@ export default function ApprovalDetail({ approvalId, navigate }) {
       {isExperiment && approval.hypothesis && (
        <>
         <section className="bg-[#121214] border border-zinc-800 rounded-[2px] shadow-sm flex flex-col">
-         <header className="p-[20px] border-b border-zinc-800">
-          <h2 className="text-[14px] font-semibold text-zinc-100">Experiment</h2>
+         <header className="flex items-center gap-3 px-5 py-3 bg-amber-500/[0.02] transition-colors">
+          <div className="w-6 h-6 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
+           <FlaskConical className="w-3.5 h-3.5 text-amber-400" />
+          </div>
+          <div className="text-[15px] font-medium text-amber-100">Experiment</div>
          </header>
          <div className="p-[20px] space-y-5">
           <div>
@@ -333,8 +336,11 @@ export default function ApprovalDetail({ approvalId, navigate }) {
         {/* Proxy metric contributions for experiment */}
         {approval.proxy_metrics && approval.proxy_metrics.length > 0 && (approval.proxy_metrics[0]?.contribution || approval.proxy_metrics[0]?.target) && (
          <section className="bg-[#121214] border border-zinc-800 rounded-[2px] shadow-sm flex flex-col">
-          <header className="p-[20px] border-b border-zinc-800">
-           <h3 className="text-[14px] font-semibold text-zinc-100">Contributions</h3>
+          <header className="flex items-center gap-3 px-5 py-3 bg-amber-500/[0.02] transition-colors">
+           <div className="w-6 h-6 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
+            <BarChart3 className="w-3.5 h-3.5 text-amber-400" />
+           </div>
+           <div className="text-[15px] font-medium text-amber-100">Contributions</div>
           </header>
           <div className="p-[20px] space-y-3">
            {approval.proxy_metrics.map((pm, i) => (
@@ -360,10 +366,13 @@ export default function ApprovalDetail({ approvalId, navigate }) {
       {/* Details Card — Aura card (fallback for old experiments with `why`, non-experiment gates, issues) */}
       {approval.why && !(isExperiment && approval.hypothesis) && (
        <section className="bg-[#121214] border border-zinc-800 rounded-[2px] shadow-sm flex flex-col">
-        <header className="p-[20px] border-b border-zinc-800">
-         <h2 className="text-[14px] font-semibold text-zinc-100">
+        <header className="flex items-center gap-3 px-5 py-3 bg-amber-500/[0.02] transition-colors">
+         <div className="w-6 h-6 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
+          <FileText className="w-3.5 h-3.5 text-amber-400" />
+         </div>
+         <div className="text-[15px] font-medium text-amber-100">
           {isExperiment ?"Approval Request" : isDeliverable ?"Deliverable" : isIssue ?"Proposed Issue" :"Details"}
-         </h2>
+         </div>
         </header>
         <div className="p-[20px] text-[14px] text-zinc-300 leading-relaxed space-y-5 mc-prose">
          <Markdown content={approval.why} />
@@ -374,8 +383,11 @@ export default function ApprovalDetail({ approvalId, navigate }) {
       {/* Theme proposal — proxy metrics */}
       {isTheme && (
        <section className="bg-[#121214] border border-zinc-800 rounded-[2px] shadow-sm flex flex-col">
-        <header className="p-[20px] border-b border-zinc-800">
-         <h2 className="text-[14px] font-semibold text-zinc-100">Theme Details</h2>
+        <header className="flex items-center gap-3 px-5 py-3 bg-amber-500/[0.02] transition-colors">
+         <div className="w-6 h-6 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
+          <Compass className="w-3.5 h-3.5 text-amber-400" />
+         </div>
+         <div className="text-[15px] font-medium text-amber-100">Theme Details</div>
         </header>
         <div className="p-[20px] space-y-5">
          {approval.description && (
@@ -414,8 +426,11 @@ export default function ApprovalDetail({ approvalId, navigate }) {
         .trim();
        return stripped ? (
         <section className="bg-[#121214] border border-zinc-800 rounded-[2px] shadow-sm flex flex-col">
-         <header className="p-[20px] border-b border-zinc-800">
-          <h2 className="text-[14px] font-semibold text-zinc-100">Experiment Plan</h2>
+         <header className="flex items-center gap-3 px-5 py-3 bg-amber-500/[0.02] transition-colors">
+          <div className="w-6 h-6 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
+           <FileText className="w-3.5 h-3.5 text-amber-400" />
+          </div>
+          <div className="text-[15px] font-medium text-amber-100">Experiment Plan</div>
          </header>
          <div className="p-[20px] mc-prose">
           <Markdown content={stripped} />
@@ -458,8 +473,11 @@ export default function ApprovalDetail({ approvalId, navigate }) {
       {/* Actions Card — Aura: sticky, approve/reject buttons */}
       {isPending && !resolved && (
        <section className="bg-[#121214] border border-zinc-800 rounded-[2px] shadow-sm flex flex-col sticky top-0">
-        <header className="p-[20px] border-b border-zinc-800">
-         <h2 className="text-[14px] font-semibold text-zinc-100">Actions</h2>
+        <header className="flex items-center gap-3 px-5 py-3 bg-amber-500/[0.02] transition-colors">
+         <div className="w-6 h-6 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
+          <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
+         </div>
+         <div className="text-[15px] font-medium text-amber-100">Actions</div>
         </header>
         <div className="p-[20px] space-y-3">
          <button

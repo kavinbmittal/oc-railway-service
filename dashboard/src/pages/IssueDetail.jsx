@@ -4,7 +4,7 @@
  */
 import { useState, useEffect, useCallback } from"react";
 import { getIssue, updateIssue, addComment, getThemes } from"../api.js";
-import { Pencil, Trash2 } from"lucide-react";
+import { Pencil, Trash2, FileText, MessageSquare } from"lucide-react";
 import { formatDate as formatDateUtil, formatTimeAgo } from"../utils/formatDate.js";
 import { Skeleton } from"../components/ui/Skeleton.jsx";
 import Markdown from"../components/Markdown.jsx";
@@ -250,8 +250,11 @@ export default function IssueDetail({ projectSlug, issueId, navigate }) {
     <div className="xl:col-span-2 space-y-6">
      {/* Description Card — Aura card */}
      <div className="bg-app-card border border-zinc-800 rounded-sm shadow-sm">
-      <div className="p-5 border-b border-zinc-800">
-       <h2 className="text-sm font-medium text-zinc-100">Description</h2>
+      <div className="flex items-center gap-3 px-5 py-3 bg-indigo-500/[0.02] transition-colors">
+       <div className="w-6 h-6 rounded-full bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center">
+        <FileText className="w-3.5 h-3.5 text-indigo-400" />
+       </div>
+       <div className="text-[15px] font-medium text-indigo-100">Description</div>
       </div>
       <div className="p-5 text-sm text-zinc-300 leading-relaxed prose">
        {issue.description ? (
@@ -275,8 +278,11 @@ export default function IssueDetail({ projectSlug, issueId, navigate }) {
 
      {/* Comments Card — Aura card with divide-y */}
      <div className="bg-app-card border border-zinc-800 rounded-sm shadow-sm">
-      <div className="p-5 border-b border-zinc-800 flex items-center gap-2">
-       <h2 className="text-sm font-medium text-zinc-100">Comments</h2>
+      <div className="flex items-center gap-3 px-5 py-3 bg-blue-500/[0.02] transition-colors">
+       <div className="w-6 h-6 rounded-full bg-blue-500/10 border border-blue-500/20 flex items-center justify-center">
+        <MessageSquare className="w-3.5 h-3.5 text-blue-400" />
+       </div>
+       <div className="text-[15px] font-medium text-blue-100">Comments</div>
        {comments.length > 0 && (
         <span className="px-1.5 py-0.5 rounded bg-zinc-800 text-xs text-zinc-400 font-mono">{comments.length}</span>
        )}

@@ -3,7 +3,7 @@
  * UI ported from Aura HTML reference.
  */
 import { useState } from"react";
-import { X } from"lucide-react";
+import { X, FlaskConical } from"lucide-react";
 import { createExperiment } from"../api.js";
 
 export function CreateExperiment({ projectSlug, themes = [], onCreated, onClose }) {
@@ -42,10 +42,11 @@ export function CreateExperiment({ projectSlug, themes = [], onCreated, onClose 
  return (
   <div className="bg-[#121214] border border-zinc-800 rounded-sm flex flex-col relative overflow-hidden">
    {/* Card Header — Aura */}
-   <div className="p-5 border-b border-zinc-800 flex items-center justify-between">
-    <h2 className="text-sm font-medium text-zinc-100 flex items-center gap-2">
-     New Experiment
-    </h2>
+   <div className="flex items-center gap-3 px-5 py-3 bg-cyan-500/[0.02] transition-colors">
+    <div className="w-6 h-6 rounded-full bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center">
+     <FlaskConical className="w-3.5 h-3.5 text-cyan-400" />
+    </div>
+    <div className="text-[15px] font-medium text-cyan-100 flex-1">New Experiment</div>
     <div className="flex items-center gap-2">
      <span className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-zinc-800 border border-zinc-800 text-xs text-zinc-400 font-medium">
       <span className="w-1.5 h-1.5 rounded-full bg-zinc-400" />

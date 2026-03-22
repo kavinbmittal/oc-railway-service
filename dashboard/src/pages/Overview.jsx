@@ -1,6 +1,6 @@
 import { useState, useEffect } from"react";
 import { getProjects, getInbox, getIssues, getProjectsSummary, getAgents } from "../api.js";
-import { FolderKanban, User, DollarSign, AlertTriangle, CheckCircle, ArrowUpRight, CircleDot, Milestone } from "lucide-react";
+import { FolderKanban, User, DollarSign, AlertTriangle, CheckCircle, ArrowUpRight, CircleDot, Milestone, TrendingUp } from "lucide-react";
 import { formatTimeAgo } from"../utils/formatDate.js";
 import { Skeleton } from"../components/ui/Skeleton.jsx";
 import { MetricCard } from"../components/MetricCard.jsx";
@@ -149,8 +149,11 @@ export default function Overview({ navigate }) {
 
    {/* Project Progress section */}
    <div className="bg-card border border-border rounded-[2px] shadow-sm flex flex-col">
-    <div className="p-[20px] border-b border-border flex items-center justify-between">
-     <h2 className="text-[14px] font-semibold text-foreground">Project Progress</h2>
+    <div className="flex items-center gap-3 px-5 py-3 bg-indigo-500/[0.02] transition-colors">
+     <div className="w-6 h-6 rounded-full bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center">
+      <TrendingUp className="w-3.5 h-3.5 text-indigo-400" />
+     </div>
+     <div className="text-[15px] font-medium text-indigo-100">Project Progress</div>
     </div>
 
     {displayProjects.length === 0 ? (
@@ -272,8 +275,11 @@ export default function Overview({ navigate }) {
    {/* Recent Issues section */}
    {recentIssues.length > 0 && (
     <div className="bg-card border border-border rounded-[2px] shadow-sm">
-     <div className="p-[20px] border-b border-border flex justify-between items-center">
-      <h2 className="text-[14px] font-semibold text-foreground">Recent Issues</h2>
+     <div className="flex items-center gap-3 px-5 py-3 bg-violet-500/[0.02] transition-colors">
+      <div className="w-6 h-6 rounded-full bg-violet-500/10 border border-violet-500/20 flex items-center justify-center">
+       <CircleDot className="w-3.5 h-3.5 text-violet-400" />
+      </div>
+      <div className="text-[15px] font-medium text-violet-100">Recent Issues</div>
      </div>
      <div className="flex flex-col">
       {recentIssues.map((issue, i) => (

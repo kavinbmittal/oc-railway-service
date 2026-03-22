@@ -3,7 +3,7 @@
  * UI classes ported directly from Aura HTML reference.
  */
 import { useState, useEffect, useRef } from "react";
-import { Bold, Italic, Link, Code, ChevronDown, Trash2, Check } from "lucide-react";
+import { Bold, Italic, Link, Code, ChevronDown, Trash2, Check, Pencil as PencilIcon } from "lucide-react";
 import { getIssue, updateIssue, deleteIssue, getThemes } from "../api.js";
 import { AGENTS } from "../components/AssigneeSelect.jsx";
 import { ALL_PRIORITIES } from "../components/PriorityIcon.jsx";
@@ -256,8 +256,11 @@ export default function EditIssue({ projectSlug, issueId, navigate }) {
           <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-zinc-700/50 to-transparent"></div>
 
           {/* Card Header */}
-          <div className="p-5 border-b border-zinc-800 flex items-center justify-between bg-[#121214]">
-            <h2 className="text-sm font-semibold text-zinc-100 tracking-tight">Issue Details</h2>
+          <div className="flex items-center gap-3 px-5 py-3 bg-indigo-500/[0.02] transition-colors">
+            <div className="w-6 h-6 rounded-full bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center">
+              <PencilIcon className="w-3.5 h-3.5 text-indigo-400" />
+            </div>
+            <div className="text-[15px] font-medium text-indigo-100 flex-1">Issue Details</div>
             <span className={`px-2.5 py-1 rounded-full text-xs font-medium border ${statusColors} flex items-center gap-1.5 shadow-sm`}>
               <span className={`w-1.5 h-1.5 rounded-full ${statusDot}`}></span>
               {statusLabel.charAt(0).toUpperCase() + statusLabel.slice(1)}

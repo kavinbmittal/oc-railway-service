@@ -4,7 +4,7 @@
  */
 import { useState } from"react";
 import { createProject } from"../api.js";
-import { Loader2 } from"lucide-react";
+import { Loader2, FolderOpen } from"lucide-react";
 
 const LEADS = [
  { id:"binny", label:"Binny — Lia PM" },
@@ -98,8 +98,11 @@ export default function CreateProject({ navigate }) {
     <div className="absolute top-0 inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-zinc-700/50 to-transparent" />
 
     {/* Card Header */}
-    <div className="p-[20px] border-b border-border">
-     <h2 className="text-[14px] font-semibold text-foreground tracking-tight">Project Details</h2>
+    <div className="flex items-center gap-3 px-5 py-3 bg-indigo-500/[0.02] transition-colors">
+     <div className="w-6 h-6 rounded-full bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center">
+      <FolderOpen className="w-3.5 h-3.5 text-indigo-400" />
+     </div>
+     <div className="text-[15px] font-medium text-indigo-100">Project Details</div>
     </div>
 
     {/* Form Body */}
