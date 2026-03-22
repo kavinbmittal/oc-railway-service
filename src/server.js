@@ -2884,7 +2884,7 @@ app.get("/mc/api/experiments/:dir", requireSetupAuth, (req, res) => {
   const programPath = path.join(expPath, "program.md");
   const resultsPath = path.join(expPath, "results.tsv");
 
-  let programMd = null, name = dir, status = "unknown", hypothesis = null, proxyMetric = null, targetValue = null, theme = null;
+  let programMd = null, name = dir, status = "unknown", hypothesis = null, proxyMetric = null, targetValue = null, theme = null, pmSection = null;
 
   if (fs.existsSync(programPath)) {
     try {
@@ -2903,18 +2903,17 @@ app.get("/mc/api/experiments/:dir", requireSetupAuth, (req, res) => {
       }
       const themeMatch = programMd.match(/## Theme\s*\n\s*(.+)/);
       if (themeMatch) theme = themeMatch[1].trim();
-      // Parse proxy metrics list: "- pm-xxx — target: value"
-      const pmSection = programMd.match(/## Proxy Metrics\s*\n([\s\S]*?)(?=\n##|$)/);
+      // Parse proxy metrics list
+      pmSection = programMd.match(/## Proxy Metrics\s*\n([\s\S]*?)(?=\n##|$)/);
       if (pmSection) {
         const pmLines = pmSection[1].trim().split("\n").filter((l) => l.startsWith("- "));
         const parsedPMs = pmLines.map((line) => {
-          const m = line.match(/^- (pm-[\w-]+)\s*[—–-]\s*target:\s*(.+)/i);
+          const m = line.match(/^- ([\w-]+)\s*[—–-]\s*target:\s*(.+)/i);
           if (m) return { id: m[1], target: m[2].trim() };
-          const idOnly = line.match(/^- (pm-[\w-]+)/);
+          const idOnly = line.match(/^- ([\w-]+)/);
           return idOnly ? { id: idOnly[1], target: null } : null;
         }).filter(Boolean);
         if (parsedPMs.length > 0) {
-          // Use first metric for backward-compat single fields
           proxyMetric = parsedPMs[0].id;
           targetValue = parsedPMs[0].target;
         }
@@ -2960,7 +2959,34 @@ app.get("/mc/api/experiments/:dir", requireSetupAuth, (req, res) => {
     } catch {}
   }
 
-  res.json({ name, dir, status, hypothesis, proxy_metric: proxyMetric, target_value: targetValue, theme: themeTitle, program_md: programMd, results, result_count: results.length, best_metric: bestMetric });
+  // Extract just the ## Program section for the detail page
+  let programSection = programMd;
+  if (programMd) {
+    const progMatch = programMd.match(/## Program\s*\n([\s\S]*?)$/);
+    if (progMatch) programSection = progMatch[1].trim();
+  }
+
+  // Resolve proxy metric names from theme data
+  let resolvedPMs = [];
+  if (pmSection && theme && slug) {
+    const tPath = path.join(STATE_DIR, "shared", "projects", slug, "themes", `${theme}.json`);
+    if (fs.existsSync(tPath)) {
+      try {
+        const tData = JSON.parse(fs.readFileSync(tPath, "utf8"));
+        if (Array.isArray(tData.proxy_metrics)) {
+          const pmLines2 = pmSection[1].trim().split("\n").filter((l) => l.startsWith("- "));
+          resolvedPMs = pmLines2.map((line) => {
+            const m = line.match(/^- ([\w-]+)\s*[—–-]\s*target:\s*(.+)/i);
+            if (!m) return null;
+            const found = tData.proxy_metrics.find((t) => t.id === m[1]);
+            return { id: m[1], name: found ? found.name : m[1], target: m[2].trim() };
+          }).filter(Boolean);
+        }
+      } catch { /* skip */ }
+    }
+  }
+
+  res.json({ name, dir, status, hypothesis, proxy_metric: proxyMetric, target_value: targetValue, theme: themeTitle, program_md: programMd, program: programSection, proxy_metrics: resolvedPMs, results, result_count: results.length, best_metric: bestMetric });
 });
 
 // Create experiment

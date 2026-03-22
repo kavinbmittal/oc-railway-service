@@ -96,7 +96,7 @@ export default function ExperimentDetail({ projectSlug, experimentDir, navigate 
   );
  }
 
- const { name, status, hypothesis, proxy_metric, target_value, theme, program_md, results, result_count, best_metric } = data;
+ const { name, status, hypothesis, proxy_metric, target_value, theme, program_md, program, proxy_metrics, results, result_count, best_metric } = data;
 
  // Determine run history table headers dynamically from results
  const resultHeaders = results.length > 0 ? Object.keys(results[0]) : [];
@@ -179,10 +179,21 @@ export default function ExperimentDetail({ projectSlug, experimentDir, navigate 
           </div>
          </div>
         )}
-        {proxy_metric && (
+        {(proxy_metrics?.length > 0 || proxy_metric) && (
          <div className="bg-[#121214] border border-zinc-800 rounded-sm shadow-sm p-5">
-          <div className="text-xs uppercase font-mono tracking-widest text-zinc-500 mb-1.5">Proxy Metric</div>
-          <div className="text-sm text-zinc-200">{proxy_metric}</div>
+          <div className="text-xs uppercase font-mono tracking-widest text-zinc-500 mb-1.5">Proxy Metrics</div>
+          {proxy_metrics?.length > 0 ? (
+           <div className="space-y-2">
+            {proxy_metrics.map((pm) => (
+             <div key={pm.id} className="flex items-baseline justify-between text-sm">
+              <span className="text-zinc-200">{pm.name}</span>
+              {pm.target && <span className="text-zinc-400 text-xs font-mono">{pm.target}</span>}
+             </div>
+            ))}
+           </div>
+          ) : (
+           <div className="text-sm text-zinc-200">{proxy_metric}{target_value && <span className="text-zinc-400 ml-2 text-xs font-mono">{target_value}</span>}</div>
+          )}
          </div>
         )}
        </div>
@@ -202,15 +213,15 @@ export default function ExperimentDetail({ projectSlug, experimentDir, navigate 
        </div>
       )}
 
-      {/* Program card */}
-      {program_md && (
+      {/* Program card — renders only the ## Program section, not the full file */}
+      {(program || program_md) && (
        <div className="bg-[#121214] border border-zinc-800 rounded-sm shadow-sm">
         <div className="px-5 py-4 border-b border-zinc-800 flex justify-between items-center">
          <h2 className="text-sm font-medium text-zinc-100">Program</h2>
          <button className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors">Edit</button>
         </div>
         <div className="p-5 text-sm text-zinc-300 leading-relaxed space-y-4">
-         <Markdown content={program_md} />
+         <Markdown content={program || program_md} />
         </div>
        </div>
       )}
