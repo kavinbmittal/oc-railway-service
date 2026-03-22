@@ -75,18 +75,23 @@ export default function CreateProject({ navigate }) {
  }
 
  return (
-  <div className="max-w-3xl w-full mx-auto">
-   {/* Breadcrumb — Aura: sticky topbar style */}
-   <nav className="flex items-center gap-2 text-[13px] mb-8">
-    <button onClick={() => navigate("overview")} className="text-muted-foreground hover:text-foreground transition-colors">Projects</button>
-    <span className="text-muted-foreground/30">›</span>
-    <span className="text-foreground font-semibold tracking-tight">New Project</span>
-   </nav>
+  <div className="flex flex-col h-full">
+   <header className="px-8 py-8 border-b border-zinc-800 shrink-0 bg-[#09090b]">
+    {/* Breadcrumb */}
+    <nav className="flex items-center text-[13px] text-zinc-400 mb-5 tracking-wide">
+     <a href="#/overview" onClick={(e) => { e.preventDefault(); navigate("overview"); }} className="hover:text-zinc-200 transition-colors cursor-pointer">Projects</a>
+     <span className="mx-2 text-zinc-600">&rsaquo;</span>
+     <span className="text-zinc-100 font-semibold">New Project</span>
+    </nav>
 
-   {/* Page Header — Aura: uppercase tracking */}
-   <h1 className="text-[16px] font-semibold uppercase tracking-[0.2em] text-foreground mb-8">
-    New Project
-   </h1>
+    {/* Page Header */}
+    <h1 className="text-[30px] font-semibold text-zinc-100 leading-none tracking-tight">
+     New Project
+    </h1>
+   </header>
+
+   <div className="flex-1 overflow-y-auto p-8">
+   <div className="max-w-3xl w-full mx-auto">
 
    {/* Form Card — Aura card */}
    <form onSubmit={handleSubmit} className="bg-card border border-border rounded-[2px] shadow-sm flex flex-col relative overflow-hidden">
@@ -260,6 +265,8 @@ export default function CreateProject({ navigate }) {
      </button>
     </div>
    </form>
+   </div>
+   </div>
   </div>
  );
 }

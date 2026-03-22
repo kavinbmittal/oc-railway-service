@@ -78,9 +78,56 @@ export default function AgentDetail({ agentId, navigate }) {
   );
  }
 
+ const statusDot = agent.status === "active" ? "bg-[#22c55e]" : "bg-[#6b7280]";
+
  return (
-  <div className="space-y-6">
-   <AgentHeader agent={agent} navigate={navigate} />
+  <div className="flex flex-col h-full">
+   <header className="px-8 py-8 border-b border-zinc-800 shrink-0 bg-[#09090b]">
+    {/* Breadcrumb */}
+    <nav className="flex items-center text-[13px] text-zinc-400 mb-5 tracking-wide">
+     <a href="#/agents" onClick={(e) => { e.preventDefault(); navigate("agents"); }} className="hover:text-zinc-200 transition-colors cursor-pointer">Agents</a>
+     <span className="mx-2 text-zinc-600">&rsaquo;</span>
+     <span className="text-zinc-100 font-semibold">{agent.name}</span>
+    </nav>
+
+    {/* Title + Status */}
+    <div className="flex items-center gap-4 mb-4">
+     <div className="flex items-center justify-center h-12 w-12 bg-zinc-800/50 border border-zinc-800 text-2xl shrink-0">
+      {agent.emoji || agent.name?.charAt(0)?.toUpperCase()}
+     </div>
+     <h1 className="text-[30px] font-semibold text-zinc-100 leading-none tracking-tight">{agent.name}</h1>
+     <span className="relative flex h-2.5 w-2.5 shrink-0">
+      {agent.status === "active" ? (
+       <>
+        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#22c55e] opacity-50" />
+        <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${statusDot}`} />
+       </>
+      ) : (
+       <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${statusDot}`} />
+      )}
+     </span>
+    </div>
+
+    {/* Metadata */}
+    <div className="flex items-center gap-2 text-[13px] text-zinc-500">
+     {agent.role && <span>{agent.role}</span>}
+     {agent.lastSeen && (
+      <>
+       {agent.role && <span className="text-zinc-600">&middot;</span>}
+       <span className="font-mono tabular-nums">Last seen {agent.lastSeen}</span>
+      </>
+     )}
+     {agent.runCount != null && (
+      <>
+       <span className="text-zinc-600">&middot;</span>
+       <span>{agent.runCount} runs</span>
+      </>
+     )}
+    </div>
+   </header>
+
+   <div className="flex-1 overflow-y-auto p-8">
+   <div className="space-y-6">
 
    <Tabs value={tab} onValueChange={setTab}>
     <TabsList>
@@ -214,6 +261,8 @@ export default function AgentDetail({ agentId, navigate }) {
      )}
     </TabsContent>
    </Tabs>
+   </div>
+   </div>
   </div>
  );
 }

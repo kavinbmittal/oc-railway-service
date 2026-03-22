@@ -152,7 +152,7 @@ export default function ApprovalDetail({ approvalId, navigate }) {
    :"";
 
  return (
-  <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
+  <div className="flex flex-col h-full">
    {/* Page Header — Aura: px-8 py-8 border-b, sticky */}
    <header className="px-8 py-8 border-b border-zinc-800 shrink-0 bg-[#09090b]">
     {/* Breadcrumb */}
@@ -486,6 +486,6 @@ export default function ApprovalDetail({ approvalId, navigate }) {
      </div>
     </div>
    </div>
-  </main>
+  </div>
  );
 }

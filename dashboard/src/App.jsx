@@ -152,34 +152,39 @@ export default function App() {
    <div className="min-h-0 flex-1 flex overflow-hidden">
     <Sidebar page={page} selectedProject={selectedProject} navigate={navigate} refreshKey={refreshKey} />
     <div className="flex min-w-0 flex-col h-full flex-1">
-     <main className="flex-1 p-6 md:p-8 overflow-auto">
-      {page ==="overview" && <Overview navigate={navigate} />}
-      {page ==="project" && selectedProject && (
-       <ProjectDetail projectId={selectedProject} navigate={navigate} initialTab={projectTab} />
-      )}
-      {page ==="agents" && <AgentList navigate={navigate} />}
-      {page ==="agent-detail" && selectedAgent && (
-       <AgentDetail agentId={selectedAgent} navigate={navigate} />
-      )}
-      {page ==="create-project" && <CreateProject navigate={navigate} />}
-      {page ==="approvals" && <Approvals navigate={navigate} />}
-      {page ==="approval-detail" && approvalId && (
-       <ApprovalDetail approvalId={approvalId} navigate={navigate} />
-      )}
-      {page ==="inbox" && <Inbox navigate={navigate} />}
-      {page ==="activity" && <Activity navigate={navigate} />}
-      {page ==="costs" && <Costs navigate={navigate} />}
-      {page ==="org-chart" && <OrgChart navigate={navigate} />}
-      {page ==="workspaces" && <Workspaces navigate={navigate} />}
-      {/* Issues are accessed via project detail tabs (#/projects/{slug}/issues) */}
-      {page ==="issue-detail" && issueContext && (
-       <IssueDetail
-        projectSlug={issueContext.projectSlug}
-        issueId={issueContext.issueId}
-        navigate={navigate}
-       />
-      )}
-     </main>
+     {/* Detail pages manage their own padding and scrolling for sticky headers */}
+     {(page ==="approval-detail" || page ==="issue-detail" || page ==="agent-detail" || page ==="project" || page ==="create-project") ? (
+      <main className="flex-1 overflow-hidden flex flex-col">
+       {page ==="approval-detail" && approvalId && (
+        <ApprovalDetail approvalId={approvalId} navigate={navigate} />
+       )}
+       {page ==="issue-detail" && issueContext && (
+        <IssueDetail
+         projectSlug={issueContext.projectSlug}
+         issueId={issueContext.issueId}
+         navigate={navigate}
+        />
+       )}
+       {page ==="agent-detail" && selectedAgent && (
+        <AgentDetail agentId={selectedAgent} navigate={navigate} />
+       )}
+       {page ==="project" && selectedProject && (
+        <ProjectDetail projectId={selectedProject} navigate={navigate} initialTab={projectTab} />
+       )}
+       {page ==="create-project" && <CreateProject navigate={navigate} />}
+      </main>
+     ) : (
+      <main className="flex-1 p-6 md:p-8 overflow-auto">
+       {page ==="overview" && <Overview navigate={navigate} />}
+       {page ==="agents" && <AgentList navigate={navigate} />}
+       {page ==="approvals" && <Approvals navigate={navigate} />}
+       {page ==="inbox" && <Inbox navigate={navigate} />}
+       {page ==="activity" && <Activity navigate={navigate} />}
+       {page ==="costs" && <Costs navigate={navigate} />}
+       {page ==="org-chart" && <OrgChart navigate={navigate} />}
+       {page ==="workspaces" && <Workspaces navigate={navigate} />}
+      </main>
+     )}
     </div>
    </div>
   </div>

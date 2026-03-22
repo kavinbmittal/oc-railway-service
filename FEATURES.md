@@ -13,6 +13,7 @@
 - Issues and experiments tagged to themes with target proxy metrics (server-validated)
 - Experiment approvals show structured hypothesis, program, and proxy metric targets
 - Click any approved theme to see all issues tagged to it
+- Sticky headers with breadcrumb navigation on all detail pages (projects, issues, agents, approvals, create project)
 - Keyboard-navigable with visible focus rings on all interactive elements
 
 ## Agent Heartbeats

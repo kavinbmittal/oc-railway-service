@@ -219,7 +219,7 @@ export default function Approvals({ navigate }) {
           <div
            key={approval.id || approval._file || i}
            className={`flex flex-col gap-3 px-[20px] py-4 hover:bg-zinc-800/40 transition-colors cursor-pointer ${i < items.length - 1 ? "border-b border-zinc-800/50" : ""}`}
-           onClick={() => navigate("approval", approval.id || approval._file, { project: approval._project || approval.project })}
+           onClick={() => navigate("approval-detail", approval.id || approval._file)}
           >
            <div className="flex items-center gap-4">
             <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-normal border shrink-0 ${typeStyle(approval._source || approval.gate || approval.type)}`}>

@@ -121,59 +121,61 @@ export default function IssueDetail({ projectSlug, issueId, navigate }) {
  const comments = issue.comments || [];
 
  return (
-  <div className="max-w-6xl mx-auto p-6 md:p-10 lg:p-12">
-   {/* Breadcrumb — Aura: nav text-sm text-zinc-400 with > separators */}
-   <nav className="flex items-center text-sm text-zinc-400 space-x-2 mb-6">
-    <button onClick={() => navigate("overview")} className="hover:text-zinc-100 transition-colors">Projects</button>
-    <span className="text-zinc-600">&rsaquo;</span>
-    <button onClick={() => navigate("project", projectSlug)} className="hover:text-zinc-100 transition-colors capitalize">{projectSlug}</button>
-    <span className="text-zinc-600">&rsaquo;</span>
-    <button onClick={() => navigate("project-tab", { slug: projectSlug, tab:"issues" })} className="hover:text-zinc-100 transition-colors">Issues</button>
-    <span className="text-zinc-600">&rsaquo;</span>
-    <span className="text-zinc-100 font-medium">{issue.id}</span>
-   </nav>
+  <div className="flex flex-col h-full">
+   <header className="px-8 py-8 border-b border-zinc-800 shrink-0 bg-[#09090b]">
+    {/* Breadcrumb */}
+    <nav className="flex items-center text-[13px] text-zinc-400 mb-5 tracking-wide">
+     <a href="#/overview" onClick={(e) => { e.preventDefault(); navigate("overview"); }} className="hover:text-zinc-200 transition-colors cursor-pointer">Projects</a>
+     <span className="mx-2 text-zinc-600">&rsaquo;</span>
+     <a href={`#/projects/${projectSlug}`} onClick={(e) => { e.preventDefault(); navigate("project", projectSlug); }} className="hover:text-zinc-200 transition-colors cursor-pointer capitalize">{projectSlug}</a>
+     <span className="mx-2 text-zinc-600">&rsaquo;</span>
+     <a href={`#/projects/${projectSlug}/issues`} onClick={(e) => { e.preventDefault(); navigate("project-tab", { slug: projectSlug, tab:"issues" }); }} className="hover:text-zinc-200 transition-colors cursor-pointer">Issues</a>
+     <span className="mx-2 text-zinc-600">&rsaquo;</span>
+     <span className="text-zinc-100 font-semibold">{issue.id}</span>
+    </nav>
 
-   {/* Page Header — Aura: text-3xl font-medium tracking-tight */}
-   <div className="mb-10">
-    {editingTitle ? (
-     <input
-      type="text"
-      value={titleDraft}
-      onChange={(e) => setTitleDraft(e.target.value)}
-      onBlur={handleTitleBlur}
-      onKeyDown={handleTitleKeyDown}
-      className="w-full bg-transparent text-3xl font-medium text-zinc-100 leading-none tracking-tight outline-none border-b border-zinc-800 pb-1"
-      autoFocus
-     />
-    ) : (
-     <h1
-      className="text-3xl font-medium text-zinc-100 leading-none tracking-tight mb-4 cursor-text hover:text-zinc-300 transition-colors"
-      onClick={() => setEditingTitle(true)}
-     >
-      {issue.title}
-     </h1>
-    )}
-
-    {/* Metadata line — Aura: flex items-center gap-3 with dot separators */}
-    <div className="flex flex-wrap items-center gap-3 text-sm text-zinc-500">
-     <span className="font-mono">{issue.id}</span>
-     <span className="text-zinc-700">&middot;</span>
+    {/* Title + Status Badge */}
+    <div className="flex items-center gap-4 mb-4">
+     {editingTitle ? (
+      <input
+       type="text"
+       value={titleDraft}
+       onChange={(e) => setTitleDraft(e.target.value)}
+       onBlur={handleTitleBlur}
+       onKeyDown={handleTitleKeyDown}
+       className="flex-1 bg-transparent text-[30px] font-semibold text-zinc-100 leading-none tracking-tight outline-none border-b border-zinc-800 pb-1"
+       autoFocus
+      />
+     ) : (
+      <h1
+       className="text-[30px] font-semibold text-zinc-100 leading-none tracking-tight cursor-text hover:text-zinc-300 transition-colors"
+       onClick={() => setEditingTitle(true)}
+      >
+       {issue.title}
+      </h1>
+     )}
      <StatusBadge status={issue.status} />
+    </div>
+
+    {/* Metadata line */}
+    <div className="flex flex-wrap items-center gap-2 text-[13px] text-zinc-500">
+     <span className="font-mono">{issue.id}</span>
      {issue.priority && issue.priority !== "none" && (
       <>
-       <span className="text-zinc-700">&middot;</span>
+       <span className="text-zinc-600">&middot;</span>
        <PriorityBadge priority={issue.priority} />
       </>
      )}
      {issue.assignee && (
       <>
-       <span className="text-zinc-700">&middot;</span>
+       <span className="text-zinc-600">&middot;</span>
        <span className="text-zinc-300 capitalize">{issue.assignee}</span>
       </>
      )}
     </div>
-   </div>
+   </header>
 
+   <div className="flex-1 overflow-y-auto p-8">
    {/* Two-column layout — Aura: grid-cols-3 */}
    <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 items-start">
     {/* Left Column — 2/3 */}
@@ -325,6 +327,7 @@ export default function IssueDetail({ projectSlug, issueId, navigate }) {
       </button>
      </div>
     </div>
+   </div>
    </div>
   </div>
  );

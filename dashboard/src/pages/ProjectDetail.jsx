@@ -154,64 +154,56 @@ export default function ProjectDetail({ projectId, navigate, initialTab }) {
  }
 
  return (
-  <div className="max-w-[1400px] mx-auto">
-   {/* Header area — matches Aura's space-y-4 */}
-   <div className="space-y-4">
-    {/* Breadcrumb — Aura: nav text-sm text-zinc-500 */}
-    <nav className="flex items-center text-[13px] text-muted-foreground">
-     <button
-      onClick={() => navigate("overview")}
-      className="hover:text-foreground transition-colors"
-     >
-      Projects
-     </button>
-     <span className="mx-2">›</span>
-     <span className="text-muted-foreground/80">
-      {project.title || projectId}
-     </span>
+  <div className="flex flex-col h-full">
+   <header className="px-8 py-8 border-b border-zinc-800 shrink-0 bg-[#09090b]">
+    {/* Breadcrumb */}
+    <nav className="flex items-center text-[13px] text-zinc-400 mb-5 tracking-wide">
+     <a href="#/overview" onClick={(e) => { e.preventDefault(); navigate("overview"); }} className="hover:text-zinc-200 transition-colors cursor-pointer">Projects</a>
+     <span className="mx-2 text-zinc-600">&rsaquo;</span>
+     <span className="text-zinc-100 font-semibold">{project.title || projectId}</span>
     </nav>
 
-    {/* Title + status — Aura: text-3xl font-semibold tracking-tight + badge */}
-    <div>
-     <div className="flex items-center gap-4">
-      <h1 className="text-3xl font-semibold text-foreground tracking-tight">
-       {project.title || projectId}
-      </h1>
-      <StatusBadge status={project.status} />
-     </div>
-
-     {/* Metadata — Aura: text-sm text-zinc-500 with dot separators */}
-     <div className="flex items-center gap-2 mt-3 text-[13px] text-muted-foreground">
-      <span
-       className="hover:text-foreground transition-colors cursor-pointer capitalize"
-       onClick={() => {
-        const name = project.lead.toLowerCase();
-        const workspaceId = name ==="sam" ?"workspace" : `workspace-${name}`;
-        navigate("agent-detail", workspaceId);
-       }}
-      >
-       {project.lead}
-      </span>
-      <span>·</span>
-      <span className="font-mono tabular-nums">{project.budget}</span>
-      {project.created && (
-       <>
-        <span>·</span>
-        <span>{formatDateUtil(project.created)}</span>
-       </>
-      )}
-      {totalCost > 0 && (
-       <>
-        <span>·</span>
-        <span className="font-mono tabular-nums">${totalCost.toFixed(2)} spent</span>
-       </>
-      )}
-     </div>
+    {/* Title + Status Badge */}
+    <div className="flex items-center gap-4 mb-4">
+     <h1 className="text-[30px] font-semibold text-zinc-100 leading-none tracking-tight">
+      {project.title || projectId}
+     </h1>
+     <StatusBadge status={project.status} />
     </div>
-   </div>
 
-   {/* Tabs — Aura: mt-8 border-b, gap-8 */}
-   <Tabs value={tab} onValueChange={handleTabChange} className="mt-8">
+    {/* Metadata */}
+    <div className="flex items-center gap-2 text-[13px] text-zinc-500">
+     <span
+      className="hover:text-zinc-200 transition-colors cursor-pointer capitalize"
+      onClick={() => {
+       const name = project.lead.toLowerCase();
+       const workspaceId = name ==="sam" ?"workspace" : `workspace-${name}`;
+       navigate("agent-detail", workspaceId);
+      }}
+     >
+      {project.lead}
+     </span>
+     <span className="text-zinc-600">&middot;</span>
+     <span className="font-mono tabular-nums">{project.budget}</span>
+     {project.created && (
+      <>
+       <span className="text-zinc-600">&middot;</span>
+       <span>{formatDateUtil(project.created)}</span>
+      </>
+     )}
+     {totalCost > 0 && (
+      <>
+       <span className="text-zinc-600">&middot;</span>
+       <span className="font-mono tabular-nums">${totalCost.toFixed(2)} spent</span>
+      </>
+     )}
+    </div>
+   </header>
+
+   <div className="flex-1 overflow-y-auto p-8">
+   <div className="max-w-[1400px] mx-auto">
+   {/* Tabs — Aura: border-b, gap-8 */}
+   <Tabs value={tab} onValueChange={handleTabChange}>
     <TabsList>
      {TABS.map(({ id, label, icon: Icon }) => {
       const pendingCount = id ==="approvals"
@@ -472,6 +464,8 @@ export default function ProjectDetail({ projectId, navigate, initialTab }) {
      </div>
     </TabsContent>
    </Tabs>
+   </div>
+   </div>
   </div>
  );
 }
