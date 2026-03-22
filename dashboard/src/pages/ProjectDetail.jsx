@@ -20,6 +20,7 @@ import Issues from"./Issues.jsx";
 import { CollapsibleSection } from"../components/CollapsibleSection.jsx";
 import ApprovalCard from "../components/ApprovalCard.jsx";
 import { RejectModal } from "../components/RejectModal.jsx";
+import { CreateExperiment } from "../components/CreateExperiment.jsx";
 
 const TABS = [
  { id:"overview", label:"Overview", icon: FileText },
@@ -374,7 +375,7 @@ export default function ProjectDetail({ projectId, navigate, initialTab }) {
     {/* ──────────────── EXPERIMENTS TAB ──────────────── */}
     <TabsContent value="experiments">
      <div className="mt-6">
-      <ExperimentsTab experiments={experiments} />
+      <ExperimentsTab experiments={experiments} themes={themes.filter((t) => t.status === "approved")} projectSlug={projectId} />
      </div>
     </TabsContent>
 
@@ -795,10 +796,8 @@ function ProjectApprovalsTab({ approvals, projectId, onResolved, navigate }) {
 
 /* ──────────────── EXPERIMENTS TAB COMPONENT ──────────────── */
 /* Aura: grid-cols-2 cards with hypothesis + metrics */
-function ExperimentsTab({ experiments }) {
- if (!experiments || experiments.length === 0) {
-  return <EmptyState icon={FlaskConical} text="No experiments yet" sub="The lead can start one via the autoresearch protocol." />;
- }
+function ExperimentsTab({ experiments, themes = [], projectSlug }) {
+ const [showCreate, setShowCreate] = useState(false);
 
  const totalRuns = experiments.reduce((sum, e) => sum + e.result_count, 0);
  const bestMetrics = experiments.map((e) => e.best_metric).filter((m) => m !== null && m !== undefined);
@@ -806,40 +805,67 @@ function ExperimentsTab({ experiments }) {
 
  return (
   <div className="space-y-6">
-   <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-    <MetricCard label="Experiments" value={experiments.length} />
-    <MetricCard label="Total Runs" value={totalRuns} />
-    {overallBest !== null && <MetricCard label="Best Metric" value={overallBest} mono />}
+   {/* Header with create button */}
+   <div className="flex justify-between items-center">
+    <div />
+    <button
+     onClick={() => setShowCreate(!showCreate)}
+     className="text-[13px] font-medium rounded-[6px] border border-border bg-secondary hover:bg-accent px-3 py-1.5 text-foreground transition-colors"
+    >
+     New Experiment
+    </button>
    </div>
 
-   {/* Experiment cards — Aura: grid-cols-2 */}
-   <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-    {experiments.map((exp) => (
-     <div key={exp.dir} className="bg-card border border-border rounded-[2px] shadow-sm p-5 flex flex-col h-full">
-      <div className="flex justify-between items-start mb-3">
-       <h3 className="text-[14px] font-medium text-foreground">{exp.name}</h3>
-       <StatusBadge status={exp.status} />
-      </div>
-      {exp.program_md && (
-       <div className="text-[13px] text-muted-foreground mb-4 flex-1">
-        <Markdown content={exp.program_md} />
-       </div>
-      )}
-      {exp.best_metric !== null && (
-       <div className="grid grid-cols-2 gap-4 border-t border-border/50 pt-4 mt-auto">
-        <div>
-         <div className="text-[11px] font-mono uppercase tracking-[0.15em] text-muted-foreground mb-1">Best Metric</div>
-         <div className="text-[14px] font-medium font-mono text-foreground">{exp.best_metric}</div>
-        </div>
-        <div>
-         <div className="text-[11px] font-mono uppercase tracking-[0.15em] text-muted-foreground mb-1">Runs</div>
-         <div className="text-[14px] font-medium font-mono text-foreground">{exp.result_count}</div>
-        </div>
-       </div>
-      )}
+   {/* Create form */}
+   {showCreate && (
+    <CreateExperiment
+     projectSlug={projectSlug}
+     themes={themes}
+     onCreated={() => setShowCreate(false)}
+     onClose={() => setShowCreate(false)}
+    />
+   )}
+
+   {experiments.length === 0 && !showCreate ? (
+    <EmptyState icon={FlaskConical} text="No experiments yet" sub="The lead can start one via the autoresearch protocol." />
+   ) : experiments.length > 0 && (
+    <>
+     <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+      <MetricCard label="Experiments" value={experiments.length} />
+      <MetricCard label="Total Runs" value={totalRuns} />
+      {overallBest !== null && <MetricCard label="Best Metric" value={overallBest} mono />}
      </div>
-    ))}
-   </div>
+
+     {/* Experiment cards — Aura: grid-cols-2 */}
+     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      {experiments.map((exp) => (
+       <div key={exp.dir} className="bg-card border border-border rounded-[2px] shadow-sm p-5 flex flex-col h-full">
+        <div className="flex justify-between items-start mb-3">
+         <h3 className="text-[14px] font-medium text-foreground">{exp.name}</h3>
+         <StatusBadge status={exp.status} />
+        </div>
+        {exp.program_md && (
+         <div className="text-[13px] text-muted-foreground mb-4 flex-1">
+          <Markdown content={exp.program_md} />
+         </div>
+        )}
+        {exp.best_metric !== null && (
+         <div className="grid grid-cols-2 gap-4 border-t border-border/50 pt-4 mt-auto">
+          <div>
+           <div className="text-[11px] font-mono uppercase tracking-[0.15em] text-muted-foreground mb-1">Best Metric</div>
+           <div className="text-[14px] font-medium font-mono text-foreground">{exp.best_metric}</div>
+          </div>
+          <div>
+           <div className="text-[11px] font-mono uppercase tracking-[0.15em] text-muted-foreground mb-1">Runs</div>
+           <div className="text-[14px] font-medium font-mono text-foreground">{exp.result_count}</div>
+          </div>
+         </div>
+        )}
+       </div>
+      ))}
+     </div>
+    </>
+   )}
   </div>
  );
 }

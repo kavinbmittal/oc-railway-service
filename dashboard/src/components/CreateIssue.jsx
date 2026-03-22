@@ -1,42 +1,31 @@
 /**
- * CreateIssue — form for creating a new issue.
+ * CreateIssue — inline form for creating a new issue.
+ * UI ported from Aura HTML reference.
  */
 import { useState } from"react";
-import { X, Plus } from"lucide-react";
+import { X } from"lucide-react";
 import { createIssue } from"../api.js";
-import { ALL_PRIORITIES, PriorityIcon } from"./PriorityIcon.jsx";
-import { AGENTS, AgentInitial } from"./AssigneeSelect.jsx";
+import { ALL_PRIORITIES } from"./PriorityIcon.jsx";
+import { AGENTS } from"./AssigneeSelect.jsx";
+
+const PRIORITY_DOTS = {
+ critical:"bg-red-500",
+ high:"bg-orange-500",
+ medium:"bg-blue-500",
+ low:"bg-zinc-500",
+ none:"border border-muted-foreground/40 bg-transparent",
+};
 
 export function CreateIssue({ projectSlug, onCreated, onClose, themes = [] }) {
  const [title, setTitle] = useState("");
  const [description, setDescription] = useState("");
- const [priority, setPriority] = useState("none");
+ const [priority, setPriority] = useState("medium");
  const [assignee, setAssignee] = useState("");
  const [labelInput, setLabelInput] = useState("");
- const [labels, setLabels] = useState([]);
  const [selectedTheme, setSelectedTheme] = useState("");
  const [selectedProxyMetrics, setSelectedProxyMetrics] = useState([]);
  const [submitting, setSubmitting] = useState(false);
  const [error, setError] = useState(null);
-
- function addLabel() {
-  const trimmed = labelInput.trim();
-  if (trimmed && !labels.includes(trimmed)) {
-   setLabels([...labels, trimmed]);
-   setLabelInput("");
-  }
- }
-
- function removeLabel(label) {
-  setLabels(labels.filter((l) => l !== label));
- }
-
- function handleLabelKeyDown(e) {
-  if (e.key ==="Enter") {
-   e.preventDefault();
-   addLabel();
-  }
- }
 
  async function handleSubmit(e) {
   e.preventDefault();
@@ -44,6 +33,9 @@ export function CreateIssue({ projectSlug, onCreated, onClose, themes = [] }) {
   setSubmitting(true);
   setError(null);
   try {
+   const labels = labelInput.trim()
+    ? labelInput.split(",").map((l) => l.trim()).filter(Boolean)
+    : [];
    const issue = await createIssue({
     project: projectSlug,
     title: title.trim(),
@@ -63,177 +55,175 @@ export function CreateIssue({ projectSlug, onCreated, onClose, themes = [] }) {
  }
 
  return (
-  <div className="border border-border bg-card">
-   <div className="flex items-center justify-between px-4 py-3 border-b border-border">
-    <h3 className="text-sm font-semibold">New Issue</h3>
+  <div className="bg-card border border-border rounded-[2px] shadow-sm mb-4">
+   {/* Card Header — Aura */}
+   <div className="p-[20px] border-b border-border flex justify-between items-center">
+    <h2 className="text-[14px] font-semibold text-foreground tracking-tight">New Issue</h2>
     {onClose && (
-     <button
-      onClick={onClose}
-      className="text-muted-foreground hover:text-foreground transition-colors"
-     >
-      <X className="h-4 w-4" />
+     <button onClick={onClose} className="text-muted-foreground hover:text-foreground transition-colors">
+      <X size={18} />
      </button>
     )}
    </div>
 
-   <form onSubmit={handleSubmit} className="p-4 space-y-4">
-    {/* Title */}
-    <div>
-     <input
-      type="text"
-      value={title}
-      onChange={(e) => setTitle(e.target.value)}
-      placeholder="Issue title"
-      className="w-full bg-transparent text-lg font-semibold outline-none placeholder:text-muted-foreground/40"
-      autoFocus
-     />
-    </div>
+   {/* Form Body — Aura */}
+   <form onSubmit={handleSubmit}>
+    <div className="p-[20px] space-y-6">
 
-    {/* Description */}
-    <div>
-     <textarea
-      value={description}
-      onChange={(e) => setDescription(e.target.value)}
-      placeholder="Add a description..."
-      className="w-full min-h-[100px] rounded-md border border-border bg-transparent px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-ring placeholder:text-muted-foreground/50 resize-y"
-     />
-    </div>
-
-    {/* Properties row */}
-    <div className="flex flex-wrap gap-3">
-     {/* Priority */}
+     {/* Title */}
      <div>
-      <label className="text-xs text-muted-foreground mb-1 block">Priority</label>
-      <select
-       value={priority}
-       onChange={(e) => setPriority(e.target.value)}
-       className="rounded border border-border bg-transparent px-2 py-1.5 text-xs outline-none"
-      >
-       {ALL_PRIORITIES.map((p) => (
-        <option key={p} value={p}>
-         {p.charAt(0).toUpperCase() + p.slice(1)}
-        </option>
-       ))}
-      </select>
+      <label className="text-[11px] uppercase font-mono tracking-[0.15em] text-muted-foreground mb-2 block">Title</label>
+      <input
+       type="text"
+       value={title}
+       onChange={(e) => setTitle(e.target.value)}
+       placeholder="Issue title"
+       autoFocus
+       className="w-full rounded-[6px] border border-border bg-background text-[14px] text-foreground px-3 py-2 placeholder:text-muted-foreground/40 focus:outline-none focus:ring-[3px] focus:ring-ring/50 transition-all"
+      />
      </div>
 
-     {/* Assignee */}
+     {/* Description */}
      <div>
-      <label className="text-xs text-muted-foreground mb-1 block">Assignee</label>
-      <select
-       value={assignee}
-       onChange={(e) => setAssignee(e.target.value)}
-       className="rounded border border-border bg-transparent px-2 py-1.5 text-xs outline-none"
-      >
-       <option value="">Unassigned</option>
-       {AGENTS.map((a) => (
-        <option key={a.id} value={a.id}>
-         {a.name}
-        </option>
-       ))}
-      </select>
+      <label className="text-[11px] uppercase font-mono tracking-[0.15em] text-muted-foreground mb-2 block">Description</label>
+      <textarea
+       value={description}
+       onChange={(e) => setDescription(e.target.value)}
+       rows={4}
+       placeholder="Describe the issue in detail. Markdown supported."
+       className="w-full rounded-[6px] border border-border bg-background text-[14px] text-foreground px-3 py-2 placeholder:text-muted-foreground/40 focus:outline-none focus:ring-[3px] focus:ring-ring/50 transition-all resize-y"
+      />
      </div>
-    </div>
 
-    {/* Theme + Proxy Metrics — only shown when project has approved themes */}
-    {themes.length > 0 && (
-     <div className="space-y-3">
+     {/* Two-column: Priority & Assignee — Aura */}
+     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {/* Priority */}
       <div>
-       <label className="text-xs text-muted-foreground mb-1 block">Theme</label>
-       <select
-        value={selectedTheme}
-        onChange={(e) => {
-         setSelectedTheme(e.target.value);
-         setSelectedProxyMetrics([]); // reset metrics when theme changes
-        }}
-        className="border border-border bg-transparent px-2 py-1.5 text-xs outline-none"
-       >
-        <option value="">Select theme...</option>
-        {themes.map((t) => (
-         <option key={t.id} value={t.id}>{t.title}</option>
-        ))}
-       </select>
-      </div>
-      {selectedTheme && (() => {
-       const theme = themes.find((t) => t.id === selectedTheme);
-       if (!theme || !theme.proxy_metrics?.length) return null;
-       return (
-        <div>
-         <label className="text-xs text-muted-foreground mb-1 block">Target Proxy Metrics</label>
-         <div className="space-y-1.5">
-          {theme.proxy_metrics.map((pm) => (
-           <label key={pm.id} className="flex items-center gap-2 text-xs cursor-pointer">
-            <input
-             type="checkbox"
-             checked={selectedProxyMetrics.includes(pm.id)}
-             onChange={() => {
-              setSelectedProxyMetrics((prev) =>
-               prev.includes(pm.id)
-                ? prev.filter((id) => id !== pm.id)
-                : [...prev, pm.id]
-              );
-             }}
-             className="accent-teal-400"
-            />
-            <span className="text-foreground/80">{pm.name}</span>
-           </label>
-          ))}
-         </div>
-        </div>
-       );
-      })()}
-     </div>
-    )}
-
-    {/* Labels */}
-    <div>
-     <label className="text-xs text-muted-foreground mb-1 block">Labels</label>
-     <div className="flex flex-wrap items-center gap-1.5 mb-1.5">
-      {labels.map((label) => (
-       <span
-        key={label}
-        className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium bg-accent text-accent-foreground"
-       >
-        {label}
-        <button
-         type="button"
-         onClick={() => removeLabel(label)}
-         className="text-muted-foreground hover:text-foreground"
+       <label className="text-[11px] uppercase font-mono tracking-[0.15em] text-muted-foreground mb-2 block">Priority</label>
+       <div className="relative group">
+        <select
+         value={priority}
+         onChange={(e) => setPriority(e.target.value)}
+         className="w-full rounded-[6px] border border-border bg-background text-[14px] text-foreground px-3 py-2 pr-10 focus:outline-none focus:ring-[3px] focus:ring-ring/50 transition-all cursor-pointer appearance-none"
         >
-         <X className="h-3 w-3" />
-        </button>
-       </span>
-      ))}
+         {ALL_PRIORITIES.map((p) => (
+          <option key={p} value={p}>{p.charAt(0).toUpperCase() + p.slice(1)}</option>
+         ))}
+        </select>
+        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground">
+         <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+        </div>
+       </div>
+      </div>
+
+      {/* Assignee */}
+      <div>
+       <label className="text-[11px] uppercase font-mono tracking-[0.15em] text-muted-foreground mb-2 block">Assignee</label>
+       <div className="relative group">
+        <select
+         value={assignee}
+         onChange={(e) => setAssignee(e.target.value)}
+         className="w-full rounded-[6px] border border-border bg-background text-[14px] text-foreground px-3 py-2 pr-10 focus:outline-none focus:ring-[3px] focus:ring-ring/50 transition-all cursor-pointer appearance-none"
+        >
+         <option value="">Unassigned</option>
+         {AGENTS.map((a) => (
+          <option key={a.id} value={a.id}>{a.name}</option>
+         ))}
+        </select>
+        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground">
+         <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+        </div>
+       </div>
+      </div>
      </div>
-     <div className="flex items-center gap-1">
+
+     {/* Theme — Aura */}
+     {themes.length > 0 && (
+      <div>
+       <label className="text-[11px] uppercase font-mono tracking-[0.15em] text-muted-foreground mb-2 block">Theme</label>
+       <div className="relative group">
+        <select
+         value={selectedTheme}
+         onChange={(e) => { setSelectedTheme(e.target.value); setSelectedProxyMetrics([]); }}
+         className="w-full rounded-[6px] border border-border bg-background text-[14px] text-foreground px-3 py-2 pr-10 focus:outline-none focus:ring-[3px] focus:ring-ring/50 transition-all cursor-pointer appearance-none"
+        >
+         <option value="">No theme</option>
+         {themes.map((t) => (
+          <option key={t.id} value={t.id}>{t.title}</option>
+         ))}
+        </select>
+        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground">
+         <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+        </div>
+       </div>
+       <p className="text-[12px] text-muted-foreground mt-1.5">Tag this issue to a strategic theme</p>
+
+       {/* Proxy metrics checkboxes */}
+       {selectedTheme && (() => {
+        const theme = themes.find((t) => t.id === selectedTheme);
+        if (!theme || !theme.proxy_metrics?.length) return null;
+        return (
+         <div className="mt-3">
+          <label className="text-[11px] uppercase font-mono tracking-[0.15em] text-muted-foreground mb-2 block">Target Proxy Metrics</label>
+          <div className="space-y-2">
+           {theme.proxy_metrics.map((pm) => (
+            <label key={pm.id} className="flex items-center gap-2 text-[14px] cursor-pointer">
+             <input
+              type="checkbox"
+              checked={selectedProxyMetrics.includes(pm.id)}
+              onChange={() => {
+               setSelectedProxyMetrics((prev) =>
+                prev.includes(pm.id) ? prev.filter((id) => id !== pm.id) : [...prev, pm.id]
+               );
+              }}
+              className="accent-teal-400"
+             />
+             <span className="text-foreground/80">{pm.name}</span>
+            </label>
+           ))}
+          </div>
+         </div>
+        );
+       })()}
+      </div>
+     )}
+
+     {/* Labels — Aura */}
+     <div>
+      <label className="text-[11px] uppercase font-mono tracking-[0.15em] text-muted-foreground mb-2 block">Labels</label>
       <input
        type="text"
        value={labelInput}
        onChange={(e) => setLabelInput(e.target.value)}
-       onKeyDown={handleLabelKeyDown}
-       placeholder="Add label..."
-       className="flex-1 rounded border border-border bg-transparent px-2 py-1.5 text-xs outline-none placeholder:text-muted-foreground/50"
+       placeholder="Add labels separated by commas"
+       className="w-full rounded-[6px] border border-border bg-background text-[14px] text-foreground px-3 py-2 placeholder:text-muted-foreground/40 focus:outline-none focus:ring-[3px] focus:ring-ring/50 transition-all"
       />
-      <button
-       type="button"
-       onClick={addLabel}
-       className="p-1.5 rounded border border-border hover:bg-accent/50 text-muted-foreground hover:text-foreground transition-colors"
-      >
-       <Plus className="h-3 w-3" />
-      </button>
+      <p className="text-[12px] text-muted-foreground mt-1.5">Optional tags for categorization</p>
      </div>
     </div>
 
+    {/* Error */}
     {error && (
-     <p className="text-xs text-destructive">{error}</p>
+     <div className="mx-[20px] mb-4 border border-red-500/20 bg-red-500/5 rounded-[2px] px-4 py-3 text-[13px] text-red-400">
+      {error}
+     </div>
     )}
 
-    {/* Submit */}
-    <div className="flex justify-end">
+    {/* Card Footer — Aura */}
+    <div className="p-[20px] border-t border-border flex justify-end gap-3">
+     {onClose && (
+      <button
+       type="button"
+       onClick={onClose}
+       className="px-4 py-2 rounded-[6px] border border-border bg-card text-[13px] font-medium text-foreground/80 hover:bg-accent transition-colors"
+      >
+       Cancel
+      </button>
+     )}
      <button
       type="submit"
       disabled={!title.trim() || submitting}
-      className="inline-flex items-center px-4 py-2 text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+      className="px-4 py-2 rounded-[6px] border border-emerald-500/50 bg-emerald-500/10 text-[13px] font-medium text-emerald-300 hover:bg-emerald-500/20 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
      >
       {submitting ?"Creating..." :"Create Issue"}
      </button>
