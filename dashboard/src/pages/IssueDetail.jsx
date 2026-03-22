@@ -3,7 +3,7 @@
  * UI ported from Aura HTML reference.
  */
 import { useState, useEffect, useCallback } from"react";
-import { getIssue, updateIssue, addComment } from"../api.js";
+import { getIssue, updateIssue, addComment, getThemes } from"../api.js";
 import { Pencil, Trash2 } from"lucide-react";
 import { formatDate as formatDateUtil, formatTimeAgo } from"../utils/formatDate.js";
 import { Skeleton } from"../components/ui/Skeleton.jsx";
@@ -41,6 +41,7 @@ function PriorityBadge({ priority }) {
 
 export default function IssueDetail({ projectSlug, issueId, navigate }) {
  const [issue, setIssue] = useState(null);
+ const [themes, setThemes] = useState([]);
  const [loading, setLoading] = useState(true);
  const [editingTitle, setEditingTitle] = useState(false);
  const [titleDraft, setTitleDraft] = useState("");
@@ -49,10 +50,13 @@ export default function IssueDetail({ projectSlug, issueId, navigate }) {
 
  useEffect(() => {
   setLoading(true);
-  getIssue(issueId, projectSlug)
-   .then((data) => {
+  Promise.all([
+   getIssue(issueId, projectSlug),
+   getThemes(projectSlug).catch(() => []),
+  ]).then(([data, themeList]) => {
     setIssue(data);
     setTitleDraft(data.title ||"");
+    setThemes(themeList);
    })
    .catch((err) => console.error("Failed to load issue:", err))
    .finally(() => setLoading(false));
@@ -176,6 +180,65 @@ export default function IssueDetail({ projectSlug, issueId, navigate }) {
    </header>
 
    <div className="flex-1 overflow-y-auto p-8">
+
+   {/* Theme & Proxy Metric cards — from Aura HTML */}
+   {(() => {
+    const issueTheme = issue.theme ? themes.find((t) => t.id === issue.theme || t.title === issue.theme) : null;
+    const sortedThemes = themes.filter((t) => t.status === "approved").sort((a, b) => (a.order ?? 999) - (b.order ?? 999));
+    const themeIdx = issueTheme ? sortedThemes.indexOf(issueTheme) : -1;
+    const THEME_COLORS = [
+     { badgeBg: "bg-indigo-500/10", badgeBorder: "border-indigo-500/20", text: "text-indigo-400", iconBg: "bg-indigo-500/10", iconBorder: "border-indigo-500/20", iconText: "text-indigo-400" },
+     { badgeBg: "bg-emerald-500/10", badgeBorder: "border-emerald-500/20", text: "text-emerald-400", iconBg: "bg-emerald-500/10", iconBorder: "border-emerald-500/20", iconText: "text-emerald-400" },
+     { badgeBg: "bg-amber-500/10", badgeBorder: "border-amber-500/20", text: "text-amber-400", iconBg: "bg-amber-500/10", iconBorder: "border-amber-500/20", iconText: "text-amber-400" },
+     { badgeBg: "bg-cyan-500/10", badgeBorder: "border-cyan-500/20", text: "text-cyan-400", iconBg: "bg-cyan-500/10", iconBorder: "border-cyan-500/20", iconText: "text-cyan-400" },
+     { badgeBg: "bg-rose-500/10", badgeBorder: "border-rose-500/20", text: "text-rose-400", iconBg: "bg-rose-500/10", iconBorder: "border-rose-500/20", iconText: "text-rose-400" },
+    ];
+    const colors = themeIdx >= 0 ? THEME_COLORS[themeIdx % THEME_COLORS.length] : THEME_COLORS[0];
+    const sortedPms = issueTheme ? (issueTheme.proxy_metrics || []).sort((a, b) => (a.order ?? 999) - (b.order ?? 999)) : [];
+    const issuePms = (issue.proxy_metrics || []).map((pm) => {
+     const pmId = typeof pm === "string" ? pm : pm.id;
+     const found = sortedPms.find((p) => p.id === pmId || p.name === pmId);
+     return found || { id: pmId, name: pmId };
+    });
+    const firstPm = issuePms[0];
+    const firstPmIdx = firstPm ? sortedPms.findIndex((p) => p.id === firstPm.id) : -1;
+
+    if (!issueTheme && issuePms.length === 0) return null;
+
+    return (
+     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+      {issueTheme && (
+       <div className="bg-app-card border border-zinc-800 rounded-sm shadow-sm p-5 flex items-start gap-4">
+        <div className={`w-10 h-10 rounded-full ${colors.iconBg} border ${colors.iconBorder} flex items-center justify-center shrink-0`}>
+         <span className={`text-lg font-mono font-medium ${colors.iconText}`}>{issueTheme.order ?? themeIdx + 1}</span>
+        </div>
+        <div>
+         <h3 className="text-xs uppercase font-mono tracking-widest text-zinc-500 mb-1">Theme</h3>
+         <p className="text-base font-medium text-zinc-100 mb-1">{issueTheme.title}</p>
+         {issueTheme.description && (
+          <p className="text-xs text-zinc-400 leading-relaxed">{issueTheme.description}</p>
+         )}
+        </div>
+       </div>
+      )}
+      {firstPm && (
+       <div className="bg-app-card border border-zinc-800 rounded-sm shadow-sm p-5 flex items-start gap-4">
+        <div className="w-10 h-10 rounded-full bg-zinc-800/50 border border-zinc-700/50 flex items-center justify-center shrink-0">
+         <span className="text-sm font-mono font-medium text-zinc-400">{firstPmIdx >= 0 ? String.fromCharCode(97 + firstPmIdx) : "—"}</span>
+        </div>
+        <div>
+         <h3 className="text-xs uppercase font-mono tracking-widest text-zinc-500 mb-1">Proxy Metric</h3>
+         <p className="text-base font-medium text-zinc-100">{firstPm.name}</p>
+         {firstPm.target && (
+          <p className="text-xs text-zinc-400 mt-1">Target: {firstPm.target}</p>
+         )}
+        </div>
+       </div>
+      )}
+     </div>
+    );
+   })()}
+
    {/* Two-column layout — Aura: grid-cols-3 */}
    <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 items-start">
     {/* Left Column — 2/3 */}
