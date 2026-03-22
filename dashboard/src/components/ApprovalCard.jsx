@@ -57,7 +57,7 @@ export default function ApprovalCard({
   const projectName = approval._project || approval.project;
   const title = approval.what || approval.title || "";
   const isPending =
-    !approval.status || approval.status === "pending" || approval.status === undefined;
+    !approval.status || approval.status === "pending" || approval.status === "proposed" || approval.status === undefined;
   const status = approval.status || "pending";
   const itemType = approval.type || approval.gate || null;
 

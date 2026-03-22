@@ -131,7 +131,7 @@ export default function ApprovalDetail({ approvalId, navigate }) {
   const projectName = approval._project || approval.project;
   const title = approval.what || approval.title || "";
   const status = resolved ? resolved.decision : (approval.status || "pending");
-  const isPending = status === "pending";
+  const isPending = status === "pending" || status === "proposed";
   const isRevisionRequested = status === "revision_requested";
   const isDeliverable =
     approval._source === "deliverables" ||
