@@ -917,9 +917,11 @@ function ExperimentsTab({ experiments, themes = [], projectSlug, onRefresh, navi
        return (
        <div key={exp.dir} onClick={() => navigate("experiment-detail", { slug: projectSlug, dir: exp.dir })} className="bg-[#121214] border border-zinc-800 rounded-[2px] shadow-sm p-5 flex flex-col h-full gap-4 cursor-pointer hover:bg-zinc-800/30 transition-colors">
         <div className="space-y-2.5">
-         <div>
-          <StatusBadge status={exp.status} />
-         </div>
+         {exp.status && exp.status !== "unknown" && (
+          <div>
+           <StatusBadge status={exp.status} />
+          </div>
+         )}
          <h3 className="text-sm font-medium text-zinc-100">{exp.name}</h3>
 
          {/* Theme + Proxy Metric pill row */}
