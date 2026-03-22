@@ -85,7 +85,7 @@ export default function ExperimentDetail({ projectSlug, experimentDir, navigate 
     <header className="sticky top-0 z-10 px-8 py-8 border-b border-zinc-800 shrink-0 bg-[#09090b]">
      <div className="text-sm text-zinc-400 tracking-wide">
       <a href="#/overview" onClick={(e) => { e.preventDefault(); navigate("overview"); }} className="hover:text-zinc-200 transition-colors cursor-pointer">Projects</a>
-      <span className="mx-1.5">/</span>
+      <span className="mx-2 text-zinc-600">&rsaquo;</span>
       <span>{projectSlug}</span>
      </div>
     </header>
@@ -122,11 +122,11 @@ export default function ExperimentDetail({ projectSlug, experimentDir, navigate 
     {/* Breadcrumb */}
     <div className="text-sm text-zinc-400 tracking-wide">
      <a href="#/overview" onClick={(e) => { e.preventDefault(); navigate("overview"); }} className="hover:text-zinc-200 transition-colors cursor-pointer">Projects</a>
-     <span className="mx-1.5">/</span>
+     <span className="mx-2 text-zinc-600">&rsaquo;</span>
      <a href={`#/projects/${projectSlug}`} onClick={(e) => { e.preventDefault(); navigate("project", projectSlug); }} className="hover:text-zinc-200 transition-colors cursor-pointer">{projectSlug}</a>
-     <span className="mx-1.5">/</span>
+     <span className="mx-2 text-zinc-600">&rsaquo;</span>
      <a href={`#/projects/${projectSlug}/experiments`} onClick={(e) => { e.preventDefault(); navigate("project-tab", { slug: projectSlug, tab: "experiments" }); }} className="hover:text-zinc-200 transition-colors cursor-pointer">Experiments</a>
-     <span className="mx-1.5">/</span>
+     <span className="mx-2 text-zinc-600">&rsaquo;</span>
      <span className="text-zinc-200">{name}</span>
     </div>
 
