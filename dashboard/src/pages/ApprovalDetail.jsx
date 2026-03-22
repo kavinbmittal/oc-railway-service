@@ -253,17 +253,22 @@ export default function ApprovalDetail({ approvalId, navigate }) {
          </div>
         </div>
        )}
-       {firstPm && (
-        <div className="bg-app-card border border-zinc-800 rounded-sm shadow-sm p-5 flex items-start gap-4">
-         <div className="w-10 h-10 rounded-full bg-zinc-800/50 border border-zinc-700/50 flex items-center justify-center shrink-0">
-          <span className="text-sm font-mono font-medium text-zinc-400">{firstPmIdx >= 0 ? String.fromCharCode(97 + firstPmIdx) : "—"}</span>
-         </div>
-         <div>
-          <h3 className="text-xs uppercase font-mono tracking-widest text-zinc-500 mb-1">Proxy Metric</h3>
-          <p className="text-base font-medium text-zinc-100">{firstPm.name}</p>
-          {firstPm.target && (
-           <p className="text-xs text-zinc-400 mt-1">Target: {firstPm.target}</p>
-          )}
+       {approvalPms.length > 0 && (
+        <div className="bg-app-card border border-zinc-800 rounded-sm shadow-sm p-5">
+         <h3 className="text-xs uppercase font-mono tracking-widest text-zinc-500 mb-3">Proxy Metrics</h3>
+         <div className="space-y-2">
+          {approvalPms.map((pm, i) => {
+           const pmIdx = sortedPms.findIndex((p) => p.id === pm.id);
+           return (
+            <div key={i} className="flex items-center gap-3">
+             <span className="w-6 h-6 rounded-full bg-zinc-800/50 border border-zinc-700/50 flex items-center justify-center shrink-0 text-xs font-mono text-zinc-400">{pmIdx >= 0 ? String.fromCharCode(97 + pmIdx) : "—"}</span>
+             <div>
+              <p className="text-sm font-medium text-zinc-100">{pm.name}</p>
+              {pm.target && <p className="text-xs text-zinc-400">Target: {pm.target}</p>}
+             </div>
+            </div>
+           );
+          })}
          </div>
         </div>
        )}
@@ -411,30 +416,7 @@ export default function ApprovalDetail({ approvalId, navigate }) {
        ) : null;
       })()}
 
-      {/* Theme + Proxy Metrics cards on non-theme items */}
-      {!isTheme && (approval.theme_title || (approval.proxy_metric_names && approval.proxy_metric_names.length > 0)) && (
-       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {approval.theme_title && (
-         <div className="bg-[#121214] border border-zinc-800 rounded-[2px] shadow-sm p-[20px]">
-          <div className="text-[11px] uppercase tracking-[0.16em] font-mono text-zinc-500 mb-2">Theme</div>
-          <div className="flex items-center gap-2 text-[13px] text-teal-400 font-medium">
-           <Compass size={14} />
-           {approval.theme_title}
-          </div>
-         </div>
-        )}
-        {approval.proxy_metric_names && approval.proxy_metric_names.length > 0 && (
-         <div className="bg-[#121214] border border-zinc-800 rounded-[2px] shadow-sm p-[20px]">
-          <div className="text-[11px] uppercase tracking-[0.16em] font-mono text-zinc-500 mb-2">Proxy Metrics</div>
-          <div className="space-y-1.5">
-           {approval.proxy_metric_names.map((pm, i) => (
-            <div key={i} className="text-[13px] text-zinc-200">{pm}</div>
-           ))}
-          </div>
-         </div>
-        )}
-       </div>
-      )}
+      {/* Theme + proxy metrics are shown in the grid above (line ~241) */}
 
       {/* Already resolved info */}
       {!isPending && !isRevisionRequested && !resolved && (
