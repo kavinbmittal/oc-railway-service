@@ -13,19 +13,19 @@
 - **Reference sites:** Paperclip (same category), Linear (density/hierarchy), Vercel dashboard (dark-mode restraint).
 
 ## Typography
-- **Display/Hero:** System sans (`-apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, sans-serif`) — native feel on Mac, zero loading overhead. Entity names (agent name, project name on detail pages) use `text-2xl font-semibold` (24px).
-- **Body:** System sans (same stack) at 15px base. `text-sm` (14px) for most UI text, `text-[13px]` for sidebar items and breadcrumbs.
-- **UI/Labels:** System mono (`"SF Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas`) for section headers: `text-[11px] uppercase tracking-[0.16em] font-medium font-mono`. This is the signature typographic choice — military/industrial micro-labels.
+- **Display/Hero:** System sans (`-apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, sans-serif`) — native feel on Mac, zero loading overhead.
+- **Body:** System sans (same stack) at 16px base. `text-[14px]` for most UI text, `text-[13px]` for sidebar items, breadcrumbs, and secondary table cells.
+- **UI/Labels:** System mono (`"SF Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas`) for micro-labels: `text-[11px] uppercase tracking-[0.15em] font-mono`. This is the signature typographic choice — military/industrial micro-labels.
 - **Data/Tables:** System mono with `tabular-nums` for all numbers, budgets, costs, timestamps, issue counts. Ensures columns align.
 - **Code:** Same mono stack. `text-xs` (12px) for inline code, `text-sm` for code blocks.
 - **Loading:** None — system fonts only. Zero FOUT, zero latency.
 - **Scale:**
-  - Page entity name: `text-3xl font-semibold` (30px) — commands the page
-  - Page title (list pages): `text-base uppercase tracking-wider` (16px) — distinct from section headers
-  - Section header: `text-sm font-semibold` (14px) — no uppercase, no mono. Used on h3/h4 section titles.
-  - Micro-label: `text-[11px] uppercase tracking-[0.16em] font-mono` (11px) — table column headers, metric card labels, form labels, sidebar section labels, budget breakdown labels
-  - Body: `text-sm` (14px)
-  - Small: `text-xs` (12px)
+  - Page entity name: `text-[30px] font-semibold leading-none tracking-tight` — commands the page
+  - Page title (list pages): `text-[16px] font-semibold uppercase tracking-[0.2em]` — distinct from section headers
+  - Card section header: `text-[14px] font-semibold text-foreground` — inside card header area, not uppercase, not mono
+  - Micro-label: `text-[11px] uppercase tracking-[0.15em] font-mono` — table column headers, metric card labels, form labels, sidebar section labels
+  - Body: `text-[14px]` (14px)
+  - Small: `text-[12px]` (12px)
 
 ## Color
 - **Approach:** Restrained — achromatic base with semantic-only accent colors. No brand color. No decorative color.
@@ -35,20 +35,21 @@
 - **Foreground:** `oklch(0.985 0 0)` — near-white
 - **Muted foreground:** `oklch(0.708 0 0)` — secondary text, labels
 - **Ring (focus):** `oklch(0.556 0 0)` — visible but not distracting
-- **Semantic colors:**
-  - Active/success: green (`bg-green-400`, badge: `bg-green-900/50 text-green-300`)
-  - Running/in-progress: cyan (`bg-cyan-400`, badge: `bg-cyan-900/50 text-cyan-300`)
-  - Warning/pending: amber (`bg-amber-400`, badge: `bg-amber-900/50 text-amber-300`)
-  - Error/destructive: red (`bg-red-400`, badge: `bg-red-900/50 text-red-300`, solid: `oklch(0.577 0.245 27.325)`)
-  - Proposed/review: violet (`bg-violet-900/50 text-violet-300`)
-  - Completed: blue (`bg-blue-900/50 text-blue-300`)
+- **Semantic colors (bordered badge style):**
+  - Active/success: emerald (`border border-emerald-500/20 bg-emerald-500/10 text-emerald-400`)
+  - Running/in-progress: cyan/indigo (`border border-indigo-500/20 bg-indigo-500/10 text-indigo-400`)
+  - Warning/pending: amber/yellow (`border border-amber-500/20 bg-amber-500/10 text-amber-400`)
+  - Error/destructive: red (`border border-red-500/20 bg-red-500/10 text-red-400`)
+  - Proposed/review: violet (`border border-violet-500/20 bg-violet-500/10 text-violet-400`)
+  - Completed: blue (`border border-blue-500/20 bg-blue-500/10 text-blue-400`)
+  - Neutral/archived: zinc (`border border-zinc-700/50 bg-zinc-800/50 text-muted-foreground`)
 - **Dark mode:** Only mode. No light mode. `color-scheme: dark` on html.
 
 ## Spacing
 - **Base unit:** 4px (Tailwind default)
 - **Density:** Compact — this is an information-dense ops dashboard
-- **Scale:** `gap-0.5`(2) `gap-1`(4) `gap-2`(8) `gap-3`(12) `p-4`(16) `p-6`(24) `space-y-6`(24) between major sections
-- **Metric card gaps:** `gap-1 sm:gap-2` (4-8px) — intentionally tight
+- **Scale:** `gap-0.5`(2) `gap-1`(4) `gap-2`(8) `gap-3`(12) `p-[20px]`(20) `p-6`(24) `space-y-6`(24) between major sections
+- **Metric card gaps:** `gap-2` (8px)
 - **Section spacing:** `space-y-6` (24px) between top-level sections
 - **Content padding:** `p-6 md:p-8` on main content area
 - **Sidebar width:** `w-60` (240px) fixed
@@ -56,13 +57,13 @@
 ## Layout
 - **Approach:** Grid-disciplined
 - **Structure:** Fixed sidebar (240px) + scrollable content area. Full viewport height (`h-dvh`).
-- **Grid:** `grid-cols-2 xl:grid-cols-4` for metric cards. `grid-cols-2 sm:grid-cols-3` for smaller card sets. Data tables for project lists.
-- **Max content width:** None — content fills available space. Tables and cards reflow responsively.
+- **Grid:** `grid-cols-1 md:grid-cols-2 lg:grid-cols-4` for metric cards. Data tables for project lists.
+- **Max content width:** `max-w-[1400px] mx-auto` on main content area.
 - **Border radius:**
-  - **Cards and sections: `rounded-sm`** (2px) — subtle softening. Not bubbly, not razor sharp.
-  - **Buttons, inputs, textareas, dropdowns: `rounded-md`** (6px) — soft interactive elements, matches Paperclip.
+  - **Cards, sections, banners: `rounded-[2px]`** — minimal softening. Matches Aura reference.
+  - **Buttons, inputs, textareas, dropdowns, nav items: `rounded-[6px]`** — soft interactive elements.
   - **Exception: `rounded-full`** — status dots, badge pills. Semantically circular.
-  - **Exception: `rounded-sm`** — sidebar project dots (small color squares).
+  - **Exception: `rounded-[2px]`** — sidebar project dots (`w-1.5 h-1.5`).
   - **Never: `rounded-lg`** — too bubbly, reads as AI-generated.
 - **Borders:** `border border-border` (1px, `oklch(0.269 0 0)`) on all cards and sections.
 - **Shadows:** `shadow-sm` on cards for subtle depth. `shadow-lg` on dropdown menus. No shadows on flat elements.
@@ -80,20 +81,22 @@
 ## Component Patterns
 
 ### Cards
-- Default: `bg-card rounded-sm border border-border shadow-sm` — full card background, soft corners, subtle shadow
-- Card with header: Section title inside `px-5 py-4 border-b border-border`, content below. Section headers are `text-sm font-semibold text-foreground` (not uppercase, not mono).
-- Elevated (primary status): `bg-card rounded-sm border border-border shadow-sm border-l-2 border-l-{color} bg-accent/20` — left accent border + tinted background. Use for the single most important section on a page (e.g., "Current Work" on agent detail).
-- Never more than one elevated card per view.
-- Table cells inside cards use `px-5 py-3.5` padding to align with card header padding.
+- Default: `bg-card border border-border rounded-[2px] shadow-sm` — full card background, minimal corners, subtle shadow.
+- Card with header: Section title inside `p-[20px] border-b border-border`, content below. Section headers are `text-[14px] font-semibold text-foreground` (not uppercase, not mono).
+- Elevated (primary status): same as default + `border-l-2 border-l-{color} bg-accent/20` — left accent border + tinted background. Max one per view.
+- Table cells inside cards use `px-[20px] py-3.5` padding to align with card header.
+- Metric cards use `p-[20px]` internally.
 
 ### Status Badges
-- Pill shape: `rounded-full px-2.5 py-0.5 text-xs font-medium`
-- Color: semantic background at 50% opacity + 300-level text (e.g., `bg-green-900/50 text-green-300`)
+- Pill shape: `rounded-full px-2.5 py-0.5 text-[11px] font-medium`
+- Bordered style: `border border-{color}-500/20 bg-{color}-500/10 text-{color}-400` (e.g., `border border-emerald-500/20 bg-emerald-500/10 text-emerald-400`)
 - 20+ status mappings defined in `StatusBadge.jsx`
 
 ### Metric Cards
-- Large number: `text-2xl sm:text-3xl font-semibold tabular-nums`
-- Label below: `text-[11px] uppercase tracking-[0.16em] text-muted-foreground`
+- Large number: `text-[30px] font-semibold leading-none tracking-tight tabular-nums`
+- Label below: `text-[11px] font-mono uppercase tracking-[0.15em] text-muted-foreground`
+- Icon top-right: `size-20 text-muted-foreground/40 group-hover:text-muted-foreground`
+- Hover: `hover:bg-accent/30`
 - Monetary values: `font-mono` for tabular alignment
 
 ### Breadcrumbs
@@ -108,22 +111,26 @@
 - Secondary text: `text-xs text-muted-foreground/60`
 
 ### Tables
-- Header: `text-[11px] uppercase tracking-[0.16em] font-mono text-muted-foreground/60` (the micro-label pattern)
-- Rows: `hover:bg-accent/50 transition-colors cursor-pointer`
-- Dividers: `divide-y divide-border`
+- Container: `w-full text-left border-collapse whitespace-nowrap`
+- Header: `text-[11px] uppercase font-mono tracking-[0.15em] text-muted-foreground font-normal pb-3 px-[20px] pt-4 border-b border-border`
+- Rows: `border-b border-border/50 hover:bg-accent/40 transition-colors cursor-pointer` with `tabIndex="0"`
+- Cells: `px-[20px] py-3.5`
 - No zebra striping. Hover state is sufficient.
+- Budget columns: inline `h-1.5 rounded-full` progress bars with percentage label
 
 ### Sidebar
 - Brand header: `h-[60px]` with `border-b border-border`, branded icon in `w-6 h-6 rounded-md`, title in `text-sm font-semibold tracking-wide`
-- Section labels: `text-[11px] uppercase tracking-widest font-mono text-muted-foreground/80`
-- Nav items: `text-[13px] font-medium rounded-md` with `h-4 w-4` icons
-- Active: `bg-accent text-foreground`
-- Hover: `bg-accent/50`
-- Project items: colored dot (`h-3.5 w-3.5 rounded-sm`) + name, `rounded-md` on hover
+- Nav container: `p-4 space-y-6`
+- Section labels: `text-[11px] font-mono uppercase tracking-[0.15em] text-muted-foreground` with `mb-2 px-2`
+- Nav items: `px-2 py-1.5 rounded-[6px] text-[13px] font-medium` with `h-4 w-4` icons, `focus:ring-[3px] focus:ring-ring/50`
+- Active: `bg-accent/60 text-foreground`
+- Inactive: `text-muted-foreground hover:bg-accent/40 hover:text-foreground`
+- Project items: small dot (`w-1.5 h-1.5 rounded-[2px]`) + name, `rounded-[6px]` on hover
+- Footer: user profile card with initials avatar (`w-8 h-8 rounded-[6px] bg-secondary border border-border`), name + version
 
 ## Anti-Patterns (Never Do)
 
-1. **No `rounded-lg` on anything.** Cards use `rounded-sm` (2px). Buttons/inputs/dropdowns use `rounded-md` (6px). `rounded-full` for pills and dots only.
+1. **No `rounded-lg` on anything.** Cards use `rounded-[2px]`. Buttons/inputs/dropdowns/nav use `rounded-[6px]`. `rounded-full` for pills and dots only.
 2. **No gradients.** Not on buttons, not on backgrounds, not on anything.
 3. **No decorative color.** Every color must map to a semantic meaning.
 4. **Shadows are intentional.** `shadow-sm` on cards, `shadow-lg` on dropdowns. No shadows on flat elements, rows, or buttons.
@@ -157,3 +164,4 @@
 | 2026-03-22 | Main content padding p-6 md:p-8 | Bumped from p-4 md:p-6. Matches Aura's p-8 for generous spacing. |
 | 2026-03-22 | Sidebar nav items rounded-md | Per Aura reference. Softens nav items without being bubbly. |
 | 2026-03-22 | Sidebar brand header h-[60px] with border-b | Per Aura reference. Taller header with clear separation. |
+| 2026-03-22 | Ported Aura HTML classes directly | All component classes now match Aura reference: p-[20px], rounded-[2px], tracking-[0.15em], rounded-[6px] nav, bordered status badges, inline progress bars, user profile footer, 6px scrollbar. |
