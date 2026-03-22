@@ -411,16 +411,28 @@ export default function ApprovalDetail({ approvalId, navigate }) {
        ) : null;
       })()}
 
-      {/* Theme tag on non-theme items */}
-      {!isTheme && approval.theme_title && (
-       <div className="border border-teal-500/20 bg-teal-500/5 rounded-[2px] px-5 py-3">
-        <div className="flex items-center gap-2">
-         <Compass size={14} className="text-teal-400" />
-         <span className="text-[13px] text-teal-400 font-medium">Theme: {approval.theme_title}</span>
-         {approval.proxy_metric_names && approval.proxy_metric_names.length > 0 && (
-          <span className="text-[13px] text-zinc-500">— targeting: {approval.proxy_metric_names.join(", ")}</span>
-         )}
-        </div>
+      {/* Theme + Proxy Metrics cards on non-theme items */}
+      {!isTheme && (approval.theme_title || (approval.proxy_metric_names && approval.proxy_metric_names.length > 0)) && (
+       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {approval.theme_title && (
+         <div className="bg-[#121214] border border-zinc-800 rounded-[2px] shadow-sm p-[20px]">
+          <div className="text-[11px] uppercase tracking-[0.16em] font-mono text-zinc-500 mb-2">Theme</div>
+          <div className="flex items-center gap-2 text-[13px] text-teal-400 font-medium">
+           <Compass size={14} />
+           {approval.theme_title}
+          </div>
+         </div>
+        )}
+        {approval.proxy_metric_names && approval.proxy_metric_names.length > 0 && (
+         <div className="bg-[#121214] border border-zinc-800 rounded-[2px] shadow-sm p-[20px]">
+          <div className="text-[11px] uppercase tracking-[0.16em] font-mono text-zinc-500 mb-2">Proxy Metrics</div>
+          <div className="space-y-1.5">
+           {approval.proxy_metric_names.map((pm, i) => (
+            <div key={i} className="text-[13px] text-zinc-200">{pm}</div>
+           ))}
+          </div>
+         </div>
+        )}
        </div>
       )}
 
