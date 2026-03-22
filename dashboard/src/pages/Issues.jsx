@@ -23,12 +23,13 @@ function timeAgo(iso) {
 }
 
 // Theme color palette — cycle through based on theme index
+// Each entry uses the exact Aura HTML hover class (full string) so Tailwind can detect it.
 const THEME_COLORS = [
- { bg: "bg-indigo-500/[0.02]", bgHover: "bg-indigo-500/[0.05]", badgeBg: "bg-indigo-500/10", badgeBorder: "border-indigo-500/20", text: "text-indigo-400", titleText: "text-indigo-100", countBg: "bg-indigo-500/10", countBorder: "border-indigo-500/20", chevron: "text-indigo-400/50" },
- { bg: "bg-emerald-500/[0.02]", bgHover: "bg-emerald-500/[0.05]", badgeBg: "bg-emerald-500/10", badgeBorder: "border-emerald-500/20", text: "text-emerald-400", titleText: "text-emerald-100", countBg: "bg-emerald-500/10", countBorder: "border-emerald-500/20", chevron: "text-emerald-400/50" },
- { bg: "bg-amber-500/[0.02]", bgHover: "bg-amber-500/[0.05]", badgeBg: "bg-amber-500/10", badgeBorder: "border-amber-500/20", text: "text-amber-400", titleText: "text-amber-100", countBg: "bg-amber-500/10", countBorder: "border-amber-500/20", chevron: "text-amber-400/50" },
- { bg: "bg-cyan-500/[0.02]", bgHover: "bg-cyan-500/[0.05]", badgeBg: "bg-cyan-500/10", badgeBorder: "border-cyan-500/20", text: "text-cyan-400", titleText: "text-cyan-100", countBg: "bg-cyan-500/10", countBorder: "border-cyan-500/20", chevron: "text-cyan-400/50" },
- { bg: "bg-rose-500/[0.02]", bgHover: "bg-rose-500/[0.05]", badgeBg: "bg-rose-500/10", badgeBorder: "border-rose-500/20", text: "text-rose-400", titleText: "text-rose-100", countBg: "bg-rose-500/10", countBorder: "border-rose-500/20", chevron: "text-rose-400/50" },
+ { headerClass: "bg-indigo-500/[0.02] hover:bg-indigo-500/[0.05]", badgeBg: "bg-indigo-500/10", badgeBorder: "border-indigo-500/20", text: "text-indigo-400", titleText: "text-indigo-100", countBg: "bg-indigo-500/10", countBorder: "border-indigo-500/20", chevron: "text-indigo-400/50" },
+ { headerClass: "bg-emerald-500/[0.02] hover:bg-emerald-500/[0.05]", badgeBg: "bg-emerald-500/10", badgeBorder: "border-emerald-500/20", text: "text-emerald-400", titleText: "text-emerald-100", countBg: "bg-emerald-500/10", countBorder: "border-emerald-500/20", chevron: "text-emerald-400/50" },
+ { headerClass: "bg-amber-500/[0.02] hover:bg-amber-500/[0.05]", badgeBg: "bg-amber-500/10", badgeBorder: "border-amber-500/20", text: "text-amber-400", titleText: "text-amber-100", countBg: "bg-amber-500/10", countBorder: "border-amber-500/20", chevron: "text-amber-400/50" },
+ { headerClass: "bg-cyan-500/[0.02] hover:bg-cyan-500/[0.05]", badgeBg: "bg-cyan-500/10", badgeBorder: "border-cyan-500/20", text: "text-cyan-400", titleText: "text-cyan-100", countBg: "bg-cyan-500/10", countBorder: "border-cyan-500/20", chevron: "text-cyan-400/50" },
+ { headerClass: "bg-rose-500/[0.02] hover:bg-rose-500/[0.05]", badgeBg: "bg-rose-500/10", badgeBorder: "border-rose-500/20", text: "text-rose-400", titleText: "text-rose-100", countBg: "bg-rose-500/10", countBorder: "border-rose-500/20", chevron: "text-rose-400/50" },
 ];
 
 /** Single issue row inside a theme group */
@@ -148,7 +149,7 @@ export default function Issues({ projectSlug, navigate, themes = [] }) {
      <select
       value={filterStatus}
       onChange={(e) => setFilterStatus(e.target.value)}
-      className="flex items-center gap-2 bg-card border border-border hover:border-muted-foreground/30 text-foreground text-[13px] rounded-[6px] px-3 py-1.5 transition-colors focus:outline-none focus:ring-[3px] focus:ring-ring/50"
+      className="flex items-center gap-2 rounded-[6px] border border-zinc-800 bg-[#121214] text-[13px] px-3 py-1.5 text-zinc-300 hover:border-zinc-700 transition-colors focus:outline-none focus:ring-[3px] focus:ring-zinc-700/50"
      >
       <option value="">Status: All</option>
       {ALL_STATUSES.filter((s) => s !=="proposed").map((s) => (
@@ -161,7 +162,7 @@ export default function Issues({ projectSlug, navigate, themes = [] }) {
      <select
       value={filterPriority}
       onChange={(e) => setFilterPriority(e.target.value)}
-      className="flex items-center gap-2 bg-card border border-border hover:border-muted-foreground/30 text-foreground text-[13px] rounded-[6px] px-3 py-1.5 transition-colors focus:outline-none focus:ring-[3px] focus:ring-ring/50"
+      className="flex items-center gap-2 rounded-[6px] border border-zinc-800 bg-[#121214] text-[13px] px-3 py-1.5 text-zinc-300 hover:border-zinc-700 transition-colors focus:outline-none focus:ring-[3px] focus:ring-zinc-700/50"
      >
       <option value="">Priority: All</option>
       {ALL_PRIORITIES.map((p) => (
@@ -174,7 +175,7 @@ export default function Issues({ projectSlug, navigate, themes = [] }) {
      <select
       value={filterAssignee}
       onChange={(e) => setFilterAssignee(e.target.value)}
-      className="flex items-center gap-2 bg-card border border-border hover:border-muted-foreground/30 text-foreground text-[13px] rounded-[6px] px-3 py-1.5 transition-colors focus:outline-none focus:ring-[3px] focus:ring-ring/50"
+      className="flex items-center gap-2 rounded-[6px] border border-zinc-800 bg-[#121214] text-[13px] px-3 py-1.5 text-zinc-300 hover:border-zinc-700 transition-colors focus:outline-none focus:ring-[3px] focus:ring-zinc-700/50"
      >
       <option value="">Assignee</option>
       {AGENTS.map((a) => (
@@ -185,7 +186,7 @@ export default function Issues({ projectSlug, navigate, themes = [] }) {
 
     <button
      onClick={() => setShowCreate(!showCreate)}
-     className="text-[13px] font-medium rounded-[6px] border border-border bg-secondary hover:bg-accent px-3 py-1.5 text-foreground transition-colors focus:outline-none focus:ring-[3px] focus:ring-ring/50"
+     className="rounded-[6px] border border-zinc-800 bg-[#121214] text-[13px] font-medium text-zinc-300 px-3 py-1.5 hover:bg-zinc-800 transition-colors focus:outline-none focus:ring-[3px] focus:ring-zinc-700/50"
     >
      Create Issue
     </button>
@@ -224,7 +225,7 @@ export default function Issues({ projectSlug, navigate, themes = [] }) {
         {/* Theme Header */}
         <div
          onClick={() => toggleTheme(theme.id)}
-         className={`flex items-center gap-3 px-5 py-3 ${themeColors.bg} hover:${themeColors.bgHover} transition-colors cursor-pointer select-none`}
+         className={`flex items-center gap-3 px-5 py-3 ${themeColors.headerClass} transition-colors cursor-pointer select-none`}
         >
          <div className={`w-6 h-6 rounded-full ${themeColors.badgeBg} border ${themeColors.badgeBorder} flex items-center justify-center text-[11px] font-mono font-medium ${themeColors.text} flex-shrink-0`}>
           {theme.order ?? themeIdx + 1}

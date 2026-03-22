@@ -810,7 +810,7 @@ function ExperimentsTab({ experiments, themes = [], projectSlug, onRefresh, navi
     <div />
     <button
      onClick={() => setShowCreate(!showCreate)}
-     className="text-[13px] font-medium rounded-[6px] border border-border bg-secondary hover:bg-accent px-3 py-1.5 text-foreground transition-colors"
+     className="rounded-[6px] border border-zinc-800 bg-[#121214] text-[13px] font-medium text-zinc-300 px-3 py-1.5 hover:bg-zinc-800 transition-colors focus:outline-none focus:ring-[3px] focus:ring-zinc-700/50"
     >
      New Experiment
     </button>
@@ -847,13 +847,13 @@ function ExperimentsTab({ experiments, themes = [], projectSlug, onRefresh, navi
      {/* Experiment cards — Aura: grid-cols-2, compact with hypothesis */}
      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
       {experiments.map((exp) => (
-       <div key={exp.dir} onClick={() => navigate("experiment-detail", { slug: projectSlug, dir: exp.dir })} className="bg-[#121214] border border-zinc-800 rounded-sm shadow-sm p-5 flex flex-col h-full cursor-pointer hover:bg-zinc-800/30 transition-colors">
+       <div key={exp.dir} onClick={() => navigate("experiment-detail", { slug: projectSlug, dir: exp.dir })} className="bg-[#121214] border border-zinc-800 rounded-[2px] shadow-sm p-5 flex flex-col h-full cursor-pointer hover:bg-zinc-800/30 transition-colors">
         <div className="flex justify-between items-start mb-3">
          <h3 className="text-sm font-medium text-zinc-100">{exp.name}</h3>
          <StatusBadge status={exp.status} />
         </div>
         {exp.hypothesis && (
-         <p className="text-[13px] text-zinc-400 mb-6 flex-1 line-clamp-2">
+         <p className="text-sm text-zinc-400 mb-6 flex-1 line-clamp-2">
           Hypothesis: {exp.hypothesis}
          </p>
         )}
