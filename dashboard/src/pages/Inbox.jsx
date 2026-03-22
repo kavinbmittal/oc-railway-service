@@ -23,9 +23,13 @@ const CATEGORIES = [
     key: "approvals",
     title: "Pending Approvals",
     icon: ShieldCheck,
-    iconBg: "bg-amber-500/10",
-    iconBorder: "border-amber-500/20",
-    iconText: "text-amber-400",
+    headerClass: "bg-amber-500/[0.02] hover:bg-amber-500/[0.05]",
+    badgeBg: "bg-amber-500/10",
+    badgeBorder: "border-amber-500/20",
+    text: "text-amber-400",
+    titleText: "text-amber-100",
+    countBg: "bg-amber-500/10",
+    countBorder: "border-amber-500/20",
     filter: (item) => item.type === "approval" || item.type === "proposed_issue",
     alwaysShow: true,
     badgeColor: (item) =>
@@ -44,9 +48,13 @@ const CATEGORIES = [
     key: "budget",
     title: "Budget Alerts",
     icon: Wallet,
-    iconBg: "bg-red-500/10",
-    iconBorder: "border-red-500/20",
-    iconText: "text-red-400",
+    headerClass: "bg-red-500/[0.02] hover:bg-red-500/[0.05]",
+    badgeBg: "bg-red-500/10",
+    badgeBorder: "border-red-500/20",
+    text: "text-red-400",
+    titleText: "text-red-100",
+    countBg: "bg-red-500/10",
+    countBorder: "border-red-500/20",
     filter: (item) => item.type === "budget",
     alwaysShow: false,
     badgeColor: (item) =>
@@ -65,9 +73,13 @@ const CATEGORIES = [
     key: "stale_tasks",
     title: "Stale Tasks",
     icon: Clock,
-    iconBg: "bg-cyan-500/10",
-    iconBorder: "border-cyan-500/20",
-    iconText: "text-cyan-400",
+    headerClass: "bg-cyan-500/[0.02] hover:bg-cyan-500/[0.05]",
+    badgeBg: "bg-cyan-500/10",
+    badgeBorder: "border-cyan-500/20",
+    text: "text-cyan-400",
+    titleText: "text-cyan-100",
+    countBg: "bg-cyan-500/10",
+    countBorder: "border-cyan-500/20",
     filter: (item) => item.type === "stale_task",
     alwaysShow: false,
     isStaleRow: true,
@@ -81,9 +93,13 @@ const CATEGORIES = [
     key: "standups",
     title: "Standups",
     icon: MessageSquare,
-    iconBg: "bg-emerald-500/10",
-    iconBorder: "border-emerald-500/20",
-    iconText: "text-emerald-400",
+    headerClass: "bg-emerald-500/[0.02] hover:bg-emerald-500/[0.05]",
+    badgeBg: "bg-emerald-500/10",
+    badgeBorder: "border-emerald-500/20",
+    text: "text-emerald-400",
+    titleText: "text-emerald-100",
+    countBg: "bg-emerald-500/10",
+    countBorder: "border-emerald-500/20",
     filter: (item) => item.type === "standup",
     alwaysShow: false,
     badgeColor: () => "border-blue-500/20 bg-blue-500/10 text-blue-400",
@@ -173,17 +189,15 @@ export default function Inbox({ navigate }) {
 
           return (
             <div key={cat.key} className="bg-card border border-border rounded-[2px] shadow-sm flex flex-col">
-              {/* Section header */}
-              <div className="p-5 border-b border-border flex justify-between items-center">
-                <div className="flex items-center gap-3">
-                  <div className={`w-8 h-8 rounded-full ${cat.iconBg} border ${cat.iconBorder} flex items-center justify-center`}>
-                    <Icon className={`w-4 h-4 ${cat.iconText}`} />
-                  </div>
-                  <h2 className="text-[14px] font-semibold text-foreground tracking-tight">{cat.title}</h2>
+              {/* Section header — same pattern as Issues tab theme headers */}
+              <div className={`flex items-center gap-3 px-5 py-3 ${cat.headerClass} transition-colors`}>
+                <div className={`w-6 h-6 rounded-full ${cat.badgeBg} border ${cat.badgeBorder} flex items-center justify-center`}>
+                  <Icon className={`w-3.5 h-3.5 ${cat.text}`} />
                 </div>
-                <span className="text-[12px] font-mono bg-accent px-1.5 py-0.5 rounded-[2px] text-muted-foreground">
+                <div className={`text-[15px] font-medium ${cat.titleText}`}>{cat.title}</div>
+                <div className={`text-[10px] font-mono ${cat.countBg} border ${cat.countBorder} px-1.5 py-0.5 rounded-[2px] ${cat.text}`}>
                   {items.length}
-                </span>
+                </div>
               </div>
 
               {/* Empty state */}
