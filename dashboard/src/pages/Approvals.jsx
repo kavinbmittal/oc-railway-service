@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from"react";
+import { Compass } from"lucide-react";
 import { getApprovals, resolveApproval, updateIssue, deleteIssue } from"../api.js";
 import { RejectModal } from "../components/RejectModal.jsx";
 
@@ -237,6 +238,7 @@ export default function Approvals({ navigate }) {
             <div className="flex items-center gap-2 flex-wrap">
              {approval.theme_title && (
               <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium border border-teal-500/20 bg-teal-500/10 text-teal-400">
+               <Compass size={10} />
                {approval.theme_title}
               </span>
              )}
