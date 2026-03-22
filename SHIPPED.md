@@ -1,5 +1,8 @@
 # SHIPPED.md
 
+## 2026-03-23
+- **style:** Rewrite Inbox page to Aura grouped cards layout — items grouped by category (Pending Approvals, Budget Alerts, Stale Tasks, Standups) with section cards, compact rows, short timestamps, empty states; removed tabs and inline approve/reject buttons
+
 ## 2026-03-22
 - **feat:** Edit Issue page — full form with Aura HTML classes, pre-populated fields, theme/proxy metric selection, danger zone delete, change tracking with save/cancel
 - **style:** Port exact Aura HTML classes to Issues and Experiments tabs — filter selects, buttons, experiment card radius, hypothesis text size, and theme header hover classes all match reference HTML literally (`0131b25`)

@@ -1,210 +1,228 @@
-import { useState, useEffect, useMemo } from"react";
-import { getInbox, resolveApproval } from"../api.js";
-import { Inbox as InboxIcon, CheckCircle } from"lucide-react";
-import { Tabs, TabsList, TabsTrigger } from"../components/ui/Tabs.jsx";
-import { Skeleton } from"../components/ui/Skeleton.jsx";
-import { EmptyState } from"../components/EmptyState.jsx";
-import { InboxItem } from"../components/InboxItem.jsx";
-import ApprovalCard from "../components/ApprovalCard.jsx";
-import { RejectModal } from "../components/RejectModal.jsx";
+import { useState, useEffect, useMemo } from "react";
+import { getInbox } from "../api.js";
+import { ShieldCheck, Wallet, Clock, MessageSquare, CheckCircle } from "lucide-react";
+import { Skeleton } from "../components/ui/Skeleton.jsx";
+import { formatTimeAgo } from "../utils/formatDate.js";
 
-const TABS = [
- { value:"all", label:"All" },
- { value:"proposed_issue", label:"Proposed" },
- { value:"approval", label:"Approvals" },
- { value:"budget", label:"Budget" },
- { value:"stale_task", label:"Tasks" },
- { value:"standup", label:"Standups" },
+/**
+ * Shortens formatTimeAgo output for compact inbox display.
+ * "15m ago" → "15m", "2h ago" → "2h", "1d ago" → "1d"
+ */
+function shortTime(dateStr) {
+  const full = formatTimeAgo(dateStr);
+  if (!full) return "";
+  return full.replace(" ago", "");
+}
+
+/**
+ * Category definitions — each maps to a section card in the inbox.
+ * Icon, title, item filter, badge color config, and click handler.
+ */
+const CATEGORIES = [
+  {
+    key: "approvals",
+    title: "Pending Approvals",
+    icon: ShieldCheck,
+    filter: (item) => item.type === "approval" || item.type === "proposed_issue",
+    alwaysShow: true,
+    badgeColor: (item) =>
+      item.type === "proposed_issue"
+        ? "border-violet-500/20 bg-violet-500/10 text-violet-400"
+        : "border-amber-500/20 bg-amber-500/10 text-amber-400",
+    badgeLabel: (item) =>
+      item.type === "proposed_issue"
+        ? "Proposed Issue"
+        : item.gate || "Approval",
+    onClick: (item, navigate) => {
+      navigate("approval-detail", item.id);
+    },
+  },
+  {
+    key: "budget",
+    title: "Budget Alerts",
+    icon: Wallet,
+    filter: (item) => item.type === "budget",
+    alwaysShow: false,
+    badgeColor: (item) =>
+      item.severity === "critical"
+        ? "border-red-500/20 bg-red-500/10 text-red-400"
+        : "border-amber-500/20 bg-amber-500/10 text-amber-400",
+    badgeLabel: (item) =>
+      item.severity === "critical" ? "Critical" : "Warning",
+    onClick: (item, navigate) => {
+      if (item.project && item.project !== "general") {
+        navigate("project-tab", { slug: item.project, tab: "costs" });
+      }
+    },
+  },
+  {
+    key: "stale_tasks",
+    title: "Stale Tasks",
+    icon: Clock,
+    filter: (item) => item.type === "stale_task",
+    alwaysShow: false,
+    isStaleRow: true,
+    onClick: (item, navigate) => {
+      if (item.project && item.project !== "general" && item.id) {
+        navigate("issue-detail", { projectSlug: item.project, issueId: item.id });
+      }
+    },
+  },
+  {
+    key: "standups",
+    title: "Standups",
+    icon: MessageSquare,
+    filter: (item) => item.type === "standup",
+    alwaysShow: false,
+    badgeColor: () => "border-blue-500/20 bg-blue-500/10 text-blue-400",
+    badgeLabel: () => "Standup",
+    onClick: (item, navigate) => {
+      if (item.project && item.project !== "general") {
+        navigate("project-tab", { slug: item.project, tab: "standups" });
+      }
+    },
+  },
 ];
 
 export default function Inbox({ navigate }) {
- const [data, setData] = useState(null);
- const [loading, setLoading] = useState(true);
- const [error, setError] = useState(null);
- const [tab, setTab] = useState("all");
- const [actionError, setActionError] = useState(null);
- const [rejectingApproval, setRejectingApproval] = useState(null);
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
- function refresh() {
-  setLoading(true);
-  getInbox()
-   .then(setData)
-   .catch((e) => setError(e.message))
-   .finally(() => setLoading(false));
- }
-
- useEffect(() => {
-  refresh();
- }, []);
-
- const items = useMemo(() => {
-  if (!data?.items) return [];
-  if (tab ==="all") return data.items;
-  return data.items.filter((item) => item.type === tab);
- }, [data, tab]);
-
- const tabCounts = useMemo(() => {
-  if (!data?.counts) return {};
-  return data.counts;
- }, [data]);
-
- async function handleApprove(approval) {
-  setActionError(null);
-  try {
-   await resolveApproval({
-    project: approval._project || approval.project,
-    id: approval.id,
-    decision:"approved",
-    comment: null,
-    requester: approval.requester,
-    gate: approval.gate,
-    what: approval.what || approval.title,
-    why: approval.why,
-    created: approval.created || approval.timestamp,
-   });
-   refresh();
-  } catch (err) {
-   setActionError(err.message);
+  function refresh() {
+    setLoading(true);
+    getInbox()
+      .then(setData)
+      .catch((e) => setError(e.message))
+      .finally(() => setLoading(false));
   }
- }
 
- function handleReject(approval) {
-  setRejectingApproval(approval);
- }
+  useEffect(() => {
+    refresh();
+  }, []);
 
- async function confirmReject(comment) {
-  const approval = rejectingApproval;
-  setRejectingApproval(null);
-  setActionError(null);
-  try {
-   await resolveApproval({
-    project: approval._project || approval.project,
-    id: approval.id,
-    decision: "rejected",
-    comment,
-    requester: approval.requester,
-    gate: approval.gate,
-    what: approval.what || approval.title,
-    why: approval.why,
-    created: approval.created || approval.timestamp,
-   });
-   refresh();
-  } catch (err) {
-   setActionError(err.message);
-  }
- }
+  // Group items by category
+  const grouped = useMemo(() => {
+    if (!data?.items) return {};
+    const result = {};
+    for (const cat of CATEGORIES) {
+      result[cat.key] = data.items.filter(cat.filter);
+    }
+    return result;
+  }, [data]);
 
- if (loading && !data) {
-  return (
-   <div className="space-y-6">
-    <div className="h-12 flex items-center">
-     <h1 className="text-base font-semibold uppercase tracking-wider">Inbox</h1>
-    </div>
-    <div className="space-y-2">
-     {[1, 2, 3].map((i) => (
-      <div key={i} className="bg-card rounded-sm border border-border shadow-sm p-5">
-       <Skeleton className="h-4 w-64 mb-2" />
-       <Skeleton className="h-3 w-40" />
+  // Total count across all categories
+  const totalCount = useMemo(() => {
+    return Object.values(grouped).reduce((sum, items) => sum + items.length, 0);
+  }, [grouped]);
+
+  if (loading && !data) {
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-between items-center mb-1">
+          <h1 className="text-[16px] font-semibold uppercase tracking-[0.2em] text-foreground">Inbox</h1>
+        </div>
+        <div className="space-y-6">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="bg-card border border-border rounded-[2px] shadow-sm p-5">
+              <Skeleton className="h-4 w-64 mb-2" />
+              <Skeleton className="h-3 w-40" />
+            </div>
+          ))}
+        </div>
       </div>
-     ))}
+    );
+  }
+
+  return (
+    <div>
+      {/* Page Header */}
+      <div className="flex justify-between items-center mb-1">
+        <h1 className="text-[16px] font-semibold uppercase tracking-[0.2em] text-foreground">Inbox</h1>
+      </div>
+      <p className="text-[14px] text-muted-foreground mb-8">
+        {totalCount} {totalCount === 1 ? "item needs" : "items need"} your attention
+      </p>
+
+      {/* Error */}
+      {error && (
+        <div className="border border-red-500/30 bg-red-500/10 px-4 py-3 text-[14px] text-red-400 mb-6">
+          {error}
+        </div>
+      )}
+
+      {/* Sections */}
+      <div className="space-y-6 pb-12">
+        {CATEGORIES.map((cat) => {
+          const items = grouped[cat.key] || [];
+          if (items.length === 0 && !cat.alwaysShow) return null;
+
+          const Icon = cat.icon;
+
+          return (
+            <div key={cat.key} className="bg-card border border-border rounded-[2px] shadow-sm flex flex-col">
+              {/* Section header */}
+              <div className="p-5 border-b border-border flex justify-between items-center">
+                <h2 className="text-[14px] font-semibold text-foreground tracking-tight">{cat.title}</h2>
+                <span className="text-[12px] font-mono bg-accent px-1.5 py-0.5 rounded-[2px] text-muted-foreground">
+                  {items.length}
+                </span>
+              </div>
+
+              {/* Empty state */}
+              {items.length === 0 ? (
+                <div className="py-12 flex flex-col items-center justify-center">
+                  <CheckCircle className="text-emerald-500 w-6 h-6 mb-3" />
+                  <span className="text-[14px] text-muted-foreground mb-1">All clear</span>
+                  <span className="text-[12px] text-muted-foreground/60">No items need your attention</span>
+                </div>
+              ) : cat.isStaleRow ? (
+                /* Stale task rows — no type badge, amber idle time */
+                items.map((item, idx) => (
+                  <div
+                    key={item.id || idx}
+                    className={`flex items-center gap-4 px-5 py-3 hover:bg-accent/40 cursor-pointer focus-within:bg-accent/40 transition-colors ${idx < items.length - 1 ? "border-b border-border/50" : ""}`}
+                    onClick={() => cat.onClick(item, navigate)}
+                  >
+                    <Icon className="text-muted-foreground w-[18px] h-[18px] flex-shrink-0" />
+                    <span className="text-[14px] text-foreground flex-1 truncate">{item.title}</span>
+                    <span className="text-[12px] text-muted-foreground flex-shrink-0 w-32 truncate hidden md:block">
+                      {item.requester || item.agent || ""}
+                    </span>
+                    <span className="text-[12px] text-muted-foreground/60 w-32 truncate hidden sm:block">
+                      {item.project && item.project !== "general" ? item.project : ""}
+                    </span>
+                    <span className="text-[12px] font-mono text-amber-500 w-16 text-right flex-shrink-0">
+                      {item.days_idle ? `${item.days_idle}d idle` : shortTime(item.timestamp)}
+                    </span>
+                  </div>
+                ))
+              ) : (
+                /* Standard rows — icon, type badge, title, agent/project, time */
+                items.map((item, idx) => (
+                  <div
+                    key={item.id || idx}
+                    className={`flex items-center gap-4 px-5 py-3 hover:bg-accent/40 cursor-pointer focus-within:bg-accent/40 transition-colors ${idx < items.length - 1 ? "border-b border-border/50" : ""}`}
+                    onClick={() => cat.onClick(item, navigate)}
+                  >
+                    <Icon className="text-muted-foreground w-[18px] h-[18px] flex-shrink-0" />
+                    <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-normal border ${cat.badgeColor(item)} flex-shrink-0`}>
+                      {cat.badgeLabel(item)}
+                    </span>
+                    <span className="text-[14px] text-foreground flex-1 truncate">{item.title}</span>
+                    <span className="text-[12px] text-muted-foreground flex-shrink-0 w-32 truncate hidden sm:block">
+                      {item.project && item.project !== "general" ? item.project : item.requester || ""}
+                    </span>
+                    <span className="text-[12px] font-mono text-muted-foreground/60 w-16 text-right flex-shrink-0">
+                      {shortTime(item.timestamp)}
+                    </span>
+                  </div>
+                ))
+              )}
+            </div>
+          );
+        })}
+      </div>
     </div>
-   </div>
   );
- }
-
- return (
-  <div className="space-y-6">
-   {/* Header */}
-   <div className="h-12 flex items-center justify-between">
-    <h1 className="text-base font-semibold uppercase tracking-wider">Inbox</h1>
-    <span className="text-xs text-muted-foreground">
-     {data?.counts?.total || 0} items
-    </span>
-   </div>
-
-   {/* Tabs */}
-   <Tabs value={tab} onValueChange={setTab}>
-    <TabsList>
-     {TABS.map((t) => {
-      const count =
-       t.value ==="all"
-        ? tabCounts.total || 0
-        : tabCounts[t.value ==="stale_task" ?"tasks" : t.value] || 0;
-      return (
-       <TabsTrigger key={t.value} value={t.value}>
-        {t.label}
-        {count > 0 && (
-         <span className="ml-1.5 inline-flex items-center justify-center min-w-[16px] h-4 rounded-full bg-muted text-muted-foreground text-[11px] font-medium px-1">
-          {count}
-         </span>
-        )}
-       </TabsTrigger>
-      );
-     })}
-    </TabsList>
-   </Tabs>
-
-   {/* Errors */}
-   {error && (
-    <div className="border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">
-     {error}
-    </div>
-   )}
-   {actionError && (
-    <div className="border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">
-     {actionError}
-    </div>
-   )}
-
-   {/* Items */}
-   {items.length === 0 ? (
-    <EmptyState
-     icon={tab ==="all" ? CheckCircle : InboxIcon}
-     text={tab ==="all" ?"All clear" : `No ${TABS.find((t) => t.value === tab)?.label?.toLowerCase() ||"items"}`}
-     sub={tab ==="all" ?"Nothing needs your attention right now." : undefined}
-    />
-   ) : (
-    <div className="border border-border overflow-hidden">
-     {items.map((item) =>
-      item.type ==="approval" ? (
-       <ApprovalCard
-        key={item.id}
-        approval={{
-         ...item.data,
-         id: item.id,
-         _project: item.project,
-         project: item.project,
-         requester: item.requester || item.data?.requester,
-         gate: item.gate || item.data?.gate,
-         what: item.data?.what || item.title,
-         why: item.data?.why,
-         created: item.data?.created || item.timestamp,
-         timestamp: item.timestamp,
-         title: item.title,
-         subtitle: item.subtitle,
-         _source: item.data?._source,
-        }}
-        onApprove={handleApprove}
-        onReject={handleReject}
-        navigate={navigate}
-        hideProject={false}
-       />
-      ) : (
-       <InboxItem
-        key={item.id}
-        item={item}
-        onNavigate={navigate}
-       />
-      )
-     )}
-    </div>
-   )}
-   {rejectingApproval && (
-    <RejectModal
-     onConfirm={confirmReject}
-     onCancel={() => setRejectingApproval(null)}
-    />
-   )}
-  </div>
- );
 }
