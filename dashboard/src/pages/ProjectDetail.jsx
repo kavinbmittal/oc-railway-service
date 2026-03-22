@@ -73,7 +73,6 @@ function parseActivityLog(raw) {
 export default function ProjectDetail({ projectId, navigate, initialTab }) {
  const [tab, setTab] = useState(initialTab ||"overview");
 
- // Sync tab from URL when navigating via back/forward
  useEffect(() => {
   if (initialTab && initialTab !== tab) setTab(initialTab);
  }, [initialTab]);
@@ -128,7 +127,6 @@ export default function ProjectDetail({ projectId, navigate, initialTab }) {
   try {
    const result = await updateBudgetPolicy(data);
    setBudgetPolicy(result.policy);
-   // Refresh cost summary
    const updated = await getProjectCosts(projectId).catch(() => null);
    if (updated) setCostSummary(updated);
    setShowBudgetModal(false);
@@ -145,71 +143,74 @@ export default function ProjectDetail({ projectId, navigate, initialTab }) {
 
  if (loading) {
   return (
-   <div className="space-y-4 p-4">
-    <Skeleton className="h-6 w-48" />
+   <div className="max-w-[1400px] mx-auto space-y-4">
     <Skeleton className="h-4 w-32" />
-    <Skeleton className="h-32 w-full" />
+    <Skeleton className="h-8 w-64 mb-2" />
+    <Skeleton className="h-4 w-48" />
+    <Skeleton className="h-64 w-full rounded-[2px] mt-4" />
    </div>
   );
  }
 
  return (
-  <div className="space-y-6">
-   {/* Breadcrumb bar */}
-   <div className="h-12 flex items-center gap-2">
-    <button
-     onClick={() => navigate("overview")}
-     className="text-[13px] text-muted-foreground hover:text-foreground transition-colors"
-    >
-     Dashboard
-    </button>
-    <span className="text-muted-foreground/40">›</span>
-    <span className="text-[13px] font-semibold text-foreground truncate">
-     {project.title || projectId}
-    </span>
-   </div>
-
-   {/* Project header */}
-   <div>
-    <div className="flex items-center gap-3 mb-2">
-     <h2 className="text-3xl font-semibold text-foreground">
-      {project.title || projectId}
-     </h2>
-     <StatusBadge status={project.status} />
-    </div>
-    <div className="flex flex-wrap gap-4 text-xs text-muted-foreground">
-     <span
-      className="flex items-center gap-1.5 cursor-pointer hover:text-foreground transition-colors"
-      onClick={() => {
-       const name = project.lead.toLowerCase();
-       const workspaceId = name ==="sam" ?"workspace" : `workspace-${name}`;
-       navigate("agent-detail", workspaceId);
-      }}
+  <div className="max-w-[1400px] mx-auto">
+   {/* Header area — matches Aura's space-y-4 */}
+   <div className="space-y-4">
+    {/* Breadcrumb — Aura: nav text-sm text-zinc-500 */}
+    <nav className="flex items-center text-[13px] text-muted-foreground">
+     <button
+      onClick={() => navigate("overview")}
+      className="hover:text-foreground transition-colors"
      >
-      <User size={12} />
-      {project.lead}
+      Projects
+     </button>
+     <span className="mx-2">›</span>
+     <span className="text-muted-foreground/80">
+      {project.title || projectId}
      </span>
-     <span className="flex items-center gap-1.5 font-mono tabular-nums">
-      <Wallet size={12} />
-      {project.budget}
-     </span>
-     {project.created && (
-      <span className="flex items-center gap-1.5">
-       <Clock size={12} />
-       {formatDateUtil(project.created)}
+    </nav>
+
+    {/* Title + status — Aura: text-3xl font-semibold tracking-tight + badge */}
+    <div>
+     <div className="flex items-center gap-4">
+      <h1 className="text-3xl font-semibold text-foreground tracking-tight">
+       {project.title || projectId}
+      </h1>
+      <StatusBadge status={project.status} />
+     </div>
+
+     {/* Metadata — Aura: text-sm text-zinc-500 with dot separators */}
+     <div className="flex items-center gap-2 mt-3 text-[13px] text-muted-foreground">
+      <span
+       className="hover:text-foreground transition-colors cursor-pointer capitalize"
+       onClick={() => {
+        const name = project.lead.toLowerCase();
+        const workspaceId = name ==="sam" ?"workspace" : `workspace-${name}`;
+        navigate("agent-detail", workspaceId);
+       }}
+      >
+       {project.lead}
       </span>
-     )}
-     {totalCost > 0 && (
-      <span className="flex items-center gap-1.5 font-mono tabular-nums">
-       <DollarSign size={12} />
-       ${totalCost.toFixed(2)} spent
-      </span>
-     )}
+      <span>·</span>
+      <span className="font-mono tabular-nums">{project.budget}</span>
+      {project.created && (
+       <>
+        <span>·</span>
+        <span>{formatDateUtil(project.created)}</span>
+       </>
+      )}
+      {totalCost > 0 && (
+       <>
+        <span>·</span>
+        <span className="font-mono tabular-nums">${totalCost.toFixed(2)} spent</span>
+       </>
+      )}
+     </div>
     </div>
    </div>
 
-   {/* Tabs */}
-   <Tabs value={tab} onValueChange={handleTabChange}>
+   {/* Tabs — Aura: mt-8 border-b, gap-8 */}
+   <Tabs value={tab} onValueChange={handleTabChange} className="mt-8">
     <TabsList>
      {TABS.map(({ id, label, icon: Icon }) => {
       const pendingCount = id ==="approvals"
@@ -220,7 +221,7 @@ export default function ProjectDetail({ projectId, navigate, initialTab }) {
         <Icon size={14} strokeWidth={1.8} />
         {label}
         {pendingCount > 0 && (
-         <span className="ml-1.5 inline-flex items-center justify-center min-w-[16px] h-4 rounded-full bg-amber-900/50 text-amber-300 text-[11px] font-medium px-1">
+         <span className="ml-1.5 inline-flex items-center justify-center min-w-[16px] h-4 rounded-full border border-amber-500/20 bg-amber-500/10 text-amber-400 text-[11px] font-medium px-1">
           {pendingCount}
          </span>
         )}
@@ -229,237 +230,290 @@ export default function ProjectDetail({ projectId, navigate, initialTab }) {
      })}
     </TabsList>
 
-    {/* Overview tab */}
+    {/* ──────────────── OVERVIEW TAB ──────────────── */}
+    {/* Aura: grid-cols-3 with xl:col-span-2 left */}
     <TabsContent value="overview">
-     <div className="space-y-4">
-      {project.mission && (
-       <div className="bg-card rounded-sm border border-border shadow-sm p-5">
-        <div className="flex items-center gap-2 mb-3">
-         <Target size={14} className="text-muted-foreground/50" />
-         <h3 className="text-sm font-semibold text-muted-foreground">
-          Mission / Goal
-         </h3>
+     <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 mt-6">
+      {/* Left column — 2/3 */}
+      <div className="xl:col-span-2 space-y-6">
+       {/* Mission / Goal — Aura card */}
+       {project.mission && (
+        <div className="bg-card border border-border rounded-[2px] shadow-sm">
+         <div className="px-5 py-4 border-b border-border">
+          <h2 className="text-[14px] font-medium text-foreground">Mission / Goal</h2>
+         </div>
+         <div className="p-5 text-[14px] text-foreground/80 leading-relaxed">
+          <p>{project.mission}</p>
+         </div>
         </div>
-        <p className="text-sm text-foreground/80 leading-relaxed">{project.mission}</p>
-       </div>
-      )}
+       )}
 
-      {milestones && (
-       <div className="bg-card rounded-sm border border-border shadow-sm p-5">
-        <h3 className="text-sm font-semibold text-muted-foreground mb-3">
-         Milestones
-        </h3>
-        <Markdown content={milestones} />
-       </div>
-      )}
+       {/* Milestones — Aura card */}
+       {milestones && (
+        <div className="bg-card border border-border rounded-[2px] shadow-sm">
+         <div className="px-5 py-4 border-b border-border">
+          <h2 className="text-[14px] font-medium text-foreground">Milestones</h2>
+         </div>
+         <div className="p-5">
+          <Markdown content={milestones} />
+         </div>
+        </div>
+       )}
+      </div>
 
-      {project.gates && (
-       <div className="bg-card rounded-sm border border-border shadow-sm p-5">
-        <div className="flex items-center gap-2 mb-3">
-         <ShieldCheck size={14} className="text-muted-foreground/50" />
-         <h3 className="text-sm font-semibold text-muted-foreground">
-          Approval Gates
-         </h3>
+      {/* Right column — 1/3 */}
+      <div className="space-y-6">
+       {/* Details — Aura: flex justify-between rows */}
+       <div className="bg-card border border-border rounded-[2px] shadow-sm">
+        <div className="px-5 py-4 border-b border-border">
+         <h2 className="text-[14px] font-medium text-foreground">Details</h2>
         </div>
-        <div className="divide-y divide-border">
-         {project.gates
-          .split("\n")
-          .filter(Boolean)
-          .map((gate, i) => {
-           const text = gate.replace(/^-\s*/,"");
-           const [name, requires] = text.split(":").map((s) => s.trim());
-           return (
-            <div key={i} className="flex items-center justify-between py-2 text-sm">
-             <span className="text-foreground/80">{name}</span>
-             {requires && (
-              <span className="text-xs text-muted-foreground font-mono">
-               {requires}
-              </span>
-             )}
-            </div>
-           );
-          })}
+        <div className="p-5 flex flex-col gap-4">
+         <div className="flex justify-between items-center">
+          <span className="text-[11px] font-mono uppercase tracking-[0.15em] text-muted-foreground">Status</span>
+          <StatusBadge status={project.status} />
+         </div>
+         <div className="flex justify-between items-center">
+          <span className="text-[11px] font-mono uppercase tracking-[0.15em] text-muted-foreground">Lead</span>
+          <span
+           className="text-[14px] text-foreground cursor-pointer hover:underline capitalize"
+           onClick={() => {
+            const name = project.lead.toLowerCase();
+            const workspaceId = name ==="sam" ?"workspace" : `workspace-${name}`;
+            navigate("agent-detail", workspaceId);
+           }}
+          >
+           {project.lead}
+          </span>
+         </div>
+         <div className="flex justify-between items-center">
+          <span className="text-[11px] font-mono uppercase tracking-[0.15em] text-muted-foreground">Budget</span>
+          <span className="text-[14px] text-foreground font-mono tabular-nums">{project.budget}</span>
+         </div>
+         {project.created && (
+          <div className="flex justify-between items-center">
+           <span className="text-[11px] font-mono uppercase tracking-[0.15em] text-muted-foreground">Created</span>
+           <span className="text-[14px] text-foreground">{formatDateUtil(project.created)}</span>
+          </div>
+         )}
+         {project.nsm && (
+          <div className="flex justify-between items-start">
+           <span className="text-[11px] font-mono uppercase tracking-[0.15em] text-muted-foreground">North Star</span>
+           <span className="text-[14px] text-foreground text-right max-w-[60%]">{project.nsm}</span>
+          </div>
+         )}
         </div>
        </div>
-      )}
 
-      {project.subagents && !project.subagents.includes("(none") && (
-       <div className="bg-card rounded-sm border border-border shadow-sm p-5">
-        <div className="flex items-center gap-2 mb-3">
-         <Bot size={14} className="text-muted-foreground/50" />
-         <h3 className="text-sm font-semibold text-muted-foreground">
-          Sub-agents
-         </h3>
+       {/* Sub-agents — Aura card with count badge and hover rows */}
+       {project.subagents && !project.subagents.includes("(none") && (
+        <div className="bg-card border border-border rounded-[2px] shadow-sm">
+         <div className="px-5 py-4 border-b border-border flex justify-between items-center">
+          <h2 className="text-[14px] font-medium text-foreground">Sub-agents</h2>
+         </div>
+         <div className="p-5">
+          <Markdown content={project.subagents} />
+         </div>
         </div>
-        <Markdown content={project.subagents} />
+       )}
+
+       {/* Approval Gates — Aura card */}
+       {project.gates && (
+        <div className="bg-card border border-border rounded-[2px] shadow-sm">
+         <div className="px-5 py-4 border-b border-border">
+          <h2 className="text-[14px] font-medium text-foreground">Approval Gates</h2>
+         </div>
+         <div className="p-5 text-[14px] text-muted-foreground space-y-3">
+          {project.gates
+           .split("\n")
+           .filter(Boolean)
+           .map((gate, i) => {
+            const text = gate.replace(/^-\s*/,"");
+            const [name, requires] = text.split(":").map((s) => s.trim());
+            return (
+             <div key={i} className="flex items-center gap-3">
+              <div className="w-4 h-4 rounded-[4px] border border-muted-foreground/40 shrink-0" />
+              <span className="text-foreground/80">{name}</span>
+             </div>
+            );
+           })}
+         </div>
+        </div>
+       )}
+      </div>
+     </div>
+    </TabsContent>
+
+    {/* ──────────────── STRATEGY TAB ──────────────── */}
+    <TabsContent value="strategy">
+     <div className="mt-6">
+      <StrategyTab project={project} themes={themes} projectId={projectId} navigate={navigate} />
+     </div>
+    </TabsContent>
+
+    {/* ──────────────── ISSUES TAB ──────────────── */}
+    <TabsContent value="issues">
+     <div className="mt-6">
+      <Issues projectSlug={projectId} navigate={navigate} themes={themes.filter((t) => t.status === "approved")} />
+     </div>
+    </TabsContent>
+
+    {/* ──────────────── EXPERIMENTS TAB ──────────────── */}
+    <TabsContent value="experiments">
+     <div className="mt-6">
+      <ExperimentsTab experiments={experiments} />
+     </div>
+    </TabsContent>
+
+    {/* ──────────────── STANDUPS TAB ──────────────── */}
+    <TabsContent value="standups">
+     <div className="mt-6">
+      {standups.length === 0 ? (
+       <EmptyState icon={Activity} text="No standups yet" sub="The lead will post daily updates here." />
+      ) : (
+       <div className="space-y-4">
+        {standups.map((s, i) => {
+         const isLatest = i === 0;
+         const dateStr = s.name.replace(".md","");
+         const displayDate = (() => {
+          try { return formatDateUtil(dateStr +"T00:00:00"); } catch { return dateStr; }
+         })();
+         return (
+          <div key={s.name} className="bg-card border border-border rounded-[2px] shadow-sm">
+           <div className="px-5 py-4 border-b border-border">
+            <h2 className="text-[14px] font-medium text-foreground">{displayDate}</h2>
+           </div>
+           <div className="p-5">
+            <Markdown content={s.content} />
+           </div>
+          </div>
+         );
+        })}
        </div>
       )}
      </div>
     </TabsContent>
 
-    {/* Strategy tab */}
-    <TabsContent value="strategy">
-     <StrategyTab project={project} themes={themes} projectId={projectId} navigate={navigate} />
-    </TabsContent>
-
-    {/* Issues tab */}
-    <TabsContent value="issues">
-     <Issues projectSlug={projectId} navigate={navigate} themes={themes.filter((t) => t.status === "approved")} />
-    </TabsContent>
-
-    {/* Experiments tab */}
-    <TabsContent value="experiments">
-     <ExperimentsTab experiments={experiments} />
-    </TabsContent>
-
-    {/* Standups tab */}
-    <TabsContent value="standups">
-     {standups.length === 0 ? (
-      <EmptyState icon={Activity} text="No standups yet" sub="The lead will post daily updates here." />
-     ) : (
-      <div className="space-y-2">
-       {standups.map((s, i) => {
-        const isLatest = i === 0;
-        const dateStr = s.name.replace(".md","");
-        const displayDate = (() => {
-         try { return formatDateUtil(dateStr +"T00:00:00"); } catch { return dateStr; }
-        })();
-        return (
-         <CollapsibleSection
-          key={s.name}
-          title={displayDate}
-          defaultOpen={isLatest}
-         >
-          <Markdown content={s.content} />
-         </CollapsibleSection>
-        );
-       })}
-      </div>
-     )}
-    </TabsContent>
-
-    {/* Costs tab */}
+    {/* ──────────────── COSTS TAB ──────────────── */}
     <TabsContent value="costs">
-     <ProjectCostsTab
-      costs={costs}
-      costSummary={costSummary}
-      budgetPolicy={budgetPolicy}
-      totalCost={totalCost}
-      projectId={projectId}
-      onEditBudget={() => setShowBudgetModal(true)}
-     />
-     {showBudgetModal && (
-      <BudgetEditModal
-       project={projectId}
-       policy={budgetPolicy}
-       onSave={handleSaveBudget}
-       onClose={() => setShowBudgetModal(false)}
-       saving={savingBudget}
+     <div className="mt-6">
+      <ProjectCostsTab
+       costs={costs}
+       costSummary={costSummary}
+       budgetPolicy={budgetPolicy}
+       totalCost={totalCost}
+       projectId={projectId}
+       onEditBudget={() => setShowBudgetModal(true)}
       />
-     )}
+      {showBudgetModal && (
+       <BudgetEditModal
+        project={projectId}
+        policy={budgetPolicy}
+        onSave={handleSaveBudget}
+        onClose={() => setShowBudgetModal(false)}
+        saving={savingBudget}
+       />
+      )}
+     </div>
     </TabsContent>
 
-    {/* Approvals tab */}
+    {/* ──────────────── APPROVALS TAB ──────────────── */}
     <TabsContent value="approvals">
-     <ProjectApprovalsTab
-      approvals={approvals}
-      projectId={projectId}
-      navigate={navigate}
-      onResolved={() => {
-       getApprovals(projectId)
-        .then(setApprovals)
-        .catch(() => {});
-      }}
-     />
+     <div className="mt-6">
+      <ProjectApprovalsTab
+       approvals={approvals}
+       projectId={projectId}
+       navigate={navigate}
+       onResolved={() => {
+        getApprovals(projectId)
+         .then(setApprovals)
+         .catch(() => {});
+       }}
+      />
+     </div>
     </TabsContent>
 
-    {/* Activity tab */}
+    {/* ──────────────── ACTIVITY TAB ──────────────── */}
+    {/* Aura: card with px-5 py-3, w-24 timestamp, w-32 agent name */}
     <TabsContent value="activity">
-     {activities.length === 0 ? (
-      <EmptyState icon={Clock} text="No activity yet" sub="Events will appear as the project progresses." />
-     ) : (
-      <GroupedActivityList activities={activities} />
-     )}
+     <div className="mt-6">
+      {activities.length === 0 ? (
+       <EmptyState icon={Clock} text="No activity yet" sub="Events will appear as the project progresses." />
+      ) : (
+       <div className="bg-card border border-border rounded-[2px] shadow-sm flex flex-col">
+        {activities.map((a, i) => (
+         <div
+          key={i}
+          className={`flex items-center gap-4 px-5 py-3 hover:bg-accent/40 transition-colors ${
+           i < activities.length - 1 ?"border-b border-border/50" :""
+          }`}
+         >
+          <span className="text-[12px] font-mono text-muted-foreground w-24 shrink-0">{a.time}</span>
+          <span className="text-[14px] font-medium text-foreground/80 w-32 shrink-0 truncate">{a.agent}</span>
+          <span className="text-[14px] text-muted-foreground flex-1">{a.event}</span>
+         </div>
+        ))}
+       </div>
+      )}
+     </div>
     </TabsContent>
    </Tabs>
   </div>
  );
 }
 
+/* ──────────────── STRATEGY TAB COMPONENT ──────────────── */
 function StrategyTab({ project, themes, projectId, navigate }) {
  const approvedThemes = themes.filter((t) => t.status === "approved");
  const pendingThemes = themes.filter((t) => t.status === "proposed");
- const [expandedTheme, setExpandedTheme] = useState(null);
- const [themeIssues, setThemeIssues] = useState({});
- const [loadingIssues, setLoadingIssues] = useState(false);
-
- // Load issues tagged to a theme when expanded
- const toggleTheme = async (themeId) => {
-  if (expandedTheme === themeId) {
-   setExpandedTheme(null);
-   return;
-  }
-  setExpandedTheme(themeId);
-  if (!themeIssues[themeId]) {
-   setLoadingIssues(true);
-   try {
-    const data = await getIssues(projectId);
-    const tagged = (data.issues || []).filter((i) => i.theme === themeId);
-    setThemeIssues((prev) => ({ ...prev, [themeId]: tagged }));
-   } catch { setThemeIssues((prev) => ({ ...prev, [themeId]: [] })); }
-   setLoadingIssues(false);
-  }
- };
 
  return (
-  <div className="space-y-4">
-   {/* North Star Metric */}
-   <div className="border border-border border-l-2 border-l-cyan-400 bg-accent/20 p-4">
-    <div className="flex items-center gap-2 mb-2">
-     <Target size={14} className="text-cyan-400" />
-     <h3 className="text-[11px] uppercase tracking-[0.16em] font-mono text-muted-foreground">
-      North Star Metric
-     </h3>
+  <div className="space-y-6">
+   {/* North Star Metric — elevated card */}
+   <div className="bg-card border border-border rounded-[2px] shadow-sm border-l-2 border-l-cyan-400">
+    <div className="p-5">
+     <div className="flex items-center gap-2 mb-2">
+      <Target size={16} className="text-cyan-400" />
+      <span className="text-[11px] uppercase tracking-[0.15em] font-mono text-muted-foreground">
+       North Star Metric
+      </span>
+     </div>
+     {project.nsm ? (
+      <p className="text-[14px] font-medium text-foreground">{project.nsm}</p>
+     ) : (
+      <p className="text-[14px] text-muted-foreground/60">No NSM defined yet.</p>
+     )}
+     {project.mission && (
+      <p className="text-[13px] text-muted-foreground mt-2">Mission: {project.mission}</p>
+     )}
     </div>
-    {project.nsm ? (
-     <p className="text-sm font-medium text-foreground">{project.nsm}</p>
-    ) : (
-     <p className="text-sm text-muted-foreground/60">No NSM defined yet.</p>
-    )}
-    {project.mission && (
-     <p className="text-xs text-muted-foreground mt-2">
-      Mission: {project.mission}
-     </p>
-    )}
    </div>
 
    {/* Pending theme proposals */}
    {pendingThemes.length > 0 && (
-    <div>
-     <h3 className="text-[11px] uppercase tracking-[0.16em] font-mono text-muted-foreground mb-2">
-      Proposed Themes
-     </h3>
-     <div className="space-y-2">
+    <div className="bg-card border border-border rounded-[2px] shadow-sm">
+     <div className="px-5 py-4 border-b border-border">
+      <h2 className="text-[14px] font-medium text-foreground">Proposed Themes</h2>
+     </div>
+     <div className="divide-y divide-border">
       {pendingThemes.map((theme) => (
-       <div key={theme.id} className="border border-amber-700/40 bg-amber-900/10 p-4">
+       <div key={theme.id} className="p-5">
         <div className="flex items-center gap-2 mb-2">
-         <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium bg-amber-900/50 text-amber-300">
-          <Clock size={12} /> Pending
-         </span>
-         <span className="text-sm font-medium text-foreground">{theme.title}</span>
+         <StatusBadge status="pending" />
+         <span className="text-[14px] font-medium text-foreground">{theme.title}</span>
         </div>
         {theme.description && (
-         <p className="text-xs text-muted-foreground mb-3">{theme.description}</p>
+         <p className="text-[13px] text-muted-foreground mb-3">{theme.description}</p>
         )}
         <div className="space-y-1.5">
          {(theme.proxy_metrics || []).map((pm) => (
-          <div key={pm.id} className="flex items-center gap-2 text-xs">
-           <BarChart3 size={12} className="text-muted-foreground/50 shrink-0" />
+          <div key={pm.id} className="flex items-center gap-2 text-[13px]">
+           <BarChart3 size={14} className="text-muted-foreground/50 shrink-0" />
            <span className="text-foreground/80">{pm.name}</span>
           </div>
          ))}
         </div>
-        <p className="text-[11px] text-muted-foreground/50 mt-2">
+        <p className="text-[11px] text-muted-foreground/50 mt-3">
          Proposed by {theme.proposed_by} — awaiting approval
         </p>
        </div>
@@ -468,76 +522,37 @@ function StrategyTab({ project, themes, projectId, navigate }) {
     </div>
    )}
 
-   {/* Approved themes — clickable for drill-down */}
+   {/* Approved themes */}
    {approvedThemes.length > 0 ? (
-    <div>
-     <h3 className="text-[11px] uppercase tracking-[0.16em] font-mono text-muted-foreground mb-2">
-      Key Themes
-     </h3>
-     <div className="space-y-2">
-      {approvedThemes.map((theme) => {
-       const isExpanded = expandedTheme === theme.id;
-       const issues = themeIssues[theme.id] || [];
-       return (
-        <div key={theme.id} className="border border-border">
-         <button
-          onClick={() => toggleTheme(theme.id)}
-          className="w-full text-left p-4 hover:bg-accent/30 transition-colors"
-         >
-          <div className="flex items-center gap-2 mb-1">
-           <Compass size={14} className="text-teal-400 shrink-0" />
-           <h4 className="text-sm font-medium text-foreground flex-1">{theme.title}</h4>
-           <span className="text-[11px] text-muted-foreground/50">
-            {isExpanded ? "collapse" : "click to see issues"}
-           </span>
-          </div>
-          {theme.description && (
-           <p className="text-xs text-muted-foreground mb-3 ml-[22px]">{theme.description}</p>
-          )}
-          <div className="space-y-2 ml-[22px]">
-           {(theme.proxy_metrics || []).map((pm) => (
-            <div key={pm.id} className="flex items-start gap-2">
-             <BarChart3 size={12} className="text-muted-foreground/50 mt-0.5 shrink-0" />
-             <div>
-              <span className="text-xs font-medium text-foreground/80">{pm.name}</span>
-              {pm.description && (
-               <p className="text-[11px] text-muted-foreground/60">{pm.description}</p>
-              )}
-             </div>
-            </div>
-           ))}
-          </div>
-         </button>
-         {/* Drill-down: issues tagged to this theme */}
-         {isExpanded && (
-          <div className="border-t border-border px-4 py-3 bg-accent/10">
-           <h5 className="text-[11px] uppercase tracking-[0.16em] font-mono text-muted-foreground mb-2">
-            Tagged Issues
-           </h5>
-           {loadingIssues ? (
-            <p className="text-xs text-muted-foreground/50">Loading...</p>
-           ) : issues.length === 0 ? (
-            <p className="text-xs text-muted-foreground/50 italic">No issues tagged to this theme yet.</p>
-           ) : (
-            <div className="space-y-1.5">
-             {issues.map((issue) => (
-              <button
-               key={issue.id}
-               onClick={(e) => { e.stopPropagation(); navigate("issue-detail", { slug: projectId, issueId: issue.id }); }}
-               className="flex items-center gap-2 w-full text-left px-2 py-1.5 hover:bg-accent/30 transition-colors"
-              >
-               <CircleDot size={12} className="text-muted-foreground/50 shrink-0" />
-               <span className="text-xs text-foreground/80 truncate flex-1">{issue.title}</span>
-               <StatusBadge status={issue.status} />
-              </button>
-             ))}
-            </div>
-           )}
-          </div>
-         )}
+    <div className="bg-card border border-border rounded-[2px] shadow-sm">
+     <div className="px-5 py-4 border-b border-border">
+      <h2 className="text-[14px] font-medium text-foreground">Key Themes</h2>
+     </div>
+     <div className="divide-y divide-border">
+      {approvedThemes.map((theme) => (
+       <div key={theme.id} className="p-5">
+        <div className="flex items-center gap-2 mb-1">
+         <Compass size={16} className="text-teal-400 shrink-0" />
+         <h4 className="text-[14px] font-medium text-foreground">{theme.title}</h4>
         </div>
-       );
-      })}
+        {theme.description && (
+         <p className="text-[13px] text-muted-foreground mb-3 ml-[24px]">{theme.description}</p>
+        )}
+        <div className="space-y-2 ml-[24px]">
+         {(theme.proxy_metrics || []).map((pm) => (
+          <div key={pm.id} className="flex items-start gap-2">
+           <BarChart3 size={14} className="text-muted-foreground/50 mt-0.5 shrink-0" />
+           <div>
+            <span className="text-[13px] font-medium text-foreground/80">{pm.name}</span>
+            {pm.description && (
+             <p className="text-[11px] text-muted-foreground/60">{pm.description}</p>
+            )}
+           </div>
+          </div>
+         ))}
+        </div>
+       </div>
+      ))}
      </div>
     </div>
    ) : !pendingThemes.length && (
@@ -551,37 +566,8 @@ function StrategyTab({ project, themes, projectId, navigate }) {
  );
 }
 
-function GroupedActivityList({ activities }) {
- // Group activities by date (YYYY-MM-DD from the time field)
- const groups = {};
- for (const a of activities) {
-  const dateKey = a.time ? a.time.split("")[0] :"unknown";
-  if (!groups[dateKey]) groups[dateKey] = [];
-  groups[dateKey].push(a);
- }
- const groupEntries = Object.entries(groups);
-
- return (
-  <div className="space-y-2">
-   {groupEntries.map(([dateKey, items], gi) => {
-    const isLatest = gi === 0;
-    const displayDate = (() => {
-     try { return formatDateUtil(dateKey +"T00:00:00"); } catch { return dateKey; }
-    })();
-    return (
-     <CollapsibleSection key={dateKey} title={displayDate} defaultOpen={isLatest}>
-      <div className="divide-y divide-border border border-border">
-       {items.map((a, i) => (
-        <ActivityRow key={i} time={a.time} agent={a.agent} event={a.event} />
-       ))}
-      </div>
-     </CollapsibleSection>
-    );
-   })}
-  </div>
- );
-}
-
+/* ──────────────── COSTS TAB COMPONENT ──────────────── */
+/* Aura: 4-col metric cards, budget progress card, breakdown table */
 function ProjectCostsTab({ costs, costSummary, budgetPolicy, totalCost, projectId, onEditBudget }) {
  const cs = costSummary || {};
  const budget = cs.budget || 0;
@@ -593,153 +579,112 @@ function ProjectCostsTab({ costs, costSummary, budgetPolicy, totalCost, projectI
  const agentSummaries = cs.agents || [];
 
  if (costs.length === 0 && entries.length === 0) {
-  return (
-   <EmptyState icon={DollarSign} text="No cost data yet" sub="Agents will log their token usage here." />
-  );
+  return <EmptyState icon={DollarSign} text="No cost data yet" sub="Agents will log their token usage here." />;
  }
 
  return (
-  <div className="space-y-4">
-   {/* Budget policy card */}
-   <div className="bg-card rounded-sm border border-border shadow-sm p-5 space-y-3">
-    <div className="flex items-center justify-between">
-     <div className="flex items-center gap-2">
-      <Wallet size={14} className="text-muted-foreground/50" />
-      <h3 className="text-sm font-semibold text-muted-foreground">
-       Budget Policy
-      </h3>
-     </div>
-     <button
-      onClick={onEditBudget}
-      className="flex items-center gap-1.5 text-xs text-primary hover:text-primary/80 transition-colors"
-     >
-      <Pencil size={12} />
-      Edit Budget
-     </button>
-    </div>
+  <div className="space-y-6">
+   {/* Metric cards — Aura: grid-cols-4 */}
+   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2">
+    <MetricCard label="Total Spend" value={`$${totalCost.toFixed(2)}`} mono icon={Wallet} />
+    <MetricCard label="Weekly Budget" value={budget > 0 ? `$${budget}` :"No cap"} mono icon={DollarSign} />
+    <MetricCard label="Burn Rate" value={dailyBurnRate > 0 ? `$${dailyBurnRate.toFixed(0)}/day` :"--"} mono />
+    <MetricCard label="Utilization" value={budget > 0 ? `${utilizationPct}%` :"--"} />
+   </div>
 
-    {budget > 0 && (
-     <QuotaBar
-      label="Weekly Budget"
-      percentUsed={utilizationPct}
-      leftLabel={`$${totalCost.toFixed(2)} / $${budget}`}
-      rightLabel={`${utilizationPct}%`}
-     />
-    )}
-
-    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-     <div>
-      <p className="text-[11px] uppercase tracking-[0.16em] font-mono text-muted-foreground/60">Spend</p>
-      <p className="text-lg font-semibold font-mono tabular-nums mt-0.5">${totalCost.toFixed(2)}</p>
-     </div>
-     <div>
-      <p className="text-[11px] uppercase tracking-[0.16em] font-mono text-muted-foreground/60">Budget</p>
-      <p className="text-lg font-semibold font-mono tabular-nums mt-0.5">
-       {budget > 0 ? `$${budget}/wk` :"No cap"}
-      </p>
-     </div>
-     <div>
-      <p className="text-[11px] uppercase tracking-[0.16em] font-mono text-muted-foreground/60">Remaining</p>
-      <p className="text-lg font-semibold font-mono tabular-nums mt-0.5">
-       {budget > 0 ? `$${remaining.toFixed(2)}` :"--"}
-      </p>
-     </div>
-     <div>
-      <p className="text-[11px] uppercase tracking-[0.16em] font-mono text-muted-foreground/60">Burn Rate</p>
-      <div className="mt-0.5">
-       <BurnRateIndicator dailyRate={dailyBurnRate} compact />
+   {/* Budget utilization bar — Aura card */}
+   {budget > 0 && (
+    <div className="bg-card border border-border rounded-[2px] p-5 shadow-sm">
+     <div className="flex justify-between items-end mb-3">
+      <div>
+       <h3 className="text-[14px] font-medium text-foreground mb-1">Budget Utilization</h3>
+       <p className="text-[13px] text-muted-foreground">${totalCost.toFixed(2)} used of ${budget} total allocation</p>
       </div>
+      <button
+       onClick={onEditBudget}
+       className="text-[13px] font-medium text-muted-foreground hover:text-foreground transition-colors"
+      >
+       Edit Budget
+      </button>
      </div>
+     <div className="w-full h-1.5 bg-secondary rounded-full overflow-hidden">
+      <div
+       className={`h-full rounded-full ${utilizationPct > 80 ?"bg-amber-500" :"bg-emerald-500"}`}
+       style={{ width: `${Math.min(utilizationPct, 100)}%` }}
+      />
+     </div>
+     {exhaustionDate && (
+      <p className="text-[13px] text-muted-foreground mt-3">
+       Projected exhaustion: <span className="font-mono tabular-nums">{exhaustionDate}</span>
+      </p>
+     )}
+     {budgetPolicy && (
+      <div className="flex gap-4 text-[11px] text-muted-foreground/50 pt-3 mt-3 border-t border-border/50">
+       <span>Warn: {Math.round((budgetPolicy.warn_threshold || 0.8) * 100)}%</span>
+       <span>Stop: {Math.round((budgetPolicy.stop_threshold || 1.0) * 100)}%</span>
+      </div>
+     )}
     </div>
+   )}
 
-    {exhaustionDate && (
-     <p className="text-xs text-muted-foreground">
-      Projected exhaustion: <span className="font-mono tabular-nums">{exhaustionDate}</span>
-     </p>
-    )}
-
-    {budgetPolicy && (
-     <div className="flex gap-4 text-[11px] text-muted-foreground/50 pt-1 border-t border-border/50">
-      <span>Warn: {Math.round((budgetPolicy.warn_threshold || 0.8) * 100)}%</span>
-      <span>Stop: {Math.round((budgetPolicy.stop_threshold || 1.0) * 100)}%</span>
-      {budgetPolicy.per_agent_limits && Object.keys(budgetPolicy.per_agent_limits).length > 0 && (
-       <span>
-        Agent limits: {Object.entries(budgetPolicy.per_agent_limits)
-         .map(([a, l]) => `${a}: $${l}`)
-         .join(",")}
-       </span>
-      )}
-     </div>
-    )}
-   </div>
-
-   {/* Summary metrics */}
-   <div className="grid grid-cols-2 gap-1">
-    <MetricCard
-     label="Total Spend"
-     value={`$${totalCost.toFixed(2)}`}
-     mono
-    />
-    <MetricCard
-     label="Entries"
-     value={entries.length || costs.reduce((sum, c) => sum + (c.entries?.length || 0), 0)}
-    />
-   </div>
-
-   {/* Per-agent breakdown */}
+   {/* Per-agent breakdown — Aura table */}
    {(agentSummaries.length > 0 || costs.length > 0) && (
-    <div>
-     <h4 className="text-sm font-semibold text-muted-foreground mb-2">
-      Per-Agent Breakdown
-     </h4>
-     <div className="border border-border divide-y divide-border">
-      {(agentSummaries.length > 0 ? agentSummaries : costs).map((c) => {
-       const agentName = c.agent;
-       const agentTotal = c.totalUsd ?? c.total_usd ?? 0;
-       const agentLimit = budgetPolicy?.per_agent_limits?.[agentName];
-       const agentPct = agentLimit ? Math.round((agentTotal / agentLimit) * 100) : null;
+    <div className="bg-card border border-border rounded-[2px] shadow-sm flex flex-col">
+     <div className="px-5 py-4 border-b border-border">
+      <h2 className="text-[14px] font-medium text-foreground">Cost Breakdown by Agent</h2>
+     </div>
+     <div className="overflow-x-auto">
+      <table className="w-full text-left border-collapse whitespace-nowrap">
+       <thead>
+        <tr>
+         <th className="text-[11px] uppercase font-mono tracking-[0.15em] text-muted-foreground pb-3 px-5 pt-4 border-b border-border font-normal w-[40%]">Agent</th>
+         <th className="text-[11px] uppercase font-mono tracking-[0.15em] text-muted-foreground pb-3 px-5 pt-4 border-b border-border font-normal w-[20%]">Total Cost</th>
+         <th className="text-[11px] uppercase font-mono tracking-[0.15em] text-muted-foreground pb-3 px-5 pt-4 border-b border-border font-normal w-[40%]">Percentage</th>
+        </tr>
+       </thead>
+       <tbody>
+        {(agentSummaries.length > 0 ? agentSummaries : costs).map((c, i, arr) => {
+         const agentName = c.agent;
+         const agentTotal = c.totalUsd ?? c.total_usd ?? 0;
+         const pct = totalCost > 0 ? Math.round((agentTotal / totalCost) * 100) : 0;
 
-       return (
-        <div key={agentName} className="px-4 py-3">
-         <div className="flex justify-between items-center mb-1">
-          <span className="text-sm font-medium text-foreground">{agentName}</span>
-          <span className="text-sm font-mono tabular-nums text-foreground">
-           ${agentTotal.toFixed(2)}
-          </span>
-         </div>
-         {agentLimit && (
-          <QuotaBar
-           label=""
-           percentUsed={agentPct}
-           leftLabel={`$${agentTotal.toFixed(2)} / $${agentLimit}`}
-           rightLabel={`${agentPct}%`}
-           className="mt-1"
-          />
-         )}
-         <p className="text-[11px] text-muted-foreground/50 mt-1">
-          {c.entryCount ?? c.entries?.length ?? 0} entries
-          {agentLimit ? ` | Limit: $${agentLimit}` :""}
-         </p>
-        </div>
-       );
-      })}
+         return (
+          <tr key={agentName} className={`hover:bg-accent/40 transition-colors ${i < arr.length - 1 ?"border-b border-border/50" :""}`}>
+           <td className="px-5 py-3.5 text-[14px] font-medium text-foreground">{agentName}</td>
+           <td className="px-5 py-3.5 text-[14px] font-mono text-muted-foreground">${agentTotal.toFixed(2)}</td>
+           <td className="px-5 py-3.5">
+            <div className="flex items-center gap-3">
+             <div className="flex-1 h-1.5 bg-secondary rounded-full overflow-hidden">
+              <div className="h-full bg-indigo-500 rounded-full" style={{ width: `${pct}%` }} />
+             </div>
+             <span className="text-[11px] font-mono text-muted-foreground w-8 text-right">{pct}%</span>
+            </div>
+           </td>
+          </tr>
+         );
+        })}
+       </tbody>
+      </table>
      </div>
     </div>
    )}
 
    {/* Cost timeline */}
    {entries.length > 0 && (
-    <div>
-     <h4 className="text-sm font-semibold text-muted-foreground mb-2">
-      Cost Timeline
-     </h4>
-     <CostTimeline entries={entries.slice(0, 50)} />
+    <div className="bg-card border border-border rounded-[2px] shadow-sm">
+     <div className="px-5 py-4 border-b border-border">
+      <h2 className="text-[14px] font-medium text-foreground">Cost Timeline</h2>
+     </div>
+     <div className="p-5">
+      <CostTimeline entries={entries.slice(0, 50)} />
+     </div>
     </div>
    )}
   </div>
  );
 }
 
+/* ──────────────── APPROVALS TAB COMPONENT ──────────────── */
 function ProjectApprovalsTab({ approvals, projectId, onResolved, navigate }) {
  const [rejectingApproval, setRejectingApproval] = useState(null);
 
@@ -805,23 +750,15 @@ function ProjectApprovalsTab({ approvals, projectId, onResolved, navigate }) {
  ).length;
 
  if (approvals.length === 0) {
-  return (
-   <EmptyState
-    icon={ShieldCheck}
-    text="No approvals"
-    sub="All clear — no approvals for this project."
-   />
-  );
+  return <EmptyState icon={ShieldCheck} text="No approvals" sub="All clear — no approvals for this project." />;
  }
 
  return (
-  <div className="space-y-3">
+  <div className="space-y-4">
    {pendingCount > 0 && (
-    <p className="text-xs text-muted-foreground">
-     {pendingCount} pending
-    </p>
+    <p className="text-[13px] text-muted-foreground">{pendingCount} pending</p>
    )}
-   <div className="border border-border overflow-hidden">
+   <div className="bg-card border border-border rounded-[2px] shadow-sm overflow-hidden">
     {approvals.map((approval) => (
      <ApprovalCard
       key={approval.id || approval._file}
@@ -843,110 +780,58 @@ function ProjectApprovalsTab({ approvals, projectId, onResolved, navigate }) {
  );
 }
 
+/* ──────────────── EXPERIMENTS TAB COMPONENT ──────────────── */
+/* Aura: grid-cols-2 cards with hypothesis + metrics */
 function ExperimentsTab({ experiments }) {
  if (!experiments || experiments.length === 0) {
-  return (
-   <EmptyState
-    icon={FlaskConical}
-    text="No experiments yet"
-    sub="The lead can start one via the autoresearch protocol."
-   />
-  );
+  return <EmptyState icon={FlaskConical} text="No experiments yet" sub="The lead can start one via the autoresearch protocol." />;
  }
 
- // Compute summary across all experiments
  const totalRuns = experiments.reduce((sum, e) => sum + e.result_count, 0);
  const bestMetrics = experiments.map((e) => e.best_metric).filter((m) => m !== null && m !== undefined);
  const overallBest = bestMetrics.length > 0 ? Math.max(...bestMetrics) : null;
- const latestExp = experiments[experiments.length - 1];
- const currentMetric = latestExp?.best_metric;
 
  return (
-  <div className="space-y-4">
-   {/* Summary cards */}
-   <div className="grid grid-cols-2 sm:grid-cols-3 gap-1">
+  <div className="space-y-6">
+   <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
     <MetricCard label="Experiments" value={experiments.length} />
     <MetricCard label="Total Runs" value={totalRuns} />
-    {overallBest !== null && (
-     <MetricCard label="Best Metric" value={overallBest} mono />
-    )}
+    {overallBest !== null && <MetricCard label="Best Metric" value={overallBest} mono />}
    </div>
 
-   {/* Experiment list */}
-   {experiments.map((exp) => (
-    <CollapsibleSection
-     key={exp.dir}
-     title={
-      <span className="flex items-center gap-2">
-       <span>{exp.name}</span>
+   {/* Experiment cards — Aura: grid-cols-2 */}
+   <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+    {experiments.map((exp) => (
+     <div key={exp.dir} className="bg-card border border-border rounded-[2px] shadow-sm p-5 flex flex-col h-full">
+      <div className="flex justify-between items-start mb-3">
+       <h3 className="text-[14px] font-medium text-foreground">{exp.name}</h3>
        <StatusBadge status={exp.status} />
-       {exp.result_count > 0 && (
-        <span className="text-[11px] text-muted-foreground font-mono">
-         {exp.result_count} run{exp.result_count !== 1 ?"s" :""}
-        </span>
-       )}
-      </span>
-     }
-     defaultOpen={experiments.length === 1}
-    >
-     <div className="space-y-3">
-      {/* Program definition */}
+      </div>
       {exp.program_md && (
-       <div className="bg-card rounded-sm border border-border shadow-sm p-5">
+       <div className="text-[13px] text-muted-foreground mb-4 flex-1">
         <Markdown content={exp.program_md} />
        </div>
       )}
-
-      {/* Results table */}
-      {exp.results.length > 0 && (
-       <div>
-        <h4 className="text-sm font-semibold text-muted-foreground mb-2">
-         Results
-        </h4>
-        <div className="border border-border overflow-x-auto">
-         <table className="w-full text-sm">
-          <thead>
-           <tr className="border-b border-border bg-muted/30">
-            {Object.keys(exp.results[0]).map((col) => (
-             <th
-              key={col}
-              className="px-3 py-2 text-left text-[11px] uppercase tracking-[0.16em] font-mono text-muted-foreground font-medium"
-             >
-              {col}
-             </th>
-            ))}
-           </tr>
-          </thead>
-          <tbody className="divide-y divide-border">
-           {exp.results.map((row, i) => (
-            <tr key={i} className="hover:bg-muted/20 transition-colors">
-             {Object.values(row).map((val, j) => (
-              <td key={j} className="px-3 py-2 font-mono text-xs text-foreground/80">
-               {val}
-              </td>
-             ))}
-            </tr>
-           ))}
-          </tbody>
-         </table>
+      {exp.best_metric !== null && (
+       <div className="grid grid-cols-2 gap-4 border-t border-border/50 pt-4 mt-auto">
+        <div>
+         <div className="text-[11px] font-mono uppercase tracking-[0.15em] text-muted-foreground mb-1">Best Metric</div>
+         <div className="text-[14px] font-medium font-mono text-foreground">{exp.best_metric}</div>
+        </div>
+        <div>
+         <div className="text-[11px] font-mono uppercase tracking-[0.15em] text-muted-foreground mb-1">Runs</div>
+         <div className="text-[14px] font-medium font-mono text-foreground">{exp.result_count}</div>
         </div>
        </div>
       )}
-
-      {/* Per-experiment summary */}
-      {exp.best_metric !== null && (
-       <div className="flex gap-4 text-xs text-muted-foreground">
-        <span>Best metric: <span className="font-mono font-medium text-foreground">{exp.best_metric}</span></span>
-        <span>Runs: <span className="font-mono font-medium text-foreground">{exp.result_count}</span></span>
-       </div>
-      )}
      </div>
-    </CollapsibleSection>
-   ))}
+    ))}
+   </div>
   </div>
  );
 }
 
+/* ──────────────── DATA LOADERS ──────────────── */
 async function loadStandups(projectId) {
  try {
   const dir = await getFile(`shared/projects/${projectId}/standups`);
