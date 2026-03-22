@@ -13,17 +13,8 @@ import {
 } from"lucide-react";
 import { getApprovals, getProjects, getInbox } from"../api.js";
 
-/* ── Predefined project colors (cycled) ────────────────────────────── */
-const PROJECT_COLORS = [
-"#ec4899", // pink
-"#6366f1", // indigo
-"#22c55e", // green
-"#a855f7", // purple
-"#3b82f6", // blue
-"#f59e0b", // amber
-"#ef4444", // red
-"#14b8a6", // teal
-];
+/* ── Project dot color (neutral — no decorative color) ─────────────── */
+const PROJECT_DOT_COLOR = "oklch(0.556 0 0)"; // matches --ring, muted foreground
 
 /* ── Section header (Paperclip style) ──────────────────────────────── */
 function SidebarSection({ label, children, collapsible = false, defaultOpen = true, action }) {
@@ -140,7 +131,7 @@ export default function Sidebar({ page, selectedProject, navigate, refreshKey })
   () =>
    projects.map((p, i) => ({
     ...p,
-    color: p.color || PROJECT_COLORS[i % PROJECT_COLORS.length],
+    color: PROJECT_DOT_COLOR,
    })),
   [projects]
  );
