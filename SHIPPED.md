@@ -1,6 +1,7 @@
 # SHIPPED.md
 
 ## 2026-03-22
+- **style:** Use exact Aura HTML classes on CreateExperiment, IssueDetail, ApprovalDetail, CreateProject — replaced semantic tokens with literal Tailwind values from reference
 - **fix:** Strategy tree enforcement — theme/proxy_metrics persisted on issues, server validates tags against approved themes, theme drill-down shows tagged issues
 - **feat:** Strategy tree — projects now have NSM, themes, and proxy metrics. Agents propose themes for approval, all work tagged to themes
 - **fix:** Approve/reject buttons now show on proposed issues

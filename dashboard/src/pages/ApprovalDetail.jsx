@@ -31,7 +31,7 @@ function StatusBadgeInline({ status }) {
 function TypeLabel({ type }) {
  if (!type) return null;
  return (
-  <span className="px-1.5 py-0.5 rounded-[2px] border border-border bg-secondary text-foreground/80 text-[11px] font-mono tracking-wide leading-tight">
+  <span className="px-1.5 py-0.5 rounded border border-zinc-700/80 bg-zinc-800/50 text-zinc-300 text-[11px] font-mono tracking-wide leading-tight">
    {type.toUpperCase().replace(/-/g,"_")}
   </span>
  );
@@ -118,10 +118,10 @@ export default function ApprovalDetail({ approvalId, navigate }) {
  if (loading) {
   return (
    <div className="max-w-[1200px] mx-auto space-y-4">
-    <div className="bg-accent/50 h-4 w-48 rounded-[2px]" />
-    <div className="bg-accent/50 h-8 w-96 rounded-[2px]" />
-    <div className="bg-accent/50 h-4 w-64 rounded-[2px]" />
-    <div className="bg-accent/50 h-64 w-full rounded-[2px] mt-4" />
+    <div className="bg-zinc-800/50 h-4 w-48 rounded-[2px]" />
+    <div className="bg-zinc-800/50 h-8 w-96 rounded-[2px]" />
+    <div className="bg-zinc-800/50 h-4 w-64 rounded-[2px]" />
+    <div className="bg-zinc-800/50 h-64 w-full rounded-[2px] mt-4" />
    </div>
   );
  }
@@ -129,7 +129,7 @@ export default function ApprovalDetail({ approvalId, navigate }) {
  if (!approval) {
   return (
    <div className="max-w-[1200px] mx-auto">
-    <p className="text-[14px] text-muted-foreground">{error ||"Approval not found."}</p>
+    <p className="text-[14px] text-zinc-500">{error ||"Approval not found."}</p>
    </div>
   );
  }
@@ -154,35 +154,35 @@ export default function ApprovalDetail({ approvalId, navigate }) {
  return (
   <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
    {/* Page Header — Aura: px-8 py-8 border-b, sticky */}
-   <header className="px-0 pb-8 border-b border-border shrink-0">
+   <header className="px-8 py-8 border-b border-zinc-800 shrink-0 bg-[#09090b]">
     {/* Breadcrumb */}
-    <nav className="flex items-center text-[13px] text-muted-foreground mb-5 tracking-wide">
-     <button onClick={() => navigate("approvals")} className="hover:text-foreground transition-colors">Approvals</button>
+    <nav className="flex items-center text-[13px] text-zinc-400 mb-5 tracking-wide">
+     <button onClick={() => navigate("approvals")} className="hover:text-zinc-100 transition-colors">Approvals</button>
      {projectName && (
       <>
-       <span className="mx-2 text-muted-foreground/30">›</span>
-       <button onClick={() => navigate("project", projectName)} className="hover:text-foreground transition-colors capitalize">{projectName}</button>
+       <span className="mx-2 text-zinc-600">&rsaquo;</span>
+       <button onClick={() => navigate("project", projectName)} className="hover:text-zinc-100 transition-colors capitalize">{projectName}</button>
       </>
      )}
-     <span className="mx-2 text-muted-foreground/30">›</span>
-     <span className="text-foreground font-semibold truncate">{title}</span>
+     <span className="mx-2 text-zinc-600">&rsaquo;</span>
+     <span className="text-zinc-100 font-semibold truncate">{title}</span>
     </nav>
 
     {/* Title + Status Badge — Aura: text-[30px] + bordered pill */}
     <div className="flex items-center gap-4 mb-4">
-     <h1 className="text-[30px] font-semibold text-foreground leading-none tracking-tight">{title}</h1>
+     <h1 className="text-[30px] font-semibold text-zinc-100 leading-none tracking-tight">{title}</h1>
      <StatusBadgeInline status={status} />
     </div>
 
     {/* Metadata — Aura: text-[13px] with type label + dot separators */}
-    <div className="flex items-center gap-2 text-[13px] text-muted-foreground">
+    <div className="flex items-center gap-2 text-[13px] text-zinc-500">
      <TypeLabel type={itemType} />
      {approval.requester && (
       <>
-       <span className="text-muted-foreground/30">·</span>
+       <span className="text-zinc-600">&middot;</span>
        <span>Requested by{" "}
         <button
-         className="text-foreground font-medium hover:underline capitalize"
+         className="text-zinc-100 font-medium hover:underline capitalize"
          onClick={() => {
           const name = (approval.requester ||"").toLowerCase();
           const workspaceId = name ==="sam" ?"workspace" : `workspace-${name}`;
@@ -196,7 +196,7 @@ export default function ApprovalDetail({ approvalId, navigate }) {
      )}
      {timeAgo && (
       <>
-       <span className="text-muted-foreground/30">·</span>
+       <span className="text-zinc-600">&middot;</span>
        <span>{timeAgo}</span>
       </>
      )}
@@ -204,7 +204,7 @@ export default function ApprovalDetail({ approvalId, navigate }) {
    </header>
 
    {/* Scrollable Content — Aura: grid-cols-3 */}
-   <div className="flex-1 overflow-y-auto pt-6">
+   <div className="flex-1 overflow-y-auto p-8">
     <div className="max-w-[1200px] grid grid-cols-1 xl:grid-cols-3 gap-6">
 
      {/* Left Column — 2/3 */}
@@ -223,14 +223,14 @@ export default function ApprovalDetail({ approvalId, navigate }) {
          {resolved.decision ==="approved" ? <CheckCircle2 size={16} className="text-emerald-400" /> :
           resolved.decision ==="revision_requested" ? <RotateCcw size={16} className="text-amber-400" /> :
           <XCircle size={16} className="text-red-400" />}
-         <span className="text-[14px] font-medium text-foreground">
+         <span className="text-[14px] font-medium text-zinc-100">
           {resolved.decision ==="approved"
            ? (isThemeProposal ? "Theme approved" : isIssue ?"Issue approved — moved to todo" :"Approved")
            : resolved.decision ==="revision_requested" ?"Revision Requested"
            : (isThemeProposal ? "Theme rejected" : isIssue ?"Issue rejected — removed" :"Rejected")}
          </span>
          {resolved.comment && (
-          <span className="text-[13px] text-muted-foreground ml-2">— {resolved.comment}</span>
+          <span className="text-[13px] text-zinc-500 ml-2">— {resolved.comment}</span>
          )}
         </div>
        </div>
@@ -238,13 +238,13 @@ export default function ApprovalDetail({ approvalId, navigate }) {
 
       {/* Details Card — Aura card */}
       {approval.why && (
-       <section className="bg-card border border-border rounded-[2px] shadow-sm flex flex-col">
-        <header className="p-[20px] border-b border-border">
-         <h2 className="text-[14px] font-semibold text-foreground">
+       <section className="bg-[#121214] border border-zinc-800 rounded-[2px] shadow-sm flex flex-col">
+        <header className="p-[20px] border-b border-zinc-800">
+         <h2 className="text-[14px] font-semibold text-zinc-100">
           {isExperiment ?"Approval Request" : isDeliverable ?"Deliverable" : isIssue ?"Proposed Issue" :"Details"}
          </h2>
         </header>
-        <div className="p-[20px] text-[14px] text-foreground/80 leading-relaxed mc-prose">
+        <div className="p-[20px] text-[14px] text-zinc-300 leading-relaxed space-y-5 mc-prose">
          <Markdown content={approval.why} />
         </div>
        </section>
@@ -252,26 +252,26 @@ export default function ApprovalDetail({ approvalId, navigate }) {
 
       {/* Theme proposal — proxy metrics */}
       {isTheme && (
-       <section className="bg-card border border-border rounded-[2px] shadow-sm flex flex-col">
-        <header className="p-[20px] border-b border-border">
-         <h2 className="text-[14px] font-semibold text-foreground">Theme Details</h2>
+       <section className="bg-[#121214] border border-zinc-800 rounded-[2px] shadow-sm flex flex-col">
+        <header className="p-[20px] border-b border-zinc-800">
+         <h2 className="text-[14px] font-semibold text-zinc-100">Theme Details</h2>
         </header>
         <div className="p-[20px] space-y-5">
          {approval.description && (
-          <p className="text-[14px] text-foreground/80">{approval.description}</p>
+          <p className="text-[14px] text-zinc-300">{approval.description}</p>
          )}
          {approval.proxy_metrics && approval.proxy_metrics.length > 0 && (
           <div>
-           <h3 className="text-[11px] uppercase tracking-[0.15em] font-mono text-muted-foreground mb-3">
+           <h3 className="text-[11px] uppercase tracking-[0.15em] font-mono text-zinc-500 mb-3">
             Proxy Metrics
            </h3>
            <div className="space-y-3">
             {approval.proxy_metrics.map((pm, i) => (
-             <div key={pm.id || i} className="flex items-start gap-3 p-3 border border-border/60 bg-accent/10 rounded-[2px]">
+             <div key={pm.id || i} className="flex items-start gap-3 p-3 border border-zinc-800/60 bg-zinc-800/10 rounded-[2px]">
               <BarChart3 size={14} className="text-teal-400 mt-0.5 shrink-0" />
               <div>
-               <p className="text-[14px] font-medium text-foreground">{pm.name}</p>
-               {pm.description && <p className="text-[13px] text-muted-foreground mt-0.5">{pm.description}</p>}
+               <p className="text-[14px] font-medium text-zinc-100">{pm.name}</p>
+               {pm.description && <p className="text-[13px] text-zinc-500 mt-0.5">{pm.description}</p>}
               </div>
              </div>
             ))}
@@ -284,9 +284,9 @@ export default function ApprovalDetail({ approvalId, navigate }) {
 
       {/* Experiment Plan */}
       {isExperiment && approval.programMd && (
-       <section className="bg-card border border-border rounded-[2px] shadow-sm flex flex-col">
-        <header className="p-[20px] border-b border-border">
-         <h2 className="text-[14px] font-semibold text-foreground">Experiment Plan</h2>
+       <section className="bg-[#121214] border border-zinc-800 rounded-[2px] shadow-sm flex flex-col">
+        <header className="p-[20px] border-b border-zinc-800">
+         <h2 className="text-[14px] font-semibold text-zinc-100">Experiment Plan</h2>
         </header>
         <div className="p-[20px] mc-prose">
          <Markdown content={approval.programMd} />
@@ -301,7 +301,7 @@ export default function ApprovalDetail({ approvalId, navigate }) {
          <Compass size={14} className="text-teal-400" />
          <span className="text-[13px] text-teal-400 font-medium">Theme: {approval.theme_title}</span>
          {approval.proxy_metric_names && approval.proxy_metric_names.length > 0 && (
-          <span className="text-[13px] text-muted-foreground">— targeting: {approval.proxy_metric_names.join(", ")}</span>
+          <span className="text-[13px] text-zinc-500">— targeting: {approval.proxy_metric_names.join(", ")}</span>
          )}
         </div>
        </div>
@@ -309,13 +309,13 @@ export default function ApprovalDetail({ approvalId, navigate }) {
 
       {/* Already resolved info */}
       {!isPending && !isRevisionRequested && !resolved && (
-       <div className="bg-card border border-border rounded-[2px] shadow-sm p-[20px]">
+       <div className="bg-[#121214] border border-zinc-800 rounded-[2px] shadow-sm p-[20px]">
         <div className="flex items-center gap-2">
          {status ==="approved" ? <CheckCircle2 size={16} className="text-emerald-400" /> : <XCircle size={16} className="text-red-400" />}
          <span className="text-[14px] font-medium capitalize">{status}</span>
-         {approval.resolved_at && <span className="text-[13px] text-muted-foreground ml-2">{formatTimeAgo(approval.resolved_at)}</span>}
+         {approval.resolved_at && <span className="text-[13px] text-zinc-500 ml-2">{formatTimeAgo(approval.resolved_at)}</span>}
         </div>
-        {approval.comment && <p className="text-[14px] text-muted-foreground mt-2">Note: {approval.comment}</p>}
+        {approval.comment && <p className="text-[14px] text-zinc-500 mt-2">Note: {approval.comment}</p>}
        </div>
       )}
 
@@ -325,10 +325,10 @@ export default function ApprovalDetail({ approvalId, navigate }) {
         <div className="flex items-center gap-2">
          <RotateCcw size={16} className="text-amber-400" />
          <span className="text-[14px] font-medium text-amber-300">Revision Requested</span>
-         {approval.revision_requested_at && <span className="text-[13px] text-muted-foreground ml-2">{formatTimeAgo(approval.revision_requested_at)}</span>}
+         {approval.revision_requested_at && <span className="text-[13px] text-zinc-500 ml-2">{formatTimeAgo(approval.revision_requested_at)}</span>}
         </div>
-        {approval.revision_feedback && <p className="text-[14px] text-muted-foreground mt-2">Feedback: {approval.revision_feedback}</p>}
-        <p className="text-[13px] text-muted-foreground mt-3">Waiting for {approval.requester ||"agent"} to resubmit.</p>
+        {approval.revision_feedback && <p className="text-[14px] text-zinc-500 mt-2">Feedback: {approval.revision_feedback}</p>}
+        <p className="text-[13px] text-zinc-500 mt-3">Waiting for {approval.requester ||"agent"} to resubmit.</p>
        </div>
       )}
      </div>
@@ -338,9 +338,9 @@ export default function ApprovalDetail({ approvalId, navigate }) {
 
       {/* Actions Card — Aura: sticky, approve/reject buttons */}
       {isPending && !resolved && (
-       <section className="bg-card border border-border rounded-[2px] shadow-sm flex flex-col sticky top-0">
-        <header className="p-[20px] border-b border-border">
-         <h2 className="text-[14px] font-semibold text-foreground">Actions</h2>
+       <section className="bg-[#121214] border border-zinc-800 rounded-[2px] shadow-sm flex flex-col sticky top-0">
+        <header className="p-[20px] border-b border-zinc-800">
+         <h2 className="text-[14px] font-semibold text-zinc-100">Actions</h2>
         </header>
         <div className="p-[20px] space-y-3">
          <button
@@ -374,15 +374,15 @@ export default function ApprovalDetail({ approvalId, navigate }) {
 
          {/* Comment textarea — Aura style */}
          {!isIssue && (
-          <div className="pt-4 mt-2 border-t border-border/60 flex flex-col gap-3">
-           <label className="text-[12px] font-medium text-muted-foreground flex items-center justify-between">
+          <div className="pt-4 mt-2 border-t border-zinc-800/60 flex flex-col gap-3">
+           <label className="text-[12px] font-medium text-zinc-500 flex items-center justify-between">
             {isThemeProposal ?"Feedback" :"Rejection Comment"}
-            <span className="text-muted-foreground/50 font-normal text-[11px]">{isIssue ?"" : isThemeProposal ?"Optional" :"Required"}</span>
+            <span className="text-zinc-600 font-normal text-[11px]">{isIssue ?"" : isThemeProposal ?"Optional" :"Required"}</span>
            </label>
            <textarea
             value={comment}
             onChange={(e) => setComment(e.target.value)}
-            className="w-full rounded-[6px] border border-border bg-background text-[14px] text-foreground p-3 placeholder:text-muted-foreground/40 focus:outline-none focus:border-ring/50 focus:ring-1 focus:ring-ring/50 transition-all resize-none h-20"
+            className="w-full rounded-[6px] border border-zinc-800 bg-[#09090b] text-[14px] text-zinc-200 p-3 placeholder:text-zinc-600 focus:outline-none focus:border-zinc-500 focus:ring-1 focus:ring-zinc-500 transition-all resize-none h-20"
             placeholder="Provide context..."
            />
           </div>
@@ -394,18 +394,18 @@ export default function ApprovalDetail({ approvalId, navigate }) {
       )}
 
       {/* Info Card — Aura: p-[20px] space-y-5 with mono labels */}
-      <section className="bg-card border border-border rounded-[2px] shadow-sm flex flex-col">
+      <section className="bg-[#121214] border border-zinc-800 rounded-[2px] shadow-sm flex flex-col">
        <div className="p-[20px] space-y-5">
         <div>
-         <div className="text-[11px] uppercase font-mono tracking-[0.15em] text-muted-foreground mb-1.5">Type</div>
-         <div className="text-[14px] text-foreground capitalize">{itemType ? itemType.replace(/-/g," ") :"Approval"}</div>
+         <div className="text-[11px] uppercase font-mono tracking-[0.15em] text-zinc-500 mb-1.5">Type</div>
+         <div className="text-[14px] text-zinc-200 capitalize">{itemType ? itemType.replace(/-/g," ") :"Approval"}</div>
         </div>
         {projectName && (
          <div>
-          <div className="text-[11px] uppercase font-mono tracking-[0.15em] text-muted-foreground mb-1.5">Project</div>
+          <div className="text-[11px] uppercase font-mono tracking-[0.15em] text-zinc-500 mb-1.5">Project</div>
           <button
            onClick={() => navigate("project", projectName)}
-           className="text-[14px] text-foreground hover:underline capitalize"
+           className="text-[14px] text-zinc-200 hover:underline capitalize"
           >
            {projectName}
           </button>
@@ -413,19 +413,19 @@ export default function ApprovalDetail({ approvalId, navigate }) {
         )}
         {approval.requester && (
          <div>
-          <div className="text-[11px] uppercase font-mono tracking-[0.15em] text-muted-foreground mb-1.5">Requested By</div>
-          <div className="text-[14px] text-foreground capitalize">{approval.requester}</div>
+          <div className="text-[11px] uppercase font-mono tracking-[0.15em] text-zinc-500 mb-1.5">Requested By</div>
+          <div className="text-[14px] text-zinc-200 capitalize">{approval.requester}</div>
          </div>
         )}
         {timeAgo && (
          <div>
-          <div className="text-[11px] uppercase font-mono tracking-[0.15em] text-muted-foreground mb-1.5">Requested At</div>
-          <div className="text-[14px] text-foreground">{timeAgo}</div>
+          <div className="text-[11px] uppercase font-mono tracking-[0.15em] text-zinc-500 mb-1.5">Requested At</div>
+          <div className="text-[14px] text-zinc-200">{timeAgo}</div>
          </div>
         )}
         <div>
-         <div className="text-[11px] uppercase font-mono tracking-[0.15em] text-muted-foreground mb-1.5">Status</div>
-         <div className="text-[14px] text-foreground font-medium capitalize flex items-center gap-1.5">
+         <div className="text-[11px] uppercase font-mono tracking-[0.15em] text-zinc-500 mb-1.5">Status</div>
+         <div className="text-[14px] text-zinc-200 font-medium capitalize flex items-center gap-1.5">
           <span className={`w-1.5 h-1.5 rounded-full ${
            status ==="approved" ?"bg-emerald-400" :
            status ==="rejected" ?"bg-red-400" :"bg-amber-400"
@@ -435,8 +435,8 @@ export default function ApprovalDetail({ approvalId, navigate }) {
         </div>
         {isIssue && approval.priority && approval.priority !== "none" && (
          <div>
-          <div className="text-[11px] uppercase font-mono tracking-[0.15em] text-muted-foreground mb-1.5">Priority</div>
-          <div className="text-[14px] text-foreground capitalize">{approval.priority}</div>
+          <div className="text-[11px] uppercase font-mono tracking-[0.15em] text-zinc-500 mb-1.5">Priority</div>
+          <div className="text-[14px] text-zinc-200 capitalize">{approval.priority}</div>
          </div>
         )}
        </div>

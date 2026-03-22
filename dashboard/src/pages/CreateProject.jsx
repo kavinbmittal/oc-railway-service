@@ -90,6 +90,7 @@ export default function CreateProject({ navigate }) {
 
    {/* Form Card — Aura card */}
    <form onSubmit={handleSubmit} className="bg-card border border-border rounded-[2px] shadow-sm flex flex-col relative overflow-hidden">
+    <div className="absolute top-0 inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-zinc-700/50 to-transparent" />
 
     {/* Card Header */}
     <div className="p-[20px] border-b border-border">
@@ -241,11 +242,11 @@ export default function CreateProject({ navigate }) {
     )}
 
     {/* Card Footer — Aura: p-[20px] border-t, cancel + create buttons */}
-    <div className="p-[20px] border-t border-border flex justify-end gap-3">
+    <div className="p-[20px] border-t border-border bg-[#121214] flex justify-end gap-3">
      <button
       type="button"
       onClick={() => navigate("overview")}
-      className="px-4 py-2 rounded-[6px] border border-border bg-card text-[13px] font-medium text-foreground/80 hover:bg-accent hover:text-foreground transition-colors"
+      className="px-4 py-2 rounded-[6px] border border-border bg-card text-[13px] font-medium text-foreground/80 hover:bg-accent hover:text-white transition-colors"
      >
       Cancel
      </button>
