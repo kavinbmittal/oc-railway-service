@@ -198,10 +198,9 @@ export default function IssueDetail({ projectSlug, issueId, navigate }) {
     const issuePms = (issue.proxy_metrics || []).map((pm) => {
      const pmId = typeof pm === "string" ? pm : pm.id;
      const found = sortedPms.find((p) => p.id === pmId || p.name === pmId);
-     return found || { id: pmId, name: pmId };
+     const contribution = typeof pm === "object" ? pm.contribution : null;
+     return { ...(found || { id: pmId, name: pmId }), contribution };
     });
-    const firstPm = issuePms[0];
-    const firstPmIdx = firstPm ? sortedPms.findIndex((p) => p.id === firstPm.id) : -1;
 
     if (!issueTheme && issuePms.length === 0) return null;
 
@@ -221,17 +220,23 @@ export default function IssueDetail({ projectSlug, issueId, navigate }) {
         </div>
        </div>
       )}
-      {firstPm && (
-       <div className="bg-app-card border border-zinc-800 rounded-sm shadow-sm p-5 flex items-start gap-4">
-        <div className="w-10 h-10 rounded-full bg-zinc-800/50 border border-zinc-700/50 flex items-center justify-center shrink-0">
-         <span className="text-sm font-mono font-medium text-zinc-400">{firstPmIdx >= 0 ? String.fromCharCode(97 + firstPmIdx) : "—"}</span>
-        </div>
-        <div>
-         <h3 className="text-xs uppercase font-mono tracking-widest text-zinc-500 mb-1">Proxy Metric</h3>
-         <p className="text-base font-medium text-zinc-100">{firstPm.name}</p>
-         {firstPm.target && (
-          <p className="text-xs text-zinc-400 mt-1">Target: {firstPm.target}</p>
-         )}
+      {issuePms.length > 0 && (
+       <div className="bg-app-card border border-zinc-800 rounded-sm shadow-sm p-5">
+        <h3 className="text-xs uppercase font-mono tracking-widest text-zinc-500 mb-3">Proxy Metrics</h3>
+        <div className="space-y-2">
+         {issuePms.map((pm, i) => {
+          const pmIdx = sortedPms.findIndex((p) => p.id === pm.id);
+          return (
+           <div key={i} className="flex items-center gap-3">
+            <span className="w-6 h-6 rounded-full bg-zinc-800/50 border border-zinc-700/50 flex items-center justify-center shrink-0 text-xs font-mono text-zinc-400">{pmIdx >= 0 ? String.fromCharCode(97 + pmIdx) : "—"}</span>
+            <div>
+             <p className="text-sm font-medium text-zinc-100">{pm.name}</p>
+             {pm.target && <p className="text-xs text-zinc-500">Theme target: {pm.target}</p>}
+             {pm.contribution && <p className="text-xs text-teal-400">Contribution: {pm.contribution}</p>}
+            </div>
+           </div>
+          );
+         })}
         </div>
        </div>
       )}

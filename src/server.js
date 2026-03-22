@@ -1533,15 +1533,15 @@ function parseExperimentMeta(programMd) {
   // Extract hypothesis
   const hypoMatch = programMd.match(/## Hypothesis\s*\n([\s\S]*?)(?=\n##|$)/);
   if (hypoMatch) meta.hypothesis = hypoMatch[1].trim();
-  // Extract proxy metrics: "- pm-xxx — target: value"
+  // Extract proxy metrics: "- metric-id — contribution: value"
   const pmSection = programMd.match(/## Proxy Metrics\s*\n([\s\S]*?)(?=\n##|$)/);
   if (pmSection) {
     const lines = pmSection[1].trim().split("\n").filter((l) => l.startsWith("- "));
     meta.proxy_metrics = lines.map((line) => {
-      const match = line.match(/^- (pm-[\w-]+)\s*[—–-]\s*target:\s*(.+)/i);
-      if (match) return { id: match[1], target: match[2].trim() };
-      const idOnly = line.match(/^- (pm-[\w-]+)/);
-      return idOnly ? { id: idOnly[1], target: null } : null;
+      const match = line.match(/^- ([\w-]+)\s*[—–-]\s*contribution:\s*(.+)/i);
+      if (match) return { id: match[1], contribution: match[2].trim() };
+      const idOnly = line.match(/^- ([\w-]+)/);
+      return idOnly ? { id: idOnly[1], contribution: null } : null;
     }).filter(Boolean);
   }
   return meta;
@@ -1627,7 +1627,8 @@ app.get("/mc/api/approvals/:id", requireSetupAuth, (req, res) => {
                       return {
                         id: pmId,
                         name: found ? found.name : pmId,
-                        target: typeof pm === "object" ? pm.target : null,
+                        target: found ? found.target : null,
+                        contribution: typeof pm === "object" ? (pm.contribution || pm.target) : null,
                       };
                     });
                   }
@@ -1669,7 +1670,8 @@ app.get("/mc/api/approvals/:id", requireSetupAuth, (req, res) => {
                       return {
                         id: pmId,
                         name: found ? found.name : pmId,
-                        target: typeof pm === "object" ? pm.target : null,
+                        target: found ? found.target : null,
+                        contribution: typeof pm === "object" ? (pm.contribution || pm.target) : null,
                       };
                     });
                   }
@@ -2870,7 +2872,7 @@ app.get("/mc/api/experiments", requireSetupAuth, (req, res) => {
       const pmSection = programMd.match(/## Proxy Metrics\s*\n([\s\S]*?)(?=\n##|$)/);
       if (pmSection) {
         const pmLines = pmSection[1].trim().split("\n").filter((l) => l.startsWith("- "));
-        const m = pmLines[0] && pmLines[0].match(/^- (pm-[\w-]+)\s*[—–-]\s*target:\s*(.+)/i);
+        const m = pmLines[0] && pmLines[0].match(/^- ([\w-]+)\s*[—–-]\s*contribution:\s*(.+)/i);
         if (m) { proxyMetric = m[1]; targetValue = m[2].trim(); }
       }
     }
@@ -2947,14 +2949,14 @@ app.get("/mc/api/experiments/:dir", requireSetupAuth, (req, res) => {
       if (pmSection) {
         const pmLines = pmSection[1].trim().split("\n").filter((l) => l.startsWith("- "));
         const parsedPMs = pmLines.map((line) => {
-          const m = line.match(/^- ([\w-]+)\s*[—–-]\s*target:\s*(.+)/i);
-          if (m) return { id: m[1], target: m[2].trim() };
+          const m = line.match(/^- ([\w-]+)\s*[—–-]\s*contribution:\s*(.+)/i);
+          if (m) return { id: m[1], contribution: m[2].trim() };
           const idOnly = line.match(/^- ([\w-]+)/);
-          return idOnly ? { id: idOnly[1], target: null } : null;
+          return idOnly ? { id: idOnly[1], contribution: null } : null;
         }).filter(Boolean);
         if (parsedPMs.length > 0) {
           proxyMetric = parsedPMs[0].id;
-          targetValue = parsedPMs[0].target;
+          targetValue = parsedPMs[0].contribution;
         }
       }
     } catch {}
@@ -3015,10 +3017,10 @@ app.get("/mc/api/experiments/:dir", requireSetupAuth, (req, res) => {
         if (Array.isArray(tData.proxy_metrics)) {
           const pmLines2 = pmSection[1].trim().split("\n").filter((l) => l.startsWith("- "));
           resolvedPMs = pmLines2.map((line) => {
-            const m = line.match(/^- ([\w-]+)\s*[—–-]\s*target:\s*(.+)/i);
+            const m = line.match(/^- ([\w-]+)\s*[—–-]\s*contribution:\s*(.+)/i);
             if (!m) return null;
             const found = tData.proxy_metrics.find((t) => t.id === m[1]);
-            return { id: m[1], name: found ? found.name : m[1], target: m[2].trim() };
+            return { id: m[1], name: found ? found.name : m[1], target: found ? found.target : null, contribution: m[2].trim() };
           }).filter(Boolean);
         }
       } catch { /* skip */ }

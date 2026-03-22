@@ -266,7 +266,8 @@ export default function ApprovalDetail({ approvalId, navigate }) {
              <span className="w-6 h-6 rounded-full bg-zinc-800/50 border border-zinc-700/50 flex items-center justify-center shrink-0 text-xs font-mono text-zinc-400">{pmIdx >= 0 ? String.fromCharCode(97 + pmIdx) : "—"}</span>
              <div>
               <p className="text-sm font-medium text-zinc-100">{pm.name}</p>
-              {pm.target && <p className="text-xs text-zinc-400">Target: {pm.target}</p>}
+              {pm.target && <p className="text-xs text-zinc-500">Theme target: {pm.target}</p>}
+              {pm.contribution && <p className="text-xs text-teal-400">Contribution: {pm.contribution}</p>}
              </div>
             </div>
            );
@@ -329,20 +330,25 @@ export default function ApprovalDetail({ approvalId, navigate }) {
           </div>
          </div>
         </section>
-        {/* Proxy metric targets for experiment */}
-        {approval.proxy_metrics && approval.proxy_metrics.length > 0 && approval.proxy_metrics[0]?.target && (
+        {/* Proxy metric contributions for experiment */}
+        {approval.proxy_metrics && approval.proxy_metrics.length > 0 && (approval.proxy_metrics[0]?.contribution || approval.proxy_metrics[0]?.target) && (
          <section className="bg-[#121214] border border-zinc-800 rounded-[2px] shadow-sm flex flex-col">
           <header className="p-[20px] border-b border-zinc-800">
-           <h3 className="text-[14px] font-semibold text-zinc-100">Target Outcomes</h3>
+           <h3 className="text-[14px] font-semibold text-zinc-100">Contributions</h3>
           </header>
           <div className="p-[20px] space-y-3">
            {approval.proxy_metrics.map((pm, i) => (
-            <div key={pm.id || i} className="flex items-center justify-between p-3 border border-zinc-800/60 bg-zinc-800/10 rounded-[2px]">
-             <div className="flex items-center gap-3">
-              <BarChart3 size={14} className="text-teal-400 shrink-0" />
-              <span className="text-[14px] font-medium text-zinc-100">{pm.name || pm.id}</span>
+            <div key={pm.id || i} className="p-3 border border-zinc-800/60 bg-zinc-800/10 rounded-[2px]">
+             <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+               <BarChart3 size={14} className="text-teal-400 shrink-0" />
+               <span className="text-[14px] font-medium text-zinc-100">{pm.name || pm.id}</span>
+              </div>
+              <span className="text-[14px] font-mono text-teal-400">{pm.contribution || pm.target}</span>
              </div>
-             <span className="text-[14px] font-mono text-teal-400">{pm.target}</span>
+             {pm.target && pm.contribution && (
+              <p className="text-xs text-zinc-500 ml-[26px] mt-1">Theme target: {pm.target}</p>
+             )}
             </div>
            ))}
           </div>
