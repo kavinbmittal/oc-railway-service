@@ -232,6 +232,21 @@ export default function Approvals({ navigate }) {
              {timeAgo(approval.created)}
             </span>
            </div>
+           {/* Theme + proxy metrics pills */}
+           {(approval.theme_title || (approval.proxy_metric_names && approval.proxy_metric_names.length > 0)) && (
+            <div className="flex items-center gap-2 flex-wrap">
+             {approval.theme_title && (
+              <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium border border-teal-500/20 bg-teal-500/10 text-teal-400">
+               {approval.theme_title}
+              </span>
+             )}
+             {approval.proxy_metric_names && approval.proxy_metric_names.map((pm, j) => (
+              <span key={j} className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium border border-zinc-700 bg-zinc-800/50 text-zinc-400">
+               {pm}
+              </span>
+             ))}
+            </div>
+           )}
            <div className="flex items-center justify-between mt-1">
             <div className="flex items-center gap-2">
              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-zinc-500">
