@@ -321,9 +321,9 @@ export default function ProjectDetail({ projectId, navigate, initialTab }) {
              {project.lead || "Unassigned"}
             </a>
            </div>
-           <div className="flex justify-between items-start">
-            <span className="text-xs font-mono uppercase tracking-widest text-zinc-500 shrink-0 mt-0.5">Budget</span>
-            <span className="text-sm text-zinc-200 text-right ml-4">{project.budget || "None"}</span>
+           <div className="flex justify-between items-center">
+            <span className="text-xs font-mono uppercase tracking-widest text-zinc-500">Budget</span>
+            <span className="text-sm text-zinc-200">{project.budget || "None"}</span>
            </div>
            <div className="flex justify-between items-center">
             <span className="text-xs font-mono uppercase tracking-widest text-zinc-500">Created</span>
