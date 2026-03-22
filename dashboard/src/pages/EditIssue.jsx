@@ -3,10 +3,13 @@
  * UI classes ported directly from Aura HTML reference.
  */
 import { useState, useEffect, useRef } from "react";
+import { Bold, Italic, Link, Code, ChevronDown, Trash2, Check } from "lucide-react";
 import { getIssue, updateIssue, deleteIssue, getThemes } from "../api.js";
 import { AGENTS } from "../components/AssigneeSelect.jsx";
 import { ALL_PRIORITIES } from "../components/PriorityIcon.jsx";
 import { formatTimeAgo } from "../utils/formatDate.js";
+
+const PRIORITY_DOTS = { critical: "bg-red-500", high: "bg-orange-500", medium: "bg-blue-500", low: "bg-zinc-500", none: "" };
 
 // Status badge color map matching Aura HTML
 const STATUS_COLORS = {
@@ -281,38 +284,18 @@ export default function EditIssue({ projectSlug, issueId, navigate }) {
               <div className="border border-zinc-800 rounded-md overflow-hidden shadow-sm focus-within:border-zinc-600 focus-within:ring-1 focus-within:ring-zinc-600 transition-all bg-[#09090b]">
                 {/* Toolbar */}
                 <div className="bg-zinc-900/50 border-b border-zinc-800 px-3 py-1.5 flex items-center gap-1">
-                  <button
-                    type="button"
-                    onClick={() => setDescription((d) => d + "**bold**")}
-                    className="p-1 text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800 rounded transition-colors flex items-center justify-center"
-                    title="Bold"
-                  >
-                    <span className="text-xs font-bold">B</span>
+                  <button type="button" onClick={() => setDescription((d) => d + "**bold**")} className="p-1 text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800 rounded transition-colors flex items-center justify-center">
+                    <Bold size={16} />
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => setDescription((d) => d + "*italic*")}
-                    className="p-1 text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800 rounded transition-colors flex items-center justify-center"
-                    title="Italic"
-                  >
-                    <span className="text-xs italic">I</span>
+                  <button type="button" onClick={() => setDescription((d) => d + "*italic*")} className="p-1 text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800 rounded transition-colors flex items-center justify-center">
+                    <Italic size={16} />
                   </button>
                   <div className="w-[1px] h-4 bg-zinc-700 mx-1"></div>
-                  <button
-                    type="button"
-                    onClick={() => setDescription((d) => d + "[link](url)")}
-                    className="p-1 text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800 rounded transition-colors flex items-center justify-center"
-                    title="Link"
-                  >
-                    <span className="text-xs">🔗</span>
+                  <button type="button" onClick={() => setDescription((d) => d + "[link](url)")} className="p-1 text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800 rounded transition-colors flex items-center justify-center">
+                    <Link size={16} />
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => setDescription((d) => d + "`code`")}
-                    className="p-1 text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800 rounded transition-colors flex items-center justify-center"
-                    title="Code"
-                  >
-                    <span className="text-xs font-mono">&lt;/&gt;</span>
+                  <button type="button" onClick={() => setDescription((d) => d + "`code`")} className="p-1 text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800 rounded transition-colors flex items-center justify-center">
+                    <Code size={16} />
                   </button>
                 </div>
                 {/* Textarea */}
@@ -331,52 +314,67 @@ export default function EditIssue({ projectSlug, issueId, navigate }) {
               {/* Priority */}
               <div>
                 <label className="block text-xs font-medium text-zinc-400 mb-2">Priority</label>
-                <select
-                  value={priority}
-                  onChange={(e) => setPriority(e.target.value)}
-                  className="w-full bg-[#09090b] border border-zinc-800 rounded-md px-3 py-2 text-sm text-zinc-200 shadow-sm hover:border-zinc-700 transition-colors focus:border-zinc-600 focus:ring-1 focus:ring-zinc-600 outline-none"
-                >
-                  {ALL_PRIORITIES.map((p) => (
-                    <option key={p} value={p}>
-                      {p.charAt(0).toUpperCase() + p.slice(1)}
-                    </option>
-                  ))}
-                </select>
+                <div className="relative">
+                  <select
+                    value={priority}
+                    onChange={(e) => setPriority(e.target.value)}
+                    className="w-full appearance-none bg-[#09090b] border border-zinc-800 rounded-md px-3 py-2 pr-10 text-sm text-zinc-200 shadow-sm hover:border-zinc-700 transition-colors focus:border-zinc-600 focus:ring-1 focus:ring-zinc-600 outline-none"
+                  >
+                    {ALL_PRIORITIES.map((p) => (
+                      <option key={p} value={p}>
+                        {p.charAt(0).toUpperCase() + p.slice(1)}
+                      </option>
+                    ))}
+                  </select>
+                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-zinc-500">
+                    <ChevronDown size={16} />
+                  </div>
+                </div>
               </div>
 
               {/* Assignee */}
               <div>
                 <label className="block text-xs font-medium text-zinc-400 mb-2">Assignee</label>
-                <select
-                  value={assignee}
-                  onChange={(e) => setAssignee(e.target.value)}
-                  className="w-full bg-[#09090b] border border-zinc-800 rounded-md px-3 py-2 text-sm text-zinc-200 shadow-sm hover:border-zinc-700 transition-colors focus:border-zinc-600 focus:ring-1 focus:ring-zinc-600 outline-none"
-                >
-                  <option value="">Unassigned</option>
-                  {AGENTS.map((a) => (
-                    <option key={a.id} value={a.id}>
-                      {a.name}
-                    </option>
-                  ))}
-                </select>
+                <div className="relative">
+                  <select
+                    value={assignee}
+                    onChange={(e) => setAssignee(e.target.value)}
+                    className="w-full appearance-none bg-[#09090b] border border-zinc-800 rounded-md px-3 py-2 pr-10 text-sm text-zinc-200 shadow-sm hover:border-zinc-700 transition-colors focus:border-zinc-600 focus:ring-1 focus:ring-zinc-600 outline-none"
+                  >
+                    <option value="">Unassigned</option>
+                    {AGENTS.map((a) => (
+                      <option key={a.id} value={a.id}>
+                        {a.name}
+                      </option>
+                    ))}
+                  </select>
+                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-zinc-500">
+                    <ChevronDown size={16} />
+                  </div>
+                </div>
               </div>
             </div>
 
             {/* Theme */}
             <div className="w-full md:w-1/2 pr-0 md:pr-3">
               <label className="block text-xs font-medium text-zinc-400 mb-2">Theme</label>
-              <select
-                value={theme}
-                onChange={(e) => handleThemeChange(e.target.value)}
-                className="w-full bg-[#09090b] border border-zinc-800 rounded-md px-3 py-2 text-sm text-zinc-200 shadow-sm hover:border-zinc-700 transition-colors focus:border-zinc-600 focus:ring-1 focus:ring-zinc-600 outline-none"
-              >
-                <option value="">No theme</option>
-                {approvedThemes.map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {t.title}
-                  </option>
-                ))}
-              </select>
+              <div className="relative">
+                <select
+                  value={theme}
+                  onChange={(e) => handleThemeChange(e.target.value)}
+                  className="w-full appearance-none bg-[#09090b] border border-zinc-800 rounded-md px-3 py-2 pr-10 text-sm text-zinc-200 shadow-sm hover:border-zinc-700 transition-colors focus:border-zinc-600 focus:ring-1 focus:ring-zinc-600 outline-none"
+                >
+                  <option value="">No theme</option>
+                  {approvedThemes.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.title}
+                    </option>
+                  ))}
+                </select>
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-zinc-500">
+                  <ChevronDown size={16} />
+                </div>
+              </div>
               <p className="text-xs text-zinc-500 mt-2">Tag this issue to a strategic theme</p>
             </div>
 
@@ -406,7 +404,7 @@ export default function EditIssue({ projectSlug, issueId, navigate }) {
                         <span className="w-5 h-5 shrink-0 rounded bg-zinc-800/50 border border-zinc-700/50 flex items-center justify-center text-xs font-mono text-zinc-500">
                           {letter}
                         </span>
-                        <span className={`text-sm ${isChecked ? "text-zinc-300" : "text-zinc-400"} group-hover:text-zinc-${isChecked ? "200" : "300"} transition-colors truncate`}>
+                        <span className={`text-sm ${isChecked ? "text-zinc-300 group-hover:text-zinc-200" : "text-zinc-400 group-hover:text-zinc-300"} transition-colors truncate`}>
                           {metric.name}
                         </span>
                       </label>
@@ -439,6 +437,7 @@ export default function EditIssue({ projectSlug, issueId, navigate }) {
                 disabled={deleting}
                 className="px-4 py-2 rounded-md border border-red-500/20 bg-red-500/10 text-sm font-medium text-red-400 hover:bg-red-500/20 transition-colors flex items-center gap-2 outline-none focus:ring-2 focus:ring-red-500/30"
               >
+                <Trash2 size={16} />
                 {deleting ? "Deleting..." : "Delete Issue"}
               </button>
             </div>
