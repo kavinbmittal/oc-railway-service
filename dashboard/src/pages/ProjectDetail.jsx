@@ -3,7 +3,7 @@ import { getFile, getProjectCosts, getBudgetPolicy, updateBudgetPolicy, getAppro
 import { formatDate as formatDateUtil, formatTimeAgo } from"../utils/formatDate.js";
 import {
  ArrowLeft, FileText, Activity, DollarSign, Clock,
- User, Wallet, Target, ShieldCheck, Bot, CircleDot, Pencil, FlaskConical, Compass, BarChart3,
+ User, Wallet, Target, ShieldCheck, Bot, CircleDot, Pencil, FlaskConical, Compass, BarChart3, CheckCircle2,
 } from"lucide-react";
 import Markdown from"../components/Markdown.jsx";
 import { Skeleton } from"../components/ui/Skeleton.jsx";
@@ -248,14 +248,27 @@ export default function ProjectDetail({ projectId, navigate, initialTab }) {
         </div>
        )}
 
-       {/* Milestones — Aura card */}
-       {milestones && (
+       {/* Themes — Aura milestones card styling */}
+       {themes.filter((t) => t.status === "approved").length > 0 && (
         <div className="bg-card border border-border rounded-[2px] shadow-sm">
          <div className="px-5 py-4 border-b border-border">
-          <h2 className="text-[14px] font-medium text-foreground">Milestones</h2>
+          <h2 className="text-[14px] font-medium text-foreground">Themes</h2>
          </div>
-         <div className="p-5">
-          <Markdown content={milestones} />
+         <div className="flex flex-col">
+          {themes.filter((t) => t.status === "approved").map((theme, i, arr) => (
+           <div
+            key={theme.id}
+            className={`px-5 py-4 flex gap-4 items-start ${i < arr.length - 1 ?"border-b border-border/50" :""}`}
+           >
+            <CheckCircle2 size={20} className="text-emerald-500 shrink-0 mt-0.5" />
+            <div>
+             <h3 className="text-[14px] font-medium text-foreground">{theme.title}</h3>
+             {theme.description && (
+              <p className="text-[14px] text-muted-foreground mt-1">{theme.description}</p>
+             )}
+            </div>
+           </div>
+          ))}
          </div>
         </div>
        )}
