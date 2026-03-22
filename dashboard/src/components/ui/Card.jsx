@@ -1,7 +1,7 @@
 function Card({ className ="", children, ...props }) {
  return (
   <div
-   className={`bg-card text-card-foreground flex flex-col gap-6 rounded-sm border py-6 shadow-sm ${className}`}
+   className={`bg-card text-card-foreground flex flex-col gap-6 rounded-[2px] border p-[20px] shadow-sm ${className}`}
    {...props}
   >
    {children}
@@ -30,7 +30,7 @@ function CardTitle({ className ="", children, ...props }) {
 
 function CardDescription({ className ="", children, ...props }) {
  return (
-  <div className={`text-muted-foreground text-sm ${className}`} {...props}>
+  <div className={`text-muted-foreground text-[14px] ${className}`} {...props}>
    {children}
   </div>
  );

@@ -23,19 +23,19 @@ export function ProjectCostCard({ project, onClick }) {
 
  return (
   <div
-   className={`bg-card rounded-sm border border-border shadow-sm p-5 space-y-3 transition-colors ${
-    onClick ?"hover:bg-accent/50 cursor-pointer" :""
+   className={`bg-card rounded-[2px] border border-border shadow-sm p-[20px] space-y-3 transition-colors ${
+    onClick ?"hover:bg-accent/50 cursor-pointer transition-colors" :""
    }`}
    onClick={onClick}
   >
    {/* Header */}
    <div className="flex items-start justify-between gap-3">
     <div className="min-w-0">
-     <h4 className="text-sm font-semibold text-foreground truncate">
+     <h4 className="text-[14px] font-semibold text-foreground truncate">
       {title || project.project}
      </h4>
      {lead && (
-      <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
+      <p className="text-[12px] text-muted-foreground flex items-center gap-1 mt-0.5">
        <User size={10} />
        {lead}
       </p>
@@ -64,7 +64,7 @@ export function ProjectCostCard({ project, onClick }) {
    )}
 
    {/* Stats row */}
-   <div className="flex items-center justify-between text-xs text-muted-foreground">
+   <div className="flex items-center justify-between text-[12px] text-muted-foreground">
     <div className="flex items-center gap-3">
      <BurnRateIndicator dailyRate={dailyBurnRate} compact />
      {exhaustionDate && (

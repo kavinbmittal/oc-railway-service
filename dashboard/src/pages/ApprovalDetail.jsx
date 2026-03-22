@@ -159,7 +159,7 @@ export default function ApprovalDetail({ approvalId, navigate }) {
  return (
   <div className="flex flex-col h-full">
    {/* Page Header — Aura: px-8 py-8 border-b, sticky */}
-   <header className="px-8 py-8 border-b border-zinc-800 shrink-0 bg-[#09090b]">
+   <header className="px-8 py-8 border-b border-border shrink-0 bg-background">
     {/* Breadcrumb */}
     <nav className="flex items-center text-[15px] text-zinc-400 mb-5 tracking-wide">
      <button onClick={() => navigate("approvals")} className="hover:text-zinc-100 transition-colors">Approvals</button>
@@ -242,32 +242,32 @@ export default function ApprovalDetail({ approvalId, navigate }) {
      return (
       <div className="max-w-[1200px] grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
        {approvalTheme && (
-        <div className="bg-app-card border border-zinc-800 rounded-sm shadow-sm p-5 flex items-start gap-4">
+        <div className="bg-app-card border border-border rounded-[2px] shadow-sm p-[20px] flex items-start gap-4">
          <div className={`w-10 h-10 rounded-full ${colors.iconBg} border ${colors.iconBorder} flex items-center justify-center shrink-0`}>
           <span className={`text-lg font-mono font-medium ${colors.iconText}`}>{approvalTheme.order ?? themeIdx + 1}</span>
          </div>
          <div>
-          <h3 className="text-xs uppercase font-mono tracking-widest text-zinc-500 mb-1">Theme</h3>
+          <h3 className="text-[12px] uppercase font-mono tracking-widest text-zinc-500 mb-1">Theme</h3>
           <p className="text-base font-medium text-zinc-100 mb-1">{approvalTheme.title}</p>
           {approvalTheme.description && (
-           <p className="text-xs text-zinc-400 leading-relaxed">{approvalTheme.description}</p>
+           <p className="text-[12px] text-zinc-400 leading-relaxed">{approvalTheme.description}</p>
           )}
          </div>
         </div>
        )}
        {approvalPms.length > 0 && (
-        <div className="bg-app-card border border-zinc-800 rounded-sm shadow-sm p-5">
-         <h3 className="text-xs uppercase font-mono tracking-widest text-zinc-500 mb-3">Proxy Metrics</h3>
+        <div className="bg-app-card border border-border rounded-[2px] shadow-sm p-[20px]">
+         <h3 className="text-[12px] uppercase font-mono tracking-widest text-zinc-500 mb-3">Proxy Metrics</h3>
          <div className="space-y-2">
           {approvalPms.map((pm, i) => {
            const pmIdx = sortedPms.findIndex((p) => p.id === pm.id);
            return (
             <div key={i} className="flex items-center gap-3">
-             <span className="w-6 h-6 rounded-full bg-zinc-800/50 border border-zinc-700/50 flex items-center justify-center shrink-0 text-xs font-mono text-zinc-400">{pmIdx >= 0 ? String.fromCharCode(97 + pmIdx) : "—"}</span>
+             <span className="w-6 h-6 rounded-full bg-zinc-800/50 border border-zinc-700/50 flex items-center justify-center shrink-0 text-[12px] font-mono text-zinc-400">{pmIdx >= 0 ? String.fromCharCode(97 + pmIdx) : "—"}</span>
              <div>
-              <p className="text-sm font-medium text-zinc-100">{pm.name}</p>
-              {pm.target && <p className="text-xs text-zinc-500">Theme target: {pm.target}</p>}
-              {pm.contribution && <p className="text-xs text-teal-400">Contribution: {pm.contribution}</p>}
+              <p className="text-[14px] font-medium text-zinc-100">{pm.name}</p>
+              {pm.target && <p className="text-[12px] text-zinc-500">Theme target: {pm.target}</p>}
+              {pm.contribution && <p className="text-[12px] text-teal-400">Contribution: {pm.contribution}</p>}
              </div>
             </div>
            );
@@ -313,7 +313,7 @@ export default function ApprovalDetail({ approvalId, navigate }) {
       {/* Experiment — new structured format (hypothesis + program + proxy targets) */}
       {isExperiment && approval.hypothesis && (
        <>
-        <section className="bg-[#121214] border border-zinc-800 rounded-[2px] shadow-sm flex flex-col">
+        <section className="bg-card border border-border rounded-[2px] shadow-sm flex flex-col">
          <header className="flex items-center gap-3 px-5 py-3 bg-amber-500/[0.02] transition-colors">
           <div className="w-6 h-6 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
            <FlaskConical className="w-3.5 h-3.5 text-amber-400" />
@@ -335,7 +335,7 @@ export default function ApprovalDetail({ approvalId, navigate }) {
         </section>
         {/* Proxy metric contributions for experiment */}
         {approval.proxy_metrics && approval.proxy_metrics.length > 0 && (approval.proxy_metrics[0]?.contribution || approval.proxy_metrics[0]?.target) && (
-         <section className="bg-[#121214] border border-zinc-800 rounded-[2px] shadow-sm flex flex-col">
+         <section className="bg-card border border-border rounded-[2px] shadow-sm flex flex-col">
           <header className="flex items-center gap-3 px-5 py-3 bg-amber-500/[0.02] transition-colors">
            <div className="w-6 h-6 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
             <BarChart3 className="w-3.5 h-3.5 text-amber-400" />
@@ -344,7 +344,7 @@ export default function ApprovalDetail({ approvalId, navigate }) {
           </header>
           <div className="p-[20px] space-y-3">
            {approval.proxy_metrics.map((pm, i) => (
-            <div key={pm.id || i} className="p-3 border border-zinc-800/60 bg-zinc-800/10 rounded-[2px]">
+            <div key={pm.id || i} className="p-3 border border-border/60 bg-zinc-800/10 rounded-[2px]">
              <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                <BarChart3 size={14} className="text-teal-400 shrink-0" />
@@ -353,7 +353,7 @@ export default function ApprovalDetail({ approvalId, navigate }) {
               <span className="text-[14px] font-mono text-teal-400">{pm.contribution || pm.target}</span>
              </div>
              {pm.target && pm.contribution && (
-              <p className="text-xs text-zinc-500 ml-[26px] mt-1">Theme target: {pm.target}</p>
+              <p className="text-[12px] text-zinc-500 ml-[26px] mt-1">Theme target: {pm.target}</p>
              )}
             </div>
            ))}
@@ -365,7 +365,7 @@ export default function ApprovalDetail({ approvalId, navigate }) {
 
       {/* Details Card — Aura card (fallback for old experiments with `why`, non-experiment gates, issues) */}
       {approval.why && !(isExperiment && approval.hypothesis) && (
-       <section className="bg-[#121214] border border-zinc-800 rounded-[2px] shadow-sm flex flex-col">
+       <section className="bg-card border border-border rounded-[2px] shadow-sm flex flex-col">
         <header className="flex items-center gap-3 px-5 py-3 bg-amber-500/[0.02] transition-colors">
          <div className="w-6 h-6 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
           <FileText className="w-3.5 h-3.5 text-amber-400" />
@@ -382,7 +382,7 @@ export default function ApprovalDetail({ approvalId, navigate }) {
 
       {/* Theme proposal — proxy metrics */}
       {isTheme && (
-       <section className="bg-[#121214] border border-zinc-800 rounded-[2px] shadow-sm flex flex-col">
+       <section className="bg-card border border-border rounded-[2px] shadow-sm flex flex-col">
         <header className="flex items-center gap-3 px-5 py-3 bg-amber-500/[0.02] transition-colors">
          <div className="w-6 h-6 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
           <Compass className="w-3.5 h-3.5 text-amber-400" />
@@ -400,7 +400,7 @@ export default function ApprovalDetail({ approvalId, navigate }) {
            </h3>
            <div className="space-y-3">
             {approval.proxy_metrics.map((pm, i) => (
-             <div key={pm.id || i} className="flex items-start gap-3 p-3 border border-zinc-800/60 bg-zinc-800/10 rounded-[2px]">
+             <div key={pm.id || i} className="flex items-start gap-3 p-3 border border-border/60 bg-zinc-800/10 rounded-[2px]">
               <BarChart3 size={14} className="text-teal-400 mt-0.5 shrink-0" />
               <div>
                <p className="text-[14px] font-medium text-zinc-100">{pm.name}</p>
@@ -425,7 +425,7 @@ export default function ApprovalDetail({ approvalId, navigate }) {
         .replace(/\n{3,}/g, "\n\n")
         .trim();
        return stripped ? (
-        <section className="bg-[#121214] border border-zinc-800 rounded-[2px] shadow-sm flex flex-col">
+        <section className="bg-card border border-border rounded-[2px] shadow-sm flex flex-col">
          <header className="flex items-center gap-3 px-5 py-3 bg-amber-500/[0.02] transition-colors">
           <div className="w-6 h-6 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
            <FileText className="w-3.5 h-3.5 text-amber-400" />
@@ -443,7 +443,7 @@ export default function ApprovalDetail({ approvalId, navigate }) {
 
       {/* Already resolved info */}
       {!isPending && !isRevisionRequested && !resolved && (
-       <div className="bg-[#121214] border border-zinc-800 rounded-[2px] shadow-sm p-[20px]">
+       <div className="bg-card border border-border rounded-[2px] shadow-sm p-[20px]">
         <div className="flex items-center gap-2">
          {status ==="approved" ? <CheckCircle2 size={16} className="text-emerald-400" /> : <XCircle size={16} className="text-red-400" />}
          <span className="text-[14px] font-medium capitalize">{status}</span>
@@ -472,7 +472,7 @@ export default function ApprovalDetail({ approvalId, navigate }) {
 
       {/* Actions Card — Aura: sticky, approve/reject buttons */}
       {isPending && !resolved && (
-       <section className="bg-[#121214] border border-zinc-800 rounded-[2px] shadow-sm flex flex-col sticky top-0">
+       <section className="bg-card border border-border rounded-[2px] shadow-sm flex flex-col sticky top-0">
         <header className="flex items-center gap-3 px-5 py-3 bg-amber-500/[0.02] transition-colors">
          <div className="w-6 h-6 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
           <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
@@ -483,7 +483,7 @@ export default function ApprovalDetail({ approvalId, navigate }) {
          <button
           onClick={() => handleResolve("approved")}
           disabled={submitting}
-          className="w-full py-2.5 rounded-[6px] border border-emerald-500/30 bg-emerald-500/10 text-[14px] font-medium text-emerald-400 hover:bg-emerald-500/20 transition-all flex justify-center items-center gap-2 focus:ring-2 focus:ring-emerald-500/50 outline-none disabled:opacity-50"
+          className="w-full py-2.5 rounded-[6px] border border-emerald-500/30 bg-emerald-500/10 text-[14px] font-medium text-emerald-400 hover:bg-emerald-500/20 transition-all flex justify-center items-center gap-2 outline-none focus-visible:ring-[3px] focus-visible:ring-emerald-500/50 disabled:opacity-50"
          >
           {submitting ? <Loader2 size={18} className="animate-spin" /> : <CheckCircle2 size={18} />}
           {isThemeProposal ? "Approve Theme" : isIssue ?"Approve Issue" :"Approve Request"}
@@ -493,7 +493,7 @@ export default function ApprovalDetail({ approvalId, navigate }) {
           <button
            onClick={() => handleResolve("revision_requested")}
            disabled={submitting || !comment.trim()}
-           className="w-full py-2.5 rounded-[6px] border border-amber-500/30 bg-amber-500/10 text-[14px] font-medium text-amber-400 hover:bg-amber-500/20 transition-all flex justify-center items-center gap-2 focus:ring-2 focus:ring-amber-500/50 outline-none disabled:opacity-50"
+           className="w-full py-2.5 rounded-[6px] border border-amber-500/30 bg-amber-500/10 text-[14px] font-medium text-amber-400 hover:bg-amber-500/20 transition-all flex justify-center items-center gap-2 outline-none focus-visible:ring-[3px] focus-visible:ring-amber-500/50 disabled:opacity-50"
           >
            {submitting ? <Loader2 size={18} className="animate-spin" /> : <RotateCcw size={18} />}
            Request Revision
@@ -503,7 +503,7 @@ export default function ApprovalDetail({ approvalId, navigate }) {
          <button
           onClick={() => handleResolve("rejected")}
           disabled={submitting || (!isIssue && !isThemeProposal && !comment.trim())}
-          className="w-full py-2.5 rounded-[6px] border border-red-500/30 bg-red-500/10 text-[14px] font-medium text-red-400 hover:bg-red-500/20 transition-all flex justify-center items-center gap-2 focus:ring-2 focus:ring-red-500/50 outline-none disabled:opacity-50"
+          className="w-full py-2.5 rounded-[6px] border border-red-500/30 bg-red-500/10 text-[14px] font-medium text-red-400 hover:bg-red-500/20 transition-all flex justify-center items-center gap-2 outline-none focus-visible:ring-[3px] focus-visible:ring-red-500/50 disabled:opacity-50"
          >
           {submitting ? <Loader2 size={18} className="animate-spin" /> : <XCircle size={18} />}
           {isThemeProposal ? "Reject Theme" : isIssue ?"Reject Issue" :"Reject Request"}
@@ -511,7 +511,7 @@ export default function ApprovalDetail({ approvalId, navigate }) {
 
          {/* Comment textarea — Aura style */}
          {!isIssue && (
-          <div className="pt-4 mt-2 border-t border-zinc-800/60 flex flex-col gap-3">
+          <div className="pt-4 mt-2 border-t border-border/60 flex flex-col gap-3">
            <label className="text-[12px] font-medium text-zinc-500 flex items-center justify-between">
             {isThemeProposal ?"Feedback" :"Rejection Comment"}
             <span className="text-zinc-600 font-normal text-[11px]">{isIssue ?"" : isThemeProposal ?"Optional" :"Required"}</span>
@@ -519,7 +519,7 @@ export default function ApprovalDetail({ approvalId, navigate }) {
            <textarea
             value={comment}
             onChange={(e) => setComment(e.target.value)}
-            className="w-full rounded-[6px] border border-zinc-800 bg-[#09090b] text-[14px] text-zinc-200 p-3 placeholder:text-zinc-600 focus:outline-none focus:border-zinc-500 focus:ring-1 focus:ring-zinc-500 transition-all resize-none h-20"
+            className="w-full rounded-[6px] border border-border bg-background text-[14px] text-zinc-200 p-3 placeholder:text-zinc-600 focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 transition-all resize-none h-20"
             placeholder="Provide context..."
            />
           </div>
@@ -531,7 +531,7 @@ export default function ApprovalDetail({ approvalId, navigate }) {
       )}
 
       {/* Info Card — Aura: p-[20px] space-y-5 with mono labels */}
-      <section className="bg-[#121214] border border-zinc-800 rounded-[2px] shadow-sm flex flex-col">
+      <section className="bg-card border border-border rounded-[2px] shadow-sm flex flex-col">
        <div className="p-[20px] space-y-5">
         <div>
          <div className="text-[11px] uppercase font-mono tracking-[0.15em] text-zinc-500 mb-1.5">Type</div>

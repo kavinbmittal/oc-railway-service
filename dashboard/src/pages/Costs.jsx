@@ -26,11 +26,11 @@ export default function Costs({ navigate }) {
 
  if (loading) {
   return (
-   <div className="space-y-6">
+   <div className="max-w-[1400px] mx-auto space-y-6">
     <div className="h-12" />
     <div className="grid grid-cols-2 xl:grid-cols-4 gap-1">
      {[1, 2, 3, 4].map((i) => (
-      <div key={i} className="bg-card rounded-sm border border-border shadow-sm p-5">
+      <div key={i} className="bg-card rounded-[2px] border border-border shadow-sm p-[20px]">
        <Skeleton className="h-4 w-20 mb-3" />
        <Skeleton className="h-8 w-16" />
       </div>
@@ -47,8 +47,8 @@ export default function Costs({ navigate }) {
 
  if (error) {
   return (
-   <div className="flex items-center justify-center h-64">
-    <p className="text-sm text-destructive">Error: {error}</p>
+   <div className="max-w-[1400px] mx-auto flex items-center justify-center h-64">
+    <p className="text-[14px] text-destructive">Error: {error}</p>
    </div>
   );
  }
@@ -66,7 +66,7 @@ export default function Costs({ navigate }) {
  });
 
  return (
-  <div className="space-y-6">
+  <div className="max-w-[1400px] mx-auto space-y-6">
    {/* Breadcrumb bar */}
    <div className="h-12 flex items-center">
     <h1 className="text-base font-semibold uppercase tracking-wider">Costs</h1>
@@ -77,7 +77,7 @@ export default function Costs({ navigate }) {
 
    {/* Per-project breakdown */}
    <div>
-    <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
+    <h3 className="text-[14px] font-semibold text-muted-foreground uppercase tracking-wide mb-3">
      Projects
     </h3>
 

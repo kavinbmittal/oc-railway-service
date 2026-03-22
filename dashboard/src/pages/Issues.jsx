@@ -38,7 +38,7 @@ function IssueRow({ issue, onClick }) {
  return (
   <div
    onClick={onClick}
-   className="flex items-center gap-4 px-5 py-3 border-t border-zinc-800/50 hover:bg-zinc-800/30 cursor-pointer transition-colors"
+   className="flex items-center gap-4 px-5 py-3 border-t border-border/50 hover:bg-zinc-800/30 cursor-pointer transition-colors"
   >
    <PriorityDot priority={issue.priority} />
    <StatusCircle status={issue.status} />
@@ -149,7 +149,7 @@ export default function Issues({ projectSlug, navigate, themes = [] }) {
      <select
       value={filterStatus}
       onChange={(e) => setFilterStatus(e.target.value)}
-      className="flex items-center gap-2 rounded-[6px] border border-zinc-800 bg-[#121214] text-[15px] px-3 py-1.5 text-zinc-300 hover:border-zinc-700 transition-colors focus:outline-none focus:ring-[3px] focus:ring-zinc-700/50"
+      className="flex items-center gap-2 rounded-[6px] border border-border bg-card text-[15px] px-3 py-1.5 text-zinc-300 hover:border-zinc-700 transition-[color,box-shadow] focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
      >
       <option value="">Status: All</option>
       {ALL_STATUSES.filter((s) => s !=="proposed").map((s) => (
@@ -162,7 +162,7 @@ export default function Issues({ projectSlug, navigate, themes = [] }) {
      <select
       value={filterPriority}
       onChange={(e) => setFilterPriority(e.target.value)}
-      className="flex items-center gap-2 rounded-[6px] border border-zinc-800 bg-[#121214] text-[15px] px-3 py-1.5 text-zinc-300 hover:border-zinc-700 transition-colors focus:outline-none focus:ring-[3px] focus:ring-zinc-700/50"
+      className="flex items-center gap-2 rounded-[6px] border border-border bg-card text-[15px] px-3 py-1.5 text-zinc-300 hover:border-zinc-700 transition-[color,box-shadow] focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
      >
       <option value="">Priority: All</option>
       {ALL_PRIORITIES.map((p) => (
@@ -175,7 +175,7 @@ export default function Issues({ projectSlug, navigate, themes = [] }) {
      <select
       value={filterAssignee}
       onChange={(e) => setFilterAssignee(e.target.value)}
-      className="flex items-center gap-2 rounded-[6px] border border-zinc-800 bg-[#121214] text-[15px] px-3 py-1.5 text-zinc-300 hover:border-zinc-700 transition-colors focus:outline-none focus:ring-[3px] focus:ring-zinc-700/50"
+      className="flex items-center gap-2 rounded-[6px] border border-border bg-card text-[15px] px-3 py-1.5 text-zinc-300 hover:border-zinc-700 transition-[color,box-shadow] focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
      >
       <option value="">Assignee</option>
       {AGENTS.map((a) => (
@@ -186,7 +186,7 @@ export default function Issues({ projectSlug, navigate, themes = [] }) {
 
     <button
      onClick={() => setShowCreate(!showCreate)}
-     className="rounded-[6px] border border-zinc-800 bg-[#121214] text-[15px] font-medium text-zinc-300 px-3 py-1.5 hover:bg-zinc-800 transition-colors focus:outline-none focus:ring-[3px] focus:ring-zinc-700/50"
+     className="rounded-[6px] border border-border bg-card text-[15px] font-medium text-zinc-300 px-3 py-1.5 hover:bg-zinc-800 transition-[color,box-shadow] focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
     >
      Create Issue
     </button>
@@ -221,7 +221,7 @@ export default function Issues({ projectSlug, navigate, themes = [] }) {
       const themeColors = THEME_COLORS[themeIdx % THEME_COLORS.length];
 
       return (
-       <div key={theme.id} className="bg-[#121214] border border-zinc-800 rounded-[2px] shadow-sm flex flex-col">
+       <div key={theme.id} className="bg-card border border-border rounded-[2px] shadow-sm flex flex-col">
         {/* Theme Header */}
         <div
          onClick={() => toggleTheme(theme.id)}
@@ -231,7 +231,7 @@ export default function Issues({ projectSlug, navigate, themes = [] }) {
           {theme.order ?? themeIdx + 1}
          </div>
          <div className={`text-[15px] font-medium ${themeColors.titleText}`}>{theme.title}</div>
-         <div className={`text-[10px] font-mono ${themeColors.countBg} border ${themeColors.countBorder} px-1.5 py-0.5 rounded-[2px] ${themeColors.text}`}>
+         <div className={`text-[11px] font-mono ${themeColors.countBg} border ${themeColors.countBorder} px-1.5 py-0.5 rounded-[2px] ${themeColors.text}`}>
           {themeIssues.length}
          </div>
          <ChevronDown size={14} className={`${themeColors.chevron} ml-auto transition-transform duration-200 ${isExpanded ? "" : "-rotate-90"}`} />
@@ -239,7 +239,7 @@ export default function Issues({ projectSlug, navigate, themes = [] }) {
 
         {/* Theme Content */}
         {isExpanded && (
-         <div className="border-t border-zinc-800/50">
+         <div className="border-t border-border/50">
           {/* Proxy Metrics */}
           {(theme.proxy_metrics || []).length > 0 && (
            <div className="ml-9 mb-2 mt-2 space-y-1.5">
@@ -256,7 +256,7 @@ export default function Issues({ projectSlug, navigate, themes = [] }) {
 
           {/* Issue rows or empty state */}
           {themeIssues.length === 0 ? (
-           <div className="text-center text-[15px] text-zinc-500 py-4 border-t border-zinc-800/50">
+           <div className="text-center text-[15px] text-zinc-500 py-4 border-t border-border/50">
             No issues for this theme
            </div>
           ) : (
@@ -274,18 +274,18 @@ export default function Issues({ projectSlug, navigate, themes = [] }) {
 
      {/* Unthemed group */}
      {unthemedIssues.length > 0 && (
-      <div className="bg-[#121214] border border-zinc-800 rounded-[2px] shadow-sm flex flex-col">
+      <div className="bg-card border border-border rounded-[2px] shadow-sm flex flex-col">
        <div
         onClick={() => toggleTheme("_unthemed")}
         className="flex items-center gap-3 px-5 py-3 bg-zinc-800/[0.2] hover:bg-zinc-800/[0.4] transition-colors cursor-pointer select-none"
        >
-        <div className="w-6 h-6 rounded-full border border-dashed border-zinc-700 bg-zinc-800/30 flex items-center justify-center text-[10px] font-medium text-zinc-400 flex-shrink-0">&mdash;</div>
+        <div className="w-6 h-6 rounded-full border border-dashed border-zinc-700 bg-zinc-800/30 flex items-center justify-center text-[11px] font-medium text-zinc-400 flex-shrink-0">&mdash;</div>
         <div className="text-[15px] font-medium text-zinc-200">Unthemed</div>
-        <div className="text-[10px] font-mono bg-zinc-800/50 border border-zinc-700/50 px-1.5 py-0.5 rounded-[2px] text-zinc-400">{unthemedIssues.length}</div>
+        <div className="text-[11px] font-mono bg-zinc-800/50 border border-zinc-700/50 px-1.5 py-0.5 rounded-[2px] text-zinc-400">{unthemedIssues.length}</div>
         <ChevronDown size={14} className={`text-zinc-500 ml-auto transition-transform duration-200 ${expandedThemes["_unthemed"] === false ? "-rotate-90" : ""}`} />
        </div>
        {expandedThemes["_unthemed"] !== false && (
-        <div className="border-t border-zinc-800/50">
+        <div className="border-t border-border/50">
          {unthemedIssues.map(issue => (
           <IssueRow key={issue.id} issue={issue} onClick={() => handleIssueClick(issue)} />
          ))}

@@ -146,13 +146,13 @@ export default function Inbox({ navigate }) {
 
   if (loading && !data) {
     return (
-      <div className="space-y-6">
+      <div className="max-w-[1400px] mx-auto space-y-6">
         <div className="flex justify-between items-center mb-1">
           <h1 className="text-[16px] font-semibold uppercase tracking-[0.2em] text-foreground">Inbox</h1>
         </div>
         <div className="space-y-6">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="bg-card border border-border rounded-[2px] shadow-sm p-5">
+            <div key={i} className="bg-card border border-border rounded-[2px] shadow-sm p-[20px]">
               <Skeleton className="h-4 w-64 mb-2" />
               <Skeleton className="h-3 w-40" />
             </div>
@@ -163,7 +163,7 @@ export default function Inbox({ navigate }) {
   }
 
   return (
-    <div>
+    <div className="max-w-[1400px] mx-auto">
       {/* Page Header */}
       <div className="flex justify-between items-center mb-1">
         <h1 className="text-[16px] font-semibold uppercase tracking-[0.2em] text-foreground">Inbox</h1>
@@ -195,14 +195,14 @@ export default function Inbox({ navigate }) {
                   <Icon className={`w-3.5 h-3.5 ${cat.text}`} />
                 </div>
                 <div className={`text-[15px] font-medium ${cat.titleText}`}>{cat.title}</div>
-                <div className={`text-[10px] font-mono ${cat.countBg} border ${cat.countBorder} px-1.5 py-0.5 rounded-[2px] ${cat.text}`}>
+                <div className={`text-[11px] font-mono ${cat.countBg} border ${cat.countBorder} px-1.5 py-0.5 rounded-[2px] ${cat.text}`}>
                   {items.length}
                 </div>
               </div>
 
               {/* Empty state */}
               {items.length === 0 ? (
-                <div className="py-12 flex flex-col items-center justify-center">
+                <div className="py-16 flex flex-col items-center justify-center">
                   <CheckCircle className="text-emerald-500 w-6 h-6 mb-3" />
                   <span className="text-[14px] text-muted-foreground mb-1">All clear</span>
                   <span className="text-[12px] text-muted-foreground/60">No items need your attention</span>

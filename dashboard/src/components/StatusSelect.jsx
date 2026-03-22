@@ -50,17 +50,17 @@ export function StatusSelect({ value, onChange, className ="" }) {
   <div className={`relative ${className}`} ref={ref}>
    <button
     onClick={() => setOpen(!open)}
-    className="inline-flex items-center gap-1.5 cursor-pointer hover:bg-accent/50 rounded px-1.5 py-1 transition-colors text-sm"
+    className="inline-flex items-center gap-1.5 cursor-pointer hover:bg-accent/50 rounded px-1.5 py-1 transition-colors text-[14px]"
    >
     <StatusCircle status={value} />
     {statusLabel(value)}
    </button>
    {open && (
-    <div className="absolute z-50 mt-1 w-44 rounded-md border border-border bg-card p-1 shadow-lg">
+    <div className="absolute z-50 mt-1 w-44 rounded-[6px] border border-border bg-card p-1 shadow-lg">
      {ALL_STATUSES.map((s) => (
       <button
        key={s}
-       className={`flex items-center gap-2 w-full px-2 py-1.5 text-xs rounded hover:bg-accent/50 text-left ${
+       className={`flex items-center gap-2 w-full px-2 py-1.5 text-[12px] rounded hover:bg-accent/50 transition-colors text-left ${
         s === value ?"bg-accent" :""
        }`}
        onClick={() => {
