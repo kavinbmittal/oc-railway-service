@@ -3,7 +3,7 @@ import { getFile, getProjectCosts, getBudgetPolicy, updateBudgetPolicy, getAppro
 import { formatDate as formatDateUtil, formatTimeAgo } from"../utils/formatDate.js";
 import {
  ArrowLeft, FileText, Activity, DollarSign, Clock,
- User, Wallet, Target, ShieldCheck, Bot, CircleDot, Pencil, FlaskConical, Compass, BarChart3, CheckCircle2,
+ User, Wallet, Target, ShieldCheck, Bot, CircleDot, Pencil, FlaskConical, Compass,
 } from"lucide-react";
 import Markdown from"../components/Markdown.jsx";
 import { Skeleton } from"../components/ui/Skeleton.jsx";
@@ -248,17 +248,23 @@ export default function ProjectDetail({ projectId, navigate, initialTab }) {
           <h2 className="text-[14px] font-medium text-foreground">Themes</h2>
          </div>
          <div className="flex flex-col">
-          {themes.filter((t) => t.status === "approved").map((theme, i, arr) => (
+          {themes.filter((t) => t.status === "approved").sort((a, b) => (a.order ?? 999) - (b.order ?? 999)).map((theme, i, arr) => (
            <div
             key={theme.id}
             className={`px-5 py-4 flex gap-4 items-start ${i < arr.length - 1 ?"border-b border-border/50" :""}`}
            >
-            <CheckCircle2 size={20} className="text-emerald-500 shrink-0 mt-0.5" />
+            <span className="w-6 h-6 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center text-[11px] font-mono font-medium text-zinc-300 shrink-0">{theme.order ?? i + 1}</span>
             <div>
              <h3 className="text-[14px] font-medium text-foreground">{theme.title}</h3>
              {theme.description && (
               <p className="text-[14px] text-muted-foreground mt-1">{theme.description}</p>
              )}
+             {(theme.proxy_metrics || []).sort((a, b) => (a.order ?? 999) - (b.order ?? 999)).map((pm, pmIdx) => (
+              <div key={pm.id} className="flex items-start gap-2 mt-1.5">
+               <span className="w-5 h-5 rounded bg-zinc-800/50 border border-zinc-700/50 flex items-center justify-center text-[10px] font-mono text-zinc-400 shrink-0 mt-0.5">{String.fromCharCode(97 + pmIdx)}</span>
+               <span className="text-[13px] text-muted-foreground">{pm.name}</span>
+              </div>
+             ))}
             </div>
            </div>
           ))}
@@ -514,9 +520,9 @@ function StrategyTab({ project, themes, projectId, navigate }) {
          <p className="text-[13px] text-muted-foreground mb-3">{theme.description}</p>
         )}
         <div className="space-y-1.5">
-         {(theme.proxy_metrics || []).sort((a, b) => (a.order ?? 999) - (b.order ?? 999)).map((pm) => (
+         {(theme.proxy_metrics || []).sort((a, b) => (a.order ?? 999) - (b.order ?? 999)).map((pm, pmIdx) => (
           <div key={pm.id} className="flex items-center gap-2 text-[13px]">
-           <BarChart3 size={14} className="text-muted-foreground/50 shrink-0" />
+           <span className="w-5 h-5 rounded bg-zinc-800/50 border border-zinc-700/50 flex items-center justify-center text-[10px] font-mono text-zinc-400 shrink-0 mt-0.5">{String.fromCharCode(97 + pmIdx)}</span>
            <span className="text-foreground/80">{pm.name}</span>
           </div>
          ))}
@@ -537,19 +543,19 @@ function StrategyTab({ project, themes, projectId, navigate }) {
       <h2 className="text-[14px] font-medium text-foreground">Key Themes</h2>
      </div>
      <div className="divide-y divide-border">
-      {approvedThemes.map((theme) => (
+      {approvedThemes.map((theme, i) => (
        <div key={theme.id} className="p-5">
         <div className="flex items-center gap-2 mb-1">
-         <Compass size={16} className="text-teal-400 shrink-0" />
+         <span className="w-6 h-6 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center text-[11px] font-mono font-medium text-zinc-300 shrink-0">{theme.order ?? i + 1}</span>
          <h4 className="text-[14px] font-medium text-foreground">{theme.title}</h4>
         </div>
         {theme.description && (
          <p className="text-[13px] text-muted-foreground mb-3 ml-[24px]">{theme.description}</p>
         )}
         <div className="space-y-2 ml-[24px]">
-         {(theme.proxy_metrics || []).sort((a, b) => (a.order ?? 999) - (b.order ?? 999)).map((pm) => (
+         {(theme.proxy_metrics || []).sort((a, b) => (a.order ?? 999) - (b.order ?? 999)).map((pm, pmIdx) => (
           <div key={pm.id} className="flex items-start gap-2">
-           <BarChart3 size={14} className="text-muted-foreground/50 mt-0.5 shrink-0" />
+           <span className="w-5 h-5 rounded bg-zinc-800/50 border border-zinc-700/50 flex items-center justify-center text-[10px] font-mono text-zinc-400 shrink-0 mt-0.5">{String.fromCharCode(97 + pmIdx)}</span>
            <div>
             <span className="text-[13px] font-medium text-foreground/80">{pm.name}</span>
             {pm.description && (
