@@ -3,7 +3,7 @@ import { getFile, getProjectCosts, getBudgetPolicy, updateBudgetPolicy, getAppro
 import { formatDate as formatDateUtil, formatTimeAgo } from"../utils/formatDate.js";
 import {
  ArrowLeft, FileText, Activity, DollarSign, Clock,
- User, Wallet, Target, ShieldCheck, Bot, CircleDot, Pencil, FlaskConical, Compass, Plus,
+ User, Wallet, Target, ShieldCheck, Bot, CircleDot, Pencil, FlaskConical, Plus,
 } from"lucide-react";
 import Markdown from"../components/Markdown.jsx";
 import { Skeleton } from"../components/ui/Skeleton.jsx";
@@ -22,9 +22,16 @@ import ApprovalCard from "../components/ApprovalCard.jsx";
 import { RejectModal } from "../components/RejectModal.jsx";
 import { CreateExperiment } from "../components/CreateExperiment.jsx";
 
+const THEME_COLORS = [
+ { badgeBg: "bg-indigo-500/10", badgeBorder: "border-indigo-500/20", text: "text-indigo-400" },
+ { badgeBg: "bg-emerald-500/10", badgeBorder: "border-emerald-500/20", text: "text-emerald-400" },
+ { badgeBg: "bg-amber-500/10", badgeBorder: "border-amber-500/20", text: "text-amber-400" },
+ { badgeBg: "bg-cyan-500/10", badgeBorder: "border-cyan-500/20", text: "text-cyan-400" },
+ { badgeBg: "bg-rose-500/10", badgeBorder: "border-rose-500/20", text: "text-rose-400" },
+];
+
 const TABS = [
  { id:"overview", label:"Overview", icon: FileText },
- { id:"strategy", label:"Strategy", icon: Compass },
  { id:"issues", label:"Issues", icon: CircleDot },
  { id:"experiments", label:"Experiments", icon: FlaskConical },
  { id:"standups", label:"Standups", icon: Activity },
@@ -224,143 +231,134 @@ export default function ProjectDetail({ projectId, navigate, initialTab }) {
     </TabsList>
 
     {/* ──────────────── OVERVIEW TAB ──────────────── */}
-    {/* Aura: grid-cols-3 with xl:col-span-2 left */}
     <TabsContent value="overview">
-     <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 mt-6">
-      {/* Left column — 2/3 */}
-      <div className="xl:col-span-2 space-y-6">
-       {/* Mission / Goal — Aura card */}
-       {project.mission && (
-        <div className="bg-card border border-border rounded-[2px] shadow-sm">
-         <div className="px-5 py-4 border-b border-border">
-          <h2 className="text-[14px] font-medium text-foreground">Mission / Goal</h2>
+     {(() => {
+      const approvedThemes = themes.filter((t) => t.status === "approved").sort((a, b) => (a.order ?? 999) - (b.order ?? 999));
+      return (
+       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 mt-6">
+        {/* Left column */}
+        <div className="xl:col-span-2 space-y-6">
+         {/* Mission */}
+         <div className="bg-[#121214] border border-zinc-800 rounded-[2px] shadow-sm">
+          <div className="px-5 py-4 border-b border-zinc-800">
+           <h2 className="text-sm font-medium text-zinc-100">Mission</h2>
+          </div>
+          <div className="p-5 text-sm text-zinc-300 space-y-4">
+           <p>{project.mission || "No mission defined."}</p>
+          </div>
          </div>
-         <div className="p-5 text-[14px] text-foreground/80 leading-relaxed">
-          <p>{project.mission}</p>
-         </div>
-        </div>
-       )}
 
-       {/* Themes — Aura milestones card styling */}
-       {themes.filter((t) => t.status === "approved").length > 0 && (
-        <div className="bg-card border border-border rounded-[2px] shadow-sm">
-         <div className="px-5 py-4 border-b border-border">
-          <h2 className="text-[14px] font-medium text-foreground">Themes</h2>
-         </div>
-         <div className="flex flex-col">
-          {themes.filter((t) => t.status === "approved").sort((a, b) => (a.order ?? 999) - (b.order ?? 999)).map((theme, i, arr) => (
-           <div
-            key={theme.id}
-            className={`px-5 py-4 flex gap-4 items-start ${i < arr.length - 1 ?"border-b border-border/50" :""}`}
-           >
-            <span className="w-6 h-6 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center text-[11px] font-mono font-medium text-zinc-300 shrink-0">{theme.order ?? i + 1}</span>
-            <div>
-             <h3 className="text-[14px] font-medium text-foreground">{theme.title}</h3>
-             {theme.description && (
-              <p className="text-[14px] text-muted-foreground mt-1">{theme.description}</p>
-             )}
-             {(theme.proxy_metrics || []).sort((a, b) => (a.order ?? 999) - (b.order ?? 999)).map((pm, pmIdx) => (
-              <div key={pm.id} className="flex items-start gap-2 mt-1.5">
-               <span className="w-5 h-5 rounded bg-zinc-800/50 border border-zinc-700/50 flex items-center justify-center text-[10px] font-mono text-zinc-400 shrink-0 mt-0.5">{String.fromCharCode(97 + pmIdx)}</span>
-               <span className="text-[13px] text-muted-foreground">{pm.name}</span>
-              </div>
-             ))}
-            </div>
+         {/* NSM */}
+         <div className="bg-[#121214] border border-zinc-800 rounded-[2px] shadow-sm flex flex-col justify-center">
+          <div className="px-5 py-4 border-b border-zinc-800">
+           <h2 className="text-sm font-medium text-zinc-100">North Star Metric (NSM)</h2>
+          </div>
+          <div className="p-5 flex items-center gap-4">
+           <div className="w-12 h-12 rounded-full bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400">
+            <Target size={24} />
            </div>
-          ))}
+           <div>
+            <div className="text-2xl font-semibold text-white tracking-tight">{project.nsm || "Not set"}</div>
+            {project.mission && <div className="text-sm text-zinc-400 mt-1">{project.mission}</div>}
+           </div>
+          </div>
          </div>
-        </div>
-       )}
-      </div>
 
-      {/* Right column — 1/3 */}
-      <div className="space-y-6">
-       {/* Details — Aura: flex justify-between rows */}
-       <div className="bg-card border border-border rounded-[2px] shadow-sm">
-        <div className="px-5 py-4 border-b border-border">
-         <h2 className="text-[14px] font-medium text-foreground">Details</h2>
+         {/* Themes */}
+         <div className="bg-[#121214] border border-zinc-800 rounded-[2px] shadow-sm">
+          <div className="px-5 py-4 border-b border-zinc-800">
+           <h2 className="text-sm font-medium text-zinc-100">Themes</h2>
+          </div>
+          <div className="flex flex-col">
+           {approvedThemes.map((theme, idx, arr) => {
+            const colors = THEME_COLORS[idx % THEME_COLORS.length];
+            return (
+             <div key={theme.id} className={`px-5 py-4 ${idx < arr.length - 1 ? "border-b border-zinc-800/50" : ""}`}>
+              <div className="flex items-center gap-3 mb-3">
+               <div className={`w-6 h-6 rounded-full ${colors.badgeBg} border ${colors.badgeBorder} flex items-center justify-center text-xs font-mono font-medium ${colors.text} flex-shrink-0`}>
+                {theme.order ?? idx + 1}
+               </div>
+               <h3 className="text-sm font-medium text-zinc-200">{theme.title}</h3>
+              </div>
+              <div className="ml-9 space-y-2.5">
+               {(theme.proxy_metrics || []).sort((a, b) => (a.order ?? 999) - (b.order ?? 999)).map((pm, pmIdx) => (
+                <div key={pm.id} className="flex items-start gap-3 text-sm text-zinc-400">
+                 <div className="w-4 h-4 rounded bg-zinc-800/50 border border-zinc-700/50 flex items-center justify-center text-[10px] font-mono text-zinc-500 flex-shrink-0 mt-0.5">
+                  {String.fromCharCode(97 + pmIdx)}
+                 </div>
+                 <span>{pm.name}</span>
+                </div>
+               ))}
+              </div>
+             </div>
+            );
+           })}
+          </div>
+         </div>
         </div>
-        <div className="p-5 flex flex-col gap-4">
-         <div className="flex justify-between items-center">
-          <span className="text-[11px] font-mono uppercase tracking-[0.15em] text-muted-foreground">Status</span>
-          <StatusBadge status={project.status} />
+
+        {/* Right column */}
+        <div className="space-y-6">
+         {/* Details */}
+         <div className="bg-[#121214] border border-zinc-800 rounded-[2px] shadow-sm">
+          <div className="px-5 py-4 border-b border-zinc-800">
+           <h2 className="text-sm font-medium text-zinc-100">Details</h2>
+          </div>
+          <div className="p-5 flex flex-col gap-4">
+           <div className="flex justify-between items-center">
+            <span className="text-xs font-mono uppercase tracking-widest text-zinc-500">Status</span>
+            <span className="text-sm text-zinc-200">{project.status || "Unknown"}</span>
+           </div>
+           <div className="flex justify-between items-center">
+            <span className="text-xs font-mono uppercase tracking-widest text-zinc-500">Lead</span>
+            <span className="text-sm text-zinc-200">{project.lead || "Unassigned"}</span>
+           </div>
+           <div className="flex justify-between items-center">
+            <span className="text-xs font-mono uppercase tracking-widest text-zinc-500">Budget</span>
+            <span className="text-sm text-zinc-200">{project.budget || "None"}</span>
+           </div>
+          </div>
          </div>
-         <div className="flex justify-between items-center">
-          <span className="text-[11px] font-mono uppercase tracking-[0.15em] text-muted-foreground">Lead</span>
-          <span
-           className="text-[14px] text-foreground cursor-pointer hover:underline capitalize"
-           onClick={() => {
-            const name = project.lead.toLowerCase();
-            const workspaceId = name ==="sam" ?"workspace" : `workspace-${name}`;
-            navigate("agent-detail", workspaceId);
-           }}
-          >
-           {project.lead}
-          </span>
-         </div>
-         <div className="flex justify-between items-center">
-          <span className="text-[11px] font-mono uppercase tracking-[0.15em] text-muted-foreground">Budget</span>
-          <span className="text-[14px] text-foreground font-mono tabular-nums">{project.budget}</span>
-         </div>
-         {project.created && (
-          <div className="flex justify-between items-center">
-           <span className="text-[11px] font-mono uppercase tracking-[0.15em] text-muted-foreground">Created</span>
-           <span className="text-[14px] text-foreground">{formatDateUtil(project.created)}</span>
+
+         {/* Sub-agents */}
+         {project.subagents && !project.subagents.includes("(none") && (
+          <div className="bg-[#121214] border border-zinc-800 rounded-[2px] shadow-sm">
+           <div className="px-5 py-4 border-b border-zinc-800 flex justify-between items-center">
+            <h2 className="text-sm font-medium text-zinc-100">Sub-agents</h2>
+           </div>
+           <div className="p-5">
+            <Markdown content={project.subagents} />
+           </div>
           </div>
          )}
-         {project.nsm && (
-          <div className="flex justify-between items-start">
-           <span className="text-[11px] font-mono uppercase tracking-[0.15em] text-muted-foreground">North Star</span>
-           <span className="text-[14px] text-foreground text-right max-w-[60%]">{project.nsm}</span>
+
+         {/* Approval Gates */}
+         {project.gates && (
+          <div className="bg-[#121214] border border-zinc-800 rounded-[2px] shadow-sm">
+           <div className="px-5 py-4 border-b border-zinc-800">
+            <h2 className="text-sm font-medium text-zinc-100">Approval Gates</h2>
+           </div>
+           <div className="p-5 text-sm text-zinc-400 space-y-3">
+            {project.gates
+             .split("\n")
+             .filter(Boolean)
+             .map((gate, i) => {
+              const text = gate.replace(/^-\s*/,"");
+              const [name] = text.split(":").map((s) => s.trim());
+              return (
+               <div key={i} className="flex items-center gap-3">
+                <div className="w-4 h-4 rounded-[4px] border border-zinc-600 flex items-center justify-center" />
+                <span className="text-zinc-300">{name}</span>
+               </div>
+              );
+             })}
+           </div>
           </div>
          )}
         </div>
        </div>
-
-       {/* Sub-agents — Aura card with count badge and hover rows */}
-       {project.subagents && !project.subagents.includes("(none") && (
-        <div className="bg-card border border-border rounded-[2px] shadow-sm">
-         <div className="px-5 py-4 border-b border-border flex justify-between items-center">
-          <h2 className="text-[14px] font-medium text-foreground">Sub-agents</h2>
-         </div>
-         <div className="p-5">
-          <Markdown content={project.subagents} />
-         </div>
-        </div>
-       )}
-
-       {/* Approval Gates — Aura card */}
-       {project.gates && (
-        <div className="bg-card border border-border rounded-[2px] shadow-sm">
-         <div className="px-5 py-4 border-b border-border">
-          <h2 className="text-[14px] font-medium text-foreground">Approval Gates</h2>
-         </div>
-         <div className="p-5 text-[14px] text-muted-foreground space-y-3">
-          {project.gates
-           .split("\n")
-           .filter(Boolean)
-           .map((gate, i) => {
-            const text = gate.replace(/^-\s*/,"");
-            const [name, requires] = text.split(":").map((s) => s.trim());
-            return (
-             <div key={i} className="flex items-center gap-3">
-              <div className="w-4 h-4 rounded-[4px] border border-muted-foreground/40 shrink-0" />
-              <span className="text-foreground/80">{name}</span>
-             </div>
-            );
-           })}
-         </div>
-        </div>
-       )}
-      </div>
-     </div>
-    </TabsContent>
-
-    {/* ──────────────── STRATEGY TAB ──────────────── */}
-    <TabsContent value="strategy">
-     <div className="mt-6">
-      <StrategyTab project={project} themes={themes} projectId={projectId} navigate={navigate} />
-     </div>
+      );
+     })()}
     </TabsContent>
 
     {/* ──────────────── ISSUES TAB ──────────────── */}
@@ -472,110 +470,6 @@ export default function ProjectDetail({ projectId, navigate, initialTab }) {
    </Tabs>
    </div>
    </div>
-  </div>
- );
-}
-
-/* ──────────────── STRATEGY TAB COMPONENT ──────────────── */
-function StrategyTab({ project, themes, projectId, navigate }) {
- const approvedThemes = themes.filter((t) => t.status === "approved").sort((a, b) => (a.order ?? 999) - (b.order ?? 999));
- const pendingThemes = themes.filter((t) => t.status === "proposed").sort((a, b) => (a.order ?? 999) - (b.order ?? 999));
-
- return (
-  <div className="space-y-6">
-   {/* North Star Metric — elevated card */}
-   <div className="bg-card border border-border rounded-[2px] shadow-sm border-l-2 border-l-cyan-400">
-    <div className="p-5">
-     <div className="flex items-center gap-2 mb-2">
-      <Target size={16} className="text-cyan-400" />
-      <span className="text-[11px] uppercase tracking-[0.15em] font-mono text-muted-foreground">
-       North Star Metric
-      </span>
-     </div>
-     {project.nsm ? (
-      <p className="text-[14px] font-medium text-foreground">{project.nsm}</p>
-     ) : (
-      <p className="text-[14px] text-muted-foreground/60">No NSM defined yet.</p>
-     )}
-     {project.mission && (
-      <p className="text-[13px] text-muted-foreground mt-2">Mission: {project.mission}</p>
-     )}
-    </div>
-   </div>
-
-   {/* Pending theme proposals */}
-   {pendingThemes.length > 0 && (
-    <div className="bg-card border border-border rounded-[2px] shadow-sm">
-     <div className="px-5 py-4 border-b border-border">
-      <h2 className="text-[14px] font-medium text-foreground">Proposed Themes</h2>
-     </div>
-     <div className="divide-y divide-border">
-      {pendingThemes.map((theme) => (
-       <div key={theme.id} className="p-5">
-        <div className="flex items-center gap-2 mb-2">
-         <StatusBadge status="pending" />
-         <span className="text-[14px] font-medium text-foreground">{theme.title}</span>
-        </div>
-        {theme.description && (
-         <p className="text-[13px] text-muted-foreground mb-3">{theme.description}</p>
-        )}
-        <div className="space-y-1.5">
-         {(theme.proxy_metrics || []).sort((a, b) => (a.order ?? 999) - (b.order ?? 999)).map((pm, pmIdx) => (
-          <div key={pm.id} className="flex items-center gap-2 text-[13px]">
-           <span className="w-5 h-5 rounded bg-zinc-800/50 border border-zinc-700/50 flex items-center justify-center text-[10px] font-mono text-zinc-400 shrink-0 mt-0.5">{String.fromCharCode(97 + pmIdx)}</span>
-           <span className="text-foreground/80">{pm.name}</span>
-          </div>
-         ))}
-        </div>
-        <p className="text-[11px] text-muted-foreground/50 mt-3">
-         Proposed by {theme.proposed_by} — awaiting approval
-        </p>
-       </div>
-      ))}
-     </div>
-    </div>
-   )}
-
-   {/* Approved themes */}
-   {approvedThemes.length > 0 ? (
-    <div className="bg-card border border-border rounded-[2px] shadow-sm">
-     <div className="px-5 py-4 border-b border-border">
-      <h2 className="text-[14px] font-medium text-foreground">Key Themes</h2>
-     </div>
-     <div className="divide-y divide-border">
-      {approvedThemes.map((theme, i) => (
-       <div key={theme.id} className="p-5">
-        <div className="flex items-center gap-2 mb-1">
-         <span className="w-6 h-6 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center text-[11px] font-mono font-medium text-zinc-300 shrink-0">{theme.order ?? i + 1}</span>
-         <h4 className="text-[14px] font-medium text-foreground">{theme.title}</h4>
-        </div>
-        {theme.description && (
-         <p className="text-[13px] text-muted-foreground mb-3 ml-[24px]">{theme.description}</p>
-        )}
-        <div className="space-y-2 ml-[24px]">
-         {(theme.proxy_metrics || []).sort((a, b) => (a.order ?? 999) - (b.order ?? 999)).map((pm, pmIdx) => (
-          <div key={pm.id} className="flex items-start gap-2">
-           <span className="w-5 h-5 rounded bg-zinc-800/50 border border-zinc-700/50 flex items-center justify-center text-[10px] font-mono text-zinc-400 shrink-0 mt-0.5">{String.fromCharCode(97 + pmIdx)}</span>
-           <div>
-            <span className="text-[13px] font-medium text-foreground/80">{pm.name}</span>
-            {pm.description && (
-             <p className="text-[11px] text-muted-foreground/60">{pm.description}</p>
-            )}
-           </div>
-          </div>
-         ))}
-        </div>
-       </div>
-      ))}
-     </div>
-    </div>
-   ) : !pendingThemes.length && (
-    <EmptyState
-     icon={Compass}
-     text="No themes yet"
-     sub="The lead agent will propose themes after reviewing the mission and NSM."
-    />
-   )}
   </div>
  );
 }
