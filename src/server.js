@@ -2838,7 +2838,7 @@ app.get("/mc/api/experiments", requireSetupAuth, (req, res) => {
     // Resolve theme title and proxy metric name
     let themeTitle = theme;
     if (theme) {
-      const themePath = path.join(projectsDir, slug, "themes", `${theme}.json`);
+      const themePath = path.join(STATE_DIR, "shared", "projects", slug, "themes", `${theme}.json`);
       if (fs.existsSync(themePath)) {
         try {
           const td = JSON.parse(fs.readFileSync(themePath, "utf8"));
