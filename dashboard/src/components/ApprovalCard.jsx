@@ -2,7 +2,7 @@
  * ApprovalCard — single approval item.
  * UI ported from Aura HTML reference.
  */
-import { Clock, CheckCircle2, XCircle, CircleDot, FlaskConical, FileText, Compass } from"lucide-react";
+import { Clock, CheckCircle2, XCircle, CircleDot, FlaskConical, FileText } from"lucide-react";
 import { formatTimeAgo } from"../utils/formatDate.js";
 
 /* Type badge — Aura bordered pill style */
@@ -62,12 +62,14 @@ export default function ApprovalCard({
     <p className={`text-[15px] font-medium text-foreground ${isRejected ?"line-through decoration-muted-foreground/40" :""}`}>
      {title}
     </p>
-    {/* Theme + proxy metrics — matches ProjectApprovalsTab style */}
+    {/* Theme + proxy metrics — colored number badge + letter badge */}
     {(approval.theme_title || (approval.proxy_metric_names && approval.proxy_metric_names.length > 0)) && (
      <div className="flex flex-wrap items-center gap-2">
       {approval.theme_title && (
        <div className="flex items-center gap-1.5 px-2 py-1 rounded-[4px] bg-zinc-800/40 border border-zinc-700/30">
-        <Compass size={10} className="text-zinc-400" />
+        <div className={`w-3.5 h-3.5 rounded-full ${approval._themeColors?.badgeBg || "bg-zinc-800/50"} border ${approval._themeColors?.badgeBorder || "border-zinc-700/50"} flex items-center justify-center text-[9px] font-mono font-medium ${approval._themeColors?.text || "text-zinc-500"} flex-shrink-0`}>
+         {approval._themeOrder ?? "?"}
+        </div>
         <span className="text-[12px] text-zinc-300">{approval.theme_title}</span>
        </div>
       )}
@@ -76,6 +78,9 @@ export default function ApprovalCard({
       )}
       {approval.proxy_metric_names && approval.proxy_metric_names.map((pm, i) => (
        <div key={i} className="flex items-center gap-1.5 px-2 py-1 rounded-[4px] bg-zinc-800/40 border border-zinc-700/30">
+        <div className="w-3.5 h-3.5 rounded bg-zinc-800/50 border border-zinc-700/50 flex items-center justify-center text-[9px] font-mono text-zinc-500 flex-shrink-0">
+         {String.fromCharCode(97 + (approval._pmIdx >= 0 ? approval._pmIdx : i))}
+        </div>
         <span className="text-[12px] text-zinc-400">{pm}</span>
        </div>
       ))}

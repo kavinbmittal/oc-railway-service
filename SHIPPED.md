@@ -1,7 +1,7 @@
 # SHIPPED.md
 
 ## 2026-03-23
-- **fix:** Global approvals page now uses DESIGN.md pill spec (rounded-[4px] box, `›` separator) instead of old teal rounded-full style
+- **fix:** Global approvals pills now show colored number badge for theme + letter badge for proxy metric, matching project approvals exactly
 - **fix:** Auto-bold known labels in agent descriptions (what:, why:, etc.) so they render cleanly regardless of agent formatting
 - **feat:** Request revision on proposed issues — leave feedback instead of just approve/reject, issue stays pending with comment attached, agent gets notified
 - **fix:** Rejecting a proposed issue now requires a comment

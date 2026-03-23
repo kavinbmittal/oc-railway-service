@@ -1,7 +1,15 @@
 import { useState, useEffect, useMemo } from"react";
-import { Compass, ShieldCheck } from"lucide-react";
-import { getApprovals, resolveApproval, updateIssue, deleteIssue } from"../api.js";
+import { ShieldCheck } from"lucide-react";
+import { getApprovals, resolveApproval, updateIssue, deleteIssue, getThemes } from"../api.js";
 import { RejectModal } from "../components/RejectModal.jsx";
+
+const THEME_COLORS = [
+ { badgeBg: "bg-indigo-500/10", badgeBorder: "border-indigo-500/20", text: "text-indigo-400" },
+ { badgeBg: "bg-emerald-500/10", badgeBorder: "border-emerald-500/20", text: "text-emerald-400" },
+ { badgeBg: "bg-amber-500/10", badgeBorder: "border-amber-500/20", text: "text-amber-400" },
+ { badgeBg: "bg-cyan-500/10", badgeBorder: "border-cyan-500/20", text: "text-cyan-400" },
+ { badgeBg: "bg-rose-500/10", badgeBorder: "border-rose-500/20", text: "text-rose-400" },
+];
 
 const TYPE_STYLES = {
  budget: "border-amber-500/20 bg-amber-500/10 text-amber-400",
@@ -31,11 +39,18 @@ export default function Approvals({ navigate }) {
  const [error, setError] = useState(null);
  const [rejectingApproval, setRejectingApproval] = useState(null);
  const [tab, setTab] = useState("pending");
+ const [projectThemes, setProjectThemes] = useState({});
 
  function refresh() {
   setLoading(true);
   getApprovals()
-   .then(setApprovals)
+   .then((items) => {
+    setApprovals(items);
+    // Fetch themes for each unique project so we can render colored badges
+    const projects = [...new Set(items.map((a) => a._project || a.project).filter(Boolean))];
+    Promise.all(projects.map((p) => getThemes(p).then((themes) => [p, themes]).catch(() => [p, []])))
+     .then((pairs) => setProjectThemes(Object.fromEntries(pairs)));
+   })
    .catch((e) => setError(e.message))
    .finally(() => setLoading(false));
  }
@@ -43,6 +58,20 @@ export default function Approvals({ navigate }) {
  useEffect(() => {
   refresh();
  }, []);
+
+ // Resolve theme data (order, colors) for an approval
+ function resolveThemeData(approval) {
+  const project = approval._project || approval.project;
+  const themes = (projectThemes[project] || []).filter((t) => t.status === "approved").sort((a, b) => (a.order ?? 999) - (b.order ?? 999));
+  const theme = themes.find((t) => t.title === approval.theme_title || t.id === approval.theme || t.id === approval.theme_id);
+  if (!theme) return null;
+  const idx = themes.indexOf(theme);
+  const colors = THEME_COLORS[idx >= 0 ? idx % THEME_COLORS.length : 0];
+  const pms = theme.proxy_metrics || [];
+  const pmNames = approval.proxy_metric_names || [];
+  const pmIdx = pmNames.length > 0 ? pms.findIndex((p) => p.name === pmNames[0] || p.id === pmNames[0]) : -1;
+  return { theme, idx, colors, pmIdx };
+ }
 
  const pendingApprovals = useMemo(
   () => approvals.filter((a) => !a.status || a.status ==="pending"),
@@ -237,24 +266,33 @@ export default function Approvals({ navigate }) {
             </span>
            </div>
            {/* Theme + proxy metrics pills */}
-           {(approval.theme_title || (approval.proxy_metric_names && approval.proxy_metric_names.length > 0)) && (
-            <div className="flex items-center gap-2 flex-wrap">
-             {approval.theme_title && (
-              <div className="flex items-center gap-1.5 px-2 py-1 rounded-[4px] bg-zinc-800/40 border border-zinc-700/30">
-               <Compass size={10} className="text-zinc-400" />
-               <span className="text-[12px] text-zinc-300">{approval.theme_title}</span>
-              </div>
-             )}
-             {approval.proxy_metric_names && approval.proxy_metric_names.length > 0 && approval.theme_title && (
-              <span className="text-zinc-600 text-[14px]">{"\u203A"}</span>
-             )}
-             {approval.proxy_metric_names && approval.proxy_metric_names.map((pm, j) => (
-              <div key={j} className="flex items-center gap-1.5 px-2 py-1 rounded-[4px] bg-zinc-800/40 border border-zinc-700/30">
-               <span className="text-[12px] text-zinc-400">{pm}</span>
-              </div>
-             ))}
-            </div>
-           )}
+           {(() => {
+            const td = resolveThemeData(approval);
+            if (!td && !approval.theme_title && !(approval.proxy_metric_names && approval.proxy_metric_names.length > 0)) return null;
+            return (
+             <div className="flex items-center gap-2 flex-wrap">
+              {approval.theme_title && (
+               <div className="flex items-center gap-1.5 px-2 py-1 rounded-[4px] bg-zinc-800/40 border border-zinc-700/30">
+                <div className={`w-3.5 h-3.5 rounded-full ${td ? td.colors.badgeBg : "bg-zinc-800/50"} border ${td ? td.colors.badgeBorder : "border-zinc-700/50"} flex items-center justify-center text-[9px] font-mono font-medium ${td ? td.colors.text : "text-zinc-500"} flex-shrink-0`}>
+                 {td ? (td.theme.order ?? td.idx + 1) : "?"}
+                </div>
+                <span className="text-[12px] text-zinc-300">{approval.theme_title}</span>
+               </div>
+              )}
+              {approval.proxy_metric_names && approval.proxy_metric_names.length > 0 && approval.theme_title && (
+               <span className="text-zinc-600 text-[14px]">{"\u203A"}</span>
+              )}
+              {approval.proxy_metric_names && approval.proxy_metric_names.map((pm, j) => (
+               <div key={j} className="flex items-center gap-1.5 px-2 py-1 rounded-[4px] bg-zinc-800/40 border border-zinc-700/30">
+                <div className="w-3.5 h-3.5 rounded bg-zinc-800/50 border border-zinc-700/50 flex items-center justify-center text-[9px] font-mono text-zinc-500 flex-shrink-0">
+                 {String.fromCharCode(97 + (td && td.pmIdx >= 0 ? td.pmIdx : j))}
+                </div>
+                <span className="text-[12px] text-zinc-400">{pm}</span>
+               </div>
+              ))}
+             </div>
+            );
+           })()}
            <div className="flex items-center justify-between mt-1">
             <div className="flex items-center gap-2">
              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-zinc-500">
