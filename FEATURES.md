@@ -2,7 +2,7 @@
 
 ## Mission Control Dashboard
 - View project overview, issues, costs, and agent activity
-- Inbox aggregates approvals, budget warnings, standups, and proposed issues
+- Inbox aggregates approvals, budget warnings, standups, proposed issues, and experiment updates
 - Unified Approvals page: proposed issues, experiment gates, and deliverable reviews in one view, grouped by project
 - Approve, reject, or request revision on any pending item (proposed issue or gate request) from the Approvals page or per-project Approvals tab
 - Request revision on proposed issues with feedback — issue stays pending, agent gets notified to revise
@@ -11,7 +11,8 @@
 - Strategy tab per project: NSM at top, approved themes with proxy metrics, pending theme proposals
 - Agents propose themes (with up to 3 proxy metrics each) for individual approval
 - Create experiments from the dashboard with name, hypothesis, proxy metric, target value, theme, and program
-- Click any experiment card to view full detail: hypothesis, program markdown, run history table with best-run highlighting, metrics sidebar, and action buttons
+- Click any experiment card to view full detail: phase arc showing experiment lifecycle (Design → Run → Pivot → Scale), hypothesis, program markdown, decision-aware run history table with colored badges and reasons, metrics sidebar, and action buttons
+- Experiment decisions (pivot, scale, kill) appear in the Inbox as Experiment Updates with deep links to the experiment detail page
 - Issues grouped by theme in list view with collapsible sections, color-coded headers, proxy metric display, and unthemed fallback group
 - Edit issues from a dedicated form page: update title, description, priority, assignee, theme, proxy metrics, labels, and model tier; delete issues from the danger zone
 - Issues and experiments tagged to themes with target proxy metrics (server-validated)

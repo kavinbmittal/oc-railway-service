@@ -114,7 +114,7 @@ Every card section header uses a colored tinted pattern — icon in a circle bad
 | Color | Sections |
 |-------|----------|
 | Indigo | Mission, NSM, Themes, Project Details form, Edit Issue, Description, Project Progress |
-| Cyan | Sub-agents, Hypothesis, Program, Run History, New Experiment |
+| Cyan | Sub-agents, Hypothesis, Program, Run History, New Experiment, Phase Arc, Experiment Updates (inbox) |
 | Amber | Approval Gates, Budget/Costs, all approval cards, Pending Approvals (inbox) |
 | Emerald | Standups (inbox + project) |
 | Violet | Recent Issues, New Issue form |
