@@ -36,7 +36,8 @@ const RESEARCH_PHASES = [
 
 // Tier descriptions shown at the bottom of the page
 const TIER_DESCRIPTIONS = {
-  strategist: "Decides what the team should focus on across all projects",
+  complex: "Handles high-stakes or deeply reasoned execution tasks",
+  strategic: "Decides what the team should focus on across all projects",
   analyst: "Decides how to approach work within their domain",
   operator: "Executes multi-step tasks where the approach is already set",
   runner: "Handles single-step mechanical tasks (fetch, format, classify)",
@@ -45,21 +46,22 @@ const TIER_DESCRIPTIONS = {
 // Default config — used when creating from scratch
 const DEFAULT_CONFIG = {
   tiers: {
-    strategist: { model: "anthropic/claude-opus-4-6", thinking: "adaptive" },
+    strategic: { model: "anthropic/claude-opus-4-6", thinking: "adaptive" },
     analyst: { model: "anthropic/claude-sonnet-4-6", thinking: "high" },
+    complex: { model: "anthropic/claude-opus-4-6", thinking: "high" },
     operator: { model: "anthropic/claude-sonnet-4-6", thinking: "medium" },
     runner: { model: "anthropic/claude-haiku-4-5", thinking: "off" },
   },
   agents: {},
   research_phases: {
-    hypothesis: "strategist",
+    hypothesis: "strategic",
     execution: "operator",
     analysis: "analyst",
-    synthesis: "strategist",
+    synthesis: "strategic",
   },
 };
 
-const TIER_ORDER = ["strategist", "analyst", "operator", "runner"];
+const TIER_ORDER = ["complex", "strategic", "analyst", "operator", "runner"];
 
 // Friendly label for a model string
 function modelLabel(modelStr) {
@@ -136,8 +138,8 @@ export default function ModelRouting({ navigate }) {
     for (const a of agentList) {
       const id = a.id || a.name?.toLowerCase();
       if (!id) continue;
-      // Sam is strategist, known leads get analyst, rest get operator
-      if (id === "sam" || id === "main") map[id] = "strategist";
+      // Sam is strategic, known leads get analyst, rest get operator
+      if (id === "sam" || id === "main") map[id] = "strategic";
       else if (["binny", "leslie", "ritam", "ej", "kiko"].includes(id)) map[id] = "analyst";
       else map[id] = "operator";
     }
@@ -251,44 +253,7 @@ export default function ModelRouting({ navigate }) {
         </div>
       </div>
 
-      {/* ── Section 1: Tier Definitions ──────────────────────────── */}
-      <div className="bg-card border border-border rounded-[2px] shadow-sm overflow-hidden">
-        <div className="flex items-center gap-3 px-5 py-3 bg-cyan-500/[0.02]">
-          <div className="w-6 h-6 rounded-full bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center">
-            <Cpu className="w-3.5 h-3.5 text-cyan-400" />
-          </div>
-          <div className="text-[15px] font-medium text-cyan-100">Tier Definitions</div>
-        </div>
-        <div className="p-5">
-          <p className="text-xs text-zinc-500 mb-4">
-            Define what model and thinking level each tier uses. Changing a tier updates all agents and research phases assigned to it.
-          </p>
-          <div className="space-y-3">
-            {TIER_ORDER.map((tierName) => {
-              const tier = config.tiers[tierName] || {};
-              return (
-                <div key={tierName} className="flex items-center gap-4 p-3 rounded-md border border-zinc-800 bg-[#09090b]">
-                  <span className="w-28 text-sm font-medium text-zinc-300 capitalize shrink-0">{tierName}</span>
-                  <AuraSelect
-                    value={tier.model || ""}
-                    onChange={(v) => updateTier(tierName, "model", v)}
-                    options={AVAILABLE_MODELS}
-                    className="flex-1"
-                  />
-                  <AuraSelect
-                    value={tier.thinking || "off"}
-                    onChange={(v) => updateTier(tierName, "thinking", v)}
-                    options={THINKING_LEVELS}
-                    className="w-40"
-                  />
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-
-      {/* ── Section 2: Agent Assignments ─────────────────────────── */}
+      {/* ── Section 1: Agent Assignments ─────────────────────────── */}
       <div className="bg-card border border-border rounded-[2px] shadow-sm overflow-hidden">
         <div className="flex items-center gap-3 px-5 py-3 bg-indigo-500/[0.02]">
           <div className="w-6 h-6 rounded-full bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center">
@@ -331,7 +296,7 @@ export default function ModelRouting({ navigate }) {
         </div>
       </div>
 
-      {/* ── Section 3: Research Phase Mapping ────────────────────── */}
+      {/* ── Section 2: Research Phase Mapping ────────────────────── */}
       <div className="bg-card border border-border rounded-[2px] shadow-sm overflow-hidden">
         <div className="flex items-center gap-3 px-5 py-3 bg-violet-500/[0.02]">
           <div className="w-6 h-6 rounded-full bg-violet-500/10 border border-violet-500/20 flex items-center justify-center">
@@ -362,6 +327,43 @@ export default function ModelRouting({ navigate }) {
                   <span className="text-xs text-zinc-500 font-mono">
                     {resolveTierDisplay(config.tiers, currentTier)}
                   </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* ── Section 3: Model Tier Definitions ────────────────────── */}
+      <div className="bg-card border border-border rounded-[2px] shadow-sm overflow-hidden">
+        <div className="flex items-center gap-3 px-5 py-3 bg-cyan-500/[0.02]">
+          <div className="w-6 h-6 rounded-full bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center">
+            <Cpu className="w-3.5 h-3.5 text-cyan-400" />
+          </div>
+          <div className="text-[15px] font-medium text-cyan-100">Model Tier Definitions</div>
+        </div>
+        <div className="p-5">
+          <p className="text-xs text-zinc-500 mb-4">
+            Define what model and thinking level each tier uses. Changing a tier updates all agents and research phases assigned to it.
+          </p>
+          <div className="space-y-3">
+            {TIER_ORDER.map((tierName) => {
+              const tier = config.tiers[tierName] || {};
+              return (
+                <div key={tierName} className="flex items-center gap-4 p-3 rounded-md border border-zinc-800 bg-[#09090b]">
+                  <span className="w-28 text-sm font-medium text-zinc-300 capitalize shrink-0">{tierName}</span>
+                  <AuraSelect
+                    value={tier.model || ""}
+                    onChange={(v) => updateTier(tierName, "model", v)}
+                    options={AVAILABLE_MODELS}
+                    className="flex-1"
+                  />
+                  <AuraSelect
+                    value={tier.thinking || "off"}
+                    onChange={(v) => updateTier(tierName, "thinking", v)}
+                    options={THINKING_LEVELS}
+                    className="w-40"
+                  />
                 </div>
               );
             })}
