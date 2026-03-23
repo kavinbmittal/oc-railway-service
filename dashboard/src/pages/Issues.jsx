@@ -50,16 +50,18 @@ function IssueRow({ issue, onClick, themeProxyMetrics = [] }) {
    </span>
    {issuePmIds.length > 0 && (
     <div className="flex items-center gap-1.5 shrink-0">
-     {themeProxyMetrics.filter(pm => issuePmIds.includes(pm.id)).map(pm => (
-      <span key={pm.id} className="text-[11px] px-2 py-0.5 rounded-full bg-zinc-800/60 border border-zinc-700/50 text-zinc-400 whitespace-nowrap">
-       {pm.name}
-      </span>
-     ))}
+     {themeProxyMetrics.map((pm, pmIdx) =>
+      issuePmIds.includes(pm.id) ? (
+       <span key={pm.id} className="text-[11px] px-2 py-0.5 rounded-full bg-zinc-800/60 border border-zinc-700/50 text-zinc-400 whitespace-nowrap">
+        {String.fromCharCode(97 + pmIdx)}. {pm.name}
+       </span>
+      ) : null
+     )}
     </div>
    )}
    <StatusBadge status={issue.status} />
    {issue.assignee && (
-    <span className="text-[12px] text-zinc-400 w-24 truncate capitalize hidden sm:block">{issue.assignee}</span>
+    <span className="text-[12px] text-zinc-400 w-12 truncate capitalize hidden sm:block">{issue.assignee}</span>
    )}
    <span className="text-[12px] font-mono text-zinc-500 w-20 text-right shrink-0">{timeAgo(issue.updated)}</span>
   </div>
