@@ -2211,6 +2211,30 @@ app.get("/mc/api/inbox", requireSetupAuth, (_req, res) => {
     }
   }
 
+  // F. Experiment Updates — agent-written decision notifications in updates/ dirs
+  for (const proj of projects) {
+    const updatesDir = path.join(projectsDir, proj.name, "updates");
+    if (!fs.existsSync(updatesDir)) continue;
+    const updateFiles = fs.readdirSync(updatesDir).filter((f) => f.endsWith(".json"));
+    for (const uf of updateFiles) {
+      try {
+        const update = JSON.parse(fs.readFileSync(path.join(updatesDir, uf), "utf8"));
+        if (update.type !== "experiment-update") continue;
+        items.push({
+          type: "experiment_update",
+          project: update.project || proj.name,
+          id: `update-${proj.name}-${uf.replace(".json", "")}`,
+          title: update.experiment_name || update.experiment_dir || uf,
+          subtitle: update.reason || null,
+          decision: update.decision || null,
+          experiment_dir: update.experiment_dir || null,
+          agent: update.agent || null,
+          timestamp: update.timestamp || new Date().toISOString(),
+        });
+      } catch { /* skip malformed update JSON */ }
+    }
+  }
+
   // Sort by recency
   items.sort((a, b) => (b.timestamp || "").localeCompare(a.timestamp || ""));
 
@@ -2220,8 +2244,9 @@ app.get("/mc/api/inbox", requireSetupAuth, (_req, res) => {
     tasks: items.filter((i) => i.type === "stale_task").length,
     standups: items.filter((i) => i.type === "standup").length,
     proposed: items.filter((i) => i.type === "proposed_issue").length,
+    updates: items.filter((i) => i.type === "experiment_update").length,
   };
-  counts.total = counts.approvals + counts.budget + counts.tasks + counts.standups + counts.proposed;
+  counts.total = counts.approvals + counts.budget + counts.tasks + counts.standups + counts.proposed + counts.updates;
 
   return res.json({ items, counts });
 });
@@ -2811,6 +2836,50 @@ app.post("/mc/api/issues/:id/comments", requireSetupAuth, (req, res) => {
 // --- Experiments API ---
 // Reads autoresearch experiment data from shared/projects/{slug}/experiments/
 
+// Derive experiment status from the decision column in results.tsv rows.
+// Falls back to the old ## Status markdown parse if no decision columns exist.
+function deriveStatusFromResults(results, mdStatus) {
+  const validDecisions = ["keep", "pivot", "scale", "kill"];
+  const decisions = results
+    .map((r) => (r.decision || "").toLowerCase().trim())
+    .filter((d) => validDecisions.includes(d));
+  if (decisions.length === 0) {
+    // No decision column data — fall back to markdown-parsed status
+    if (mdStatus && mdStatus !== "unknown") return mdStatus;
+    return results.length > 0 ? "running" : "planned";
+  }
+  const latest = decisions[decisions.length - 1];
+  if (latest === "kill") return "killed";
+  if (latest === "scale") return "completed";
+  // keep, pivot → still running
+  return "running";
+}
+
+// Build phases array for the experiment arc from results rows.
+// Each run period between decisions is a "run" node; each decision is its own node.
+function buildPhases(results, created) {
+  const phases = [{ type: "design", date: created || null }];
+  const validDecisions = ["keep", "pivot", "scale", "kill"];
+  let runNumber = 1;
+  let inRun = false;
+
+  for (const row of results) {
+    const decision = (row.decision || "").toLowerCase().trim();
+    if (!inRun) {
+      // First measurement row starts Run 1
+      phases.push({ type: "run", number: runNumber, date: row.date || null });
+      inRun = true;
+    }
+    if (validDecisions.includes(decision)) {
+      // Decision node
+      phases.push({ type: decision, date: row.date || null, reason: row.reason || "" });
+      inRun = false;
+      runNumber++;
+    }
+  }
+  return phases;
+}
+
 app.get("/mc/api/experiments", requireSetupAuth, (req, res) => {
   const slug = req.query.project;
   if (!slug || typeof slug !== "string") {
@@ -2839,7 +2908,7 @@ app.get("/mc/api/experiments", requireSetupAuth, (req, res) => {
     let name = entry.name;
     let results = [];
     let bestMetric = null;
-    let status = "unknown";
+    let mdStatus = "unknown";
 
     // Parse program.md
     if (fs.existsSync(programPath)) {
@@ -2848,7 +2917,7 @@ app.get("/mc/api/experiments", requireSetupAuth, (req, res) => {
         const titleMatch = programMd.match(/^#\s+(.+)/m);
         if (titleMatch) name = titleMatch[1];
         const statusMatch = programMd.match(/## Status\s*\n\s*(\S+)/);
-        if (statusMatch) status = statusMatch[1];
+        if (statusMatch) mdStatus = statusMatch[1];
       } catch { /* skip */ }
     }
 
@@ -2921,7 +2990,7 @@ app.get("/mc/api/experiments", requireSetupAuth, (req, res) => {
       results,
       result_count: results.length,
       best_metric: bestMetric,
-      status,
+      status: deriveStatusFromResults(results, mdStatus),
     });
   }
 
@@ -2943,7 +3012,7 @@ app.get("/mc/api/experiments/:dir", requireSetupAuth, (req, res) => {
   const programPath = path.join(expPath, "program.md");
   const resultsPath = path.join(expPath, "results.tsv");
 
-  let programMd = null, name = dir, status = "unknown", hypothesis = null, proxyMetric = null, targetValue = null, theme = null, pmSection = null;
+  let programMd = null, name = dir, mdStatus = "unknown", hypothesis = null, proxyMetric = null, targetValue = null, theme = null, pmSection = null;
 
   if (fs.existsSync(programPath)) {
     try {
@@ -2951,7 +3020,7 @@ app.get("/mc/api/experiments/:dir", requireSetupAuth, (req, res) => {
       const titleMatch = programMd.match(/^#\s+(.+)/m);
       if (titleMatch) name = titleMatch[1];
       const statusMatch = programMd.match(/## Status\s*\n\s*(\S+)/);
-      if (statusMatch) status = statusMatch[1];
+      if (statusMatch) mdStatus = statusMatch[1];
       const hypoMatch = programMd.match(/## Hypothesis\s*\n([\s\S]*?)(?=\n##|$)/);
       if (hypoMatch) hypothesis = hypoMatch[1].trim();
       const metricMatch = programMd.match(/## Proxy Metric\s*\n\s*(.+)/);
@@ -3045,7 +3114,13 @@ app.get("/mc/api/experiments/:dir", requireSetupAuth, (req, res) => {
     }
   }
 
-  res.json({ name, dir, status, hypothesis, proxy_metric: proxyMetric, target_value: targetValue, theme: themeTitle, program_md: programMd, program: programSection, proxy_metrics: resolvedPMs, results, result_count: results.length, best_metric: bestMetric });
+  const status = deriveStatusFromResults(results, mdStatus);
+  // Use first result date or directory creation time for the "design" phase
+  let createdDate = null;
+  try { createdDate = fs.statSync(expPath).birthtime.toISOString().split("T")[0]; } catch {}
+  const phases = buildPhases(results, createdDate);
+
+  res.json({ name, dir, status, hypothesis, proxy_metric: proxyMetric, target_value: targetValue, theme: themeTitle, program_md: programMd, program: programSection, proxy_metrics: resolvedPMs, results, result_count: results.length, best_metric: bestMetric, phases });
 });
 
 // Create experiment

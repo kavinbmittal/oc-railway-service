@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { getInbox } from "../api.js";
-import { ShieldCheck, Wallet, Clock, MessageSquare, CheckCircle } from "lucide-react";
+import { ShieldCheck, Wallet, Clock, MessageSquare, CheckCircle, FlaskConical } from "lucide-react";
 import { Skeleton } from "../components/ui/Skeleton.jsx";
 import { formatTimeAgo } from "../utils/formatDate.js";
 
@@ -107,6 +107,36 @@ const CATEGORIES = [
     onClick: (item, navigate) => {
       if (item.project && item.project !== "general") {
         navigate("project-tab", { slug: item.project, tab: "standups" });
+      }
+    },
+  },
+  {
+    key: "updates",
+    title: "Experiment Updates",
+    icon: FlaskConical,
+    headerClass: "bg-cyan-500/[0.02] hover:bg-cyan-500/[0.05]",
+    badgeBg: "bg-cyan-500/10",
+    badgeBorder: "border-cyan-500/20",
+    text: "text-cyan-400",
+    titleText: "text-cyan-100",
+    countBg: "bg-cyan-500/10",
+    countBorder: "border-cyan-500/20",
+    filter: (item) => item.type === "experiment_update",
+    alwaysShow: false,
+    badgeColor: (item) => {
+      const d = (item.decision || "").toLowerCase();
+      if (d === "pivot") return "border-amber-500/20 bg-amber-500/10 text-amber-400";
+      if (d === "scale") return "border-emerald-500/20 bg-emerald-500/10 text-emerald-400";
+      if (d === "kill") return "border-red-500/20 bg-red-500/10 text-red-400";
+      return "border-cyan-500/20 bg-cyan-500/10 text-cyan-400";
+    },
+    badgeLabel: (item) => {
+      const d = (item.decision || "").toLowerCase();
+      return d ? d.charAt(0).toUpperCase() + d.slice(1) : "Update";
+    },
+    onClick: (item, navigate) => {
+      if (item.project && item.experiment_dir) {
+        navigate("experiment-detail", { slug: item.project, dir: item.experiment_dir });
       }
     },
   },

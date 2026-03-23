@@ -81,6 +81,27 @@
 - [ ] Experiment-level model override — override model for an entire research loop, not just per-issue. — effort S
 - [ ] Escalation pattern insights — surface patterns like "26% of Leslie's research tasks escalate from Haiku". Depends on escalation data existing first. — effort L
 
+## 2026-03-23-experiment-journal
+
+### Server
+- [ ] Status derivation from results.tsv decision column (backward compat with ## Status fallback)
+- [ ] Phases array generation from decision history
+- [ ] Inbox endpoint: scan updates/ directories for experiment-update items
+- [ ] Inbox counts: add `updates` to counts object
+
+### Frontend
+- [ ] ExperimentDetail: phase arc component (horizontal steps, color-coded, click-to-scroll)
+- [ ] ExperimentDetail: decision + reason columns in run history table with badges and row accents
+- [ ] Inbox: "Experiment Updates" category with decision badge, reason, deep link
+- [ ] Sidebar: add updates count to inbox badge
+
+### Protocol (Railway SSH)
+- [ ] experiments.md + autoresearch.md: add decision/reason columns to results.tsv format
+- [ ] experiments.md + autoresearch.md: deprecate Status Log, add update JSON write instruction
+
+### Build dist
+- [ ] Build and commit
+
 ## v2: One-tap model switch from Telegram
 
 When a model fallback alert fires, include an inline "Switch" button that rewrites `agents.defaults.model.primary` in `openclaw.json` via an HMAC-secured `/ops/model-switch` endpoint. Also add an "Undo" button to the confirmation message so switching back is one more tap.
