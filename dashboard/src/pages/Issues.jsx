@@ -49,14 +49,12 @@ function IssueRow({ issue, onClick, themeProxyMetrics = [] }) {
     {issue.title}
    </span>
    {issuePmIds.length > 0 && (
-    <div className="flex items-center gap-1 shrink-0">
-     {themeProxyMetrics.map((pm, pmIdx) =>
-      issuePmIds.includes(pm.id) ? (
-       <div key={pm.id} className="w-4 h-4 rounded bg-zinc-800/50 border border-zinc-700/50 flex items-center justify-center text-[9px] font-mono text-zinc-500">
-        {String.fromCharCode(97 + pmIdx)}
-       </div>
-      ) : null
-     )}
+    <div className="flex items-center gap-1.5 shrink-0">
+     {themeProxyMetrics.filter(pm => issuePmIds.includes(pm.id)).map(pm => (
+      <span key={pm.id} className="text-[11px] px-2 py-0.5 rounded-full bg-zinc-800/60 border border-zinc-700/50 text-zinc-400 whitespace-nowrap">
+       {pm.name}
+      </span>
+     ))}
     </div>
    )}
    <StatusBadge status={issue.status} />
