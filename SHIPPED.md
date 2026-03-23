@@ -1,6 +1,7 @@
 # SHIPPED.md
 
 ## 2026-03-23
+- **refactor:** Model routing simplified — removed model/thinking overrides from issues, single tier dropdown (Complex/Strategic/Analyst/Operator/Runner), reordered routing page sections (`fa5fb7e`)
 - **fix:** Global approvals pills now show colored number badge for theme + letter badge for proxy metric, matching project approvals exactly
 - **fix:** Auto-bold known labels in agent descriptions (what:, why:, etc.) so they render cleanly regardless of agent formatting
 - **feat:** Request revision on proposed issues — leave feedback instead of just approve/reject, issue stays pending with comment attached, agent gets notified
