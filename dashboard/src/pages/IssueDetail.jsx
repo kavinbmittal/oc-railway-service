@@ -299,7 +299,7 @@ export default function IssueDetail({ projectSlug, issueId, navigate }) {
             </div>
             <span className="text-[14px] font-medium text-zinc-200 capitalize">{c.author ||"system"}</span>
            </div>
-           <span className="text-[12px] font-mono text-zinc-500">{timeAgo(c.timestamp)}</span>
+           <span className="text-[12px] font-mono text-zinc-500">{timeAgo(c.timestamp || c.created || c.date)}</span>
           </div>
           <div className="text-[14px] text-zinc-300 mc-prose">
            <Markdown content={c.text || c.body ||""} />

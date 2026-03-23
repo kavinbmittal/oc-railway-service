@@ -18,6 +18,7 @@
 - Issues and experiments tagged to themes with target proxy metrics (server-validated)
 - Experiment approvals show structured hypothesis, program, and proxy metric targets
 - Click any approved theme to see all issues tagged to it
+- Agent comments auto-format: flat text becomes bullet lists with bold status labels, backticked file paths, and comma-separated items split into bullets
 - Sticky headers with breadcrumb navigation on all detail pages (projects, issues, agents, approvals, create project)
 - Keyboard-navigable with visible focus rings on all interactive elements
 
