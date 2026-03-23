@@ -3,6 +3,7 @@
 ## 2026-03-23
 - **refactor:** Ship-ready cleanup — removed dead milestones code, 4 unused components, dead getDashboard endpoint, unused CSS animation, fixed variable typos, deleted stale spec docs (919 lines removed)
 - **feat:** Experiment journal — phase arc (Design → Run → Pivot → Scale), decision-aware run history table with colored badges, status derived from results.tsv, inbox Experiment Updates category with deep links to experiment detail (`988eecf`)
+- **feat:** Working directory per project — set a local path on project create, shown on project detail, passed to Claude Code agent as `workdir` for task execution
 - **feat:** Claude Code tier — agents can now be assigned to spawn Claude Code sessions for full autonomous execution; six tiers: Claude Code > Complex > Strategic > Analyst > Operator > Runner (`dba260f`)
 - **refactor:** Model routing simplified — removed model/thinking overrides from issues, single tier dropdown, reordered routing page sections (`fa5fb7e`)
 - **fix:** Global approvals pills now show colored number badge for theme + letter badge for proxy metric, matching project approvals exactly

@@ -32,6 +32,7 @@ export default function CreateProject({ navigate }) {
  const [lead, setLead] = useState("");
  const [status, setStatus] = useState("active");
  const [budget, setBudget] = useState("500");
+ const [workdir, setWorkdir] = useState("");
  const [gateText, setGateText] = useState("");
  const [gates, setGates] = useState(DEFAULT_GATES);
  const [submitting, setSubmitting] = useState(false);
@@ -65,6 +66,7 @@ export default function CreateProject({ navigate }) {
     nsm: nsm.trim() || null,
     lead: lead || "binny",
     budget: parseInt(budget) || 200,
+    workdir: workdir.trim() || null,
     gates,
    });
    navigate("project", resultSlug);
@@ -217,6 +219,19 @@ export default function CreateProject({ navigate }) {
        />
       </div>
       <span className="block text-[12px] text-muted-foreground mt-1.5">Weekly spend limit in USD</span>
+     </div>
+
+     {/* Working Directory — path for Claude Code execution */}
+     <div>
+      <label className="block text-[11px] uppercase font-mono tracking-[0.15em] text-muted-foreground mb-2">Working Directory</label>
+      <input
+       type="text"
+       value={workdir}
+       onChange={(e) => setWorkdir(e.target.value)}
+       placeholder="/Users/kbm/Repos/project-name"
+       className="w-full rounded-[6px] border border-border bg-background text-[14px] text-foreground px-3 py-2 placeholder:text-muted-foreground/40 focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 transition-shadow font-mono"
+      />
+      <span className="block text-[12px] text-muted-foreground mt-1.5">Local path where Claude Code executes tasks for this project</span>
      </div>
 
      {/* Approval Gates — textarea like Aura */}

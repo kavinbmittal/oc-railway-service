@@ -3481,12 +3481,14 @@ app.get("/mc/api/projects/summary", requireSetupAuth, (_req, res) => {
           const statusMatch = raw.match(/\*\*Status:\*\*\s*(\S+)/);
           const missionMatch = raw.match(/## Mission\s*(?:\/\s*Goal)?\n+([\s\S]*?)(?=\n## |$)/);
           const nsmMatch = raw.match(/\*\*NSM:\*\*\s*(.+)/);
+          const workdirMatch = raw.match(/\*\*Workdir:\*\*\s*(.+)/);
           meta.title = titleMatch?.[1] || e.name;
           meta.lead = leadMatch?.[1] || "unassigned";
           meta.budget = budgetMatch?.[1]?.trim() || "none";
           meta.status = statusMatch?.[1] || "unknown";
           meta.mission = missionMatch?.[1]?.trim() || "";
           meta.nsm = nsmMatch?.[1]?.trim() || null;
+          meta.workdir = workdirMatch?.[1]?.trim() || null;
         }
 
         // Count issues by status

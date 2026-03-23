@@ -45,7 +45,7 @@ export async function getApprovalDetail(id) {
   return fetchJSON(`${BASE}/approvals/${encodeURIComponent(id)}`);
 }
 
-export async function createProject({ name, mission, nsm, lead, budget, gates }) {
+export async function createProject({ name, mission, nsm, lead, budget, workdir, gates }) {
   const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
   const today = new Date().toISOString().split("T")[0];
 
@@ -55,13 +55,14 @@ export async function createProject({ name, mission, nsm, lead, budget, gates })
     .join("\n");
 
   const nsmLine = nsm ? `\n**NSM:** ${nsm}` : "";
+  const workdirLine = workdir ? `\n**Workdir:** ${workdir}` : "";
 
   const projectMd = `# ${name}
 
 **Lead:** ${lead}
 **Budget:** $${budget}/week
 **Created:** ${today}
-**Status:** active${nsmLine}
+**Status:** active${nsmLine}${workdirLine}
 
 ## Mission / Goal
 ${mission}
@@ -123,11 +124,11 @@ export async function getIssue(id, projectSlug) {
   return fetchJSON(`${BASE}/issues/${encodeURIComponent(id)}?project=${encodeURIComponent(projectSlug)}`);
 }
 
-export async function createIssue({ project, title, description, priority, assignee, labels, theme, proxy_metrics, complexity }) {
+export async function createIssue({ project, title, description, priority, assignee, labels, theme, proxy_metrics, complexity, budget }) {
   const res = await fetch(`${BASE}/issues`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ project, title, description, priority, assignee, labels, theme, proxy_metrics, complexity }),
+    body: JSON.stringify({ project, title, description, priority, assignee, labels, theme, proxy_metrics, complexity, budget }),
   });
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));

@@ -51,6 +51,7 @@ function parseProjectMd(raw) {
  const missionMatch = raw.match(/## Mission\s*(?:\/\s*Goal)?\n+([\s\S]*?)(?=\n## |$)/);
  const gatesMatch = raw.match(/## Approval Gates\n+([\s\S]*?)(?=\n## |$)/);
  const nsmMatch = raw.match(/\*\*NSM:\*\*\s*(.+)/);
+ const workdirMatch = raw.match(/\*\*Workdir:\*\*\s*(.+)/);
  const subagentsMatch = raw.match(/## Sub-agents\n+([\s\S]*?)(?=\n## |$)/);
  return {
   title: titleMatch?.[1] ||"",
@@ -59,6 +60,7 @@ function parseProjectMd(raw) {
   status: statusMatch?.[1] ||"unknown",
   created: createdMatch?.[1] ||"",
   nsm: nsmMatch?.[1]?.trim() || null,
+  workdir: workdirMatch?.[1]?.trim() || null,
   mission: missionMatch?.[1]?.trim() ||"",
   gates: gatesMatch?.[1]?.trim() ||"",
   subagents: subagentsMatch?.[1]?.trim() ||"",
@@ -398,6 +400,12 @@ export default function ProjectDetail({ projectId, navigate, initialTab }) {
             <span className="text-[12px] font-mono uppercase tracking-widest text-zinc-500">Created</span>
             <span className="text-[14px] text-zinc-200">{project.created || "—"}</span>
            </div>
+           {project.workdir && (
+            <div className="flex justify-between items-center">
+             <span className="text-[12px] font-mono uppercase tracking-widest text-zinc-500">Workdir</span>
+             <span className="text-[14px] text-zinc-200 font-mono truncate max-w-[200px]" title={project.workdir}>{project.workdir}</span>
+            </div>
+           )}
           </div>
          </div>
 
