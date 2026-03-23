@@ -84,23 +84,23 @@
 ## 2026-03-23-experiment-journal
 
 ### Server
-- [ ] Status derivation from results.tsv decision column (backward compat with ## Status fallback)
-- [ ] Phases array generation from decision history
-- [ ] Inbox endpoint: scan updates/ directories for experiment-update items
-- [ ] Inbox counts: add `updates` to counts object
+- [x] Status derivation from results.tsv decision column (backward compat with ## Status fallback)
+- [x] Phases array generation from decision history
+- [x] Inbox endpoint: scan updates/ directories for experiment-update items
+- [x] Inbox counts: add `updates` to counts object
 
 ### Frontend
-- [ ] ExperimentDetail: phase arc component (horizontal steps, color-coded, click-to-scroll)
-- [ ] ExperimentDetail: decision + reason columns in run history table with badges and row accents
-- [ ] Inbox: "Experiment Updates" category with decision badge, reason, deep link
-- [ ] Sidebar: add updates count to inbox badge
+- [x] ExperimentDetail: phase arc component (horizontal steps, color-coded, click-to-scroll)
+- [x] ExperimentDetail: decision + reason columns in run history table with badges and row accents
+- [x] Inbox: "Experiment Updates" category with decision badge, reason, deep link
+- [x] Sidebar: add updates count to inbox badge
 
 ### Protocol (Railway SSH)
-- [ ] experiments.md + autoresearch.md: add decision/reason columns to results.tsv format
-- [ ] experiments.md + autoresearch.md: deprecate Status Log, add update JSON write instruction
+- [x] experiments.md + autoresearch.md: add decision/reason columns to results.tsv format
+- [x] experiments.md + autoresearch.md: deprecate Status Log, add update JSON write instruction
 
 ### Build dist
-- [ ] Build and commit
+- [x] Build and commit
 
 ## v2: One-tap model switch from Telegram
 
