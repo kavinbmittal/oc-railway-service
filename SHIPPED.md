@@ -1,6 +1,7 @@
 # SHIPPED.md
 
 ## 2026-03-23
+- **feat:** Agent comments auto-format into bullet lists — flat text becomes structured with bold labels, bullets for sentences and comma lists, backticked file paths; comment timestamps now display correctly
 - **refactor:** Ship-ready cleanup — removed dead milestones code, 4 unused components, dead getDashboard endpoint, unused CSS animation, fixed variable typos, deleted stale spec docs (919 lines removed)
 - **feat:** Experiment journal — phase arc (Design → Run → Pivot → Scale), decision-aware run history table with colored badges, status derived from results.tsv, inbox Experiment Updates category with deep links to experiment detail (`988eecf`)
 - **feat:** Working directory per project — set a local path on project create, shown on project detail, passed to Claude Code agent as `workdir` for task execution
