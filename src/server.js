@@ -1882,6 +1882,7 @@ app.get("/mc/api/approvals", requireSetupAuth, (req, res) => {
               const programMd = findExperimentProgram(projectsDir, proj.name, data);
               if (programMd) {
                 const meta = parseExperimentMeta(programMd);
+                entry.mode = meta.mode || "autoloop";
                 if (meta.theme) {
                   entry.theme = meta.theme;
                   // Resolve theme title and proxy metric names

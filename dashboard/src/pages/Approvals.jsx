@@ -302,6 +302,14 @@ export default function Approvals({ navigate }) {
                 <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-normal border shrink-0 ${typeStyle(t.key)}`}>
                  {t.label}
                 </span>); })()}
+                {approval.mode && (() => {
+                 const isAutoloop = approval.mode === "autoloop";
+                 return (
+                  <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium border shrink-0 ${isAutoloop ? "border-orange-500/20 bg-orange-500/10 text-orange-400" : "border-blue-500/20 bg-blue-500/10 text-blue-400"}`}>
+                   {isAutoloop ? "autoloop" : "one-shot"}
+                  </span>
+                 );
+                })()}
                 <span className="text-[15px] font-medium text-zinc-200 flex-1 truncate">
                  {approval.what || approval.title}
                 </span>
