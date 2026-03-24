@@ -334,20 +334,26 @@ export default function Approvals({ navigate }) {
                 <span className="text-[15px] text-zinc-400">
                  Requested by {approval.requester || "agent"}
                 </span>
-                <div className="flex items-center gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
-                 <button
-                  onClick={() => handleReject(approval)}
-                  className="px-3 py-1.5 rounded-[6px] border border-red-500/30 bg-red-500/10 text-[15px] font-normal text-red-400 hover:bg-red-500/20 transition-colors"
-                 >
-                  Reject
-                 </button>
-                 <button
-                  onClick={() => handleApprove(approval)}
-                  className="px-3 py-1.5 rounded-[6px] border border-emerald-500/30 bg-emerald-500/10 text-[15px] font-normal text-emerald-400 hover:bg-emerald-500/20 transition-colors"
-                 >
-                  Approve
-                 </button>
-                </div>
+                {approval.status === "revision_requested" ? (
+                 <span className="rounded-full px-2.5 py-0.5 text-[11px] font-medium border border-amber-500/30 bg-amber-500/10 text-amber-400 animate-pulse">
+                  Revision Requested
+                 </span>
+                ) : (
+                 <div className="flex items-center gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
+                  <button
+                   onClick={() => handleReject(approval)}
+                   className="px-3 py-1.5 rounded-[6px] border border-red-500/30 bg-red-500/10 text-[15px] font-normal text-red-400 hover:bg-red-500/20 transition-colors"
+                  >
+                   Reject
+                  </button>
+                  <button
+                   onClick={() => handleApprove(approval)}
+                   className="px-3 py-1.5 rounded-[6px] border border-emerald-500/30 bg-emerald-500/10 text-[15px] font-normal text-emerald-400 hover:bg-emerald-500/20 transition-colors"
+                  >
+                   Approve
+                  </button>
+                 </div>
+                )}
                </div>
               </div>
              );
