@@ -1,5 +1,8 @@
 # SHIPPED.md
 
+## 2026-03-24
+- **feat:** Merged autoresearch + experiments into single canonical protocol — eval harness per domain, never-stop iteration rule, three-check tool validation (agent TOOLS.md + registry + tool doc), auto-execute on approval, pause/resume on tool failure
+
 ## 2026-03-23
 - **feat:** Autoloop experiments — Required Tools checklist on experiment approvals (green/red per tool), approve blocked until all tools verified; `pause` experiment decision with orange badge, pulsing dot, phase arc node, and inbox notification; Required Tools stripped from plan markdown to avoid duplication
 - **feat:** Edit Project page — edit name, mission, NSM, lead, status, budget, workdir, and approval gates; "Edit" button on project detail header
