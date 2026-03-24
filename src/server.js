@@ -1756,7 +1756,7 @@ app.get("/mc/api/approvals/:id", requireSetupAuth, (req, res) => {
         try {
           const raw = fs.readFileSync(path.join(issuesDir, file), "utf8");
           const issue = JSON.parse(raw);
-          const issueId = issue.id || file.replace(".json", "");
+          const issueId = String(issue.id || file.replace(".json", ""));
           if (issueId !== id) continue;
           // Resolve theme ID to title and proxy metric IDs to names
           let issueThemeTitle = issue.theme || null;
