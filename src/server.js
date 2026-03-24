@@ -2491,6 +2491,17 @@ app.post("/mc/api/projects/:slug/strategy", requireSetupAuth, (req, res) => {
     const logLine = `${now.replace("T", " ").slice(0, 16)} | kavin | Strategy revised: ${summary}\n`;
     fs.appendFileSync(activityPath, logLine, "utf8");
 
+    // 7. Commit to git so changes survive git pull
+    try {
+      const { execSync } = require("node:child_process");
+      const gitOpts = { cwd: STATE_DIR, stdio: "pipe", timeout: 15000 };
+      execSync(`git add shared/projects/${slug}/themes/ shared/projects/${slug}/notifications/ shared/projects/${slug}/issues/ shared/projects/${slug}/activity.log shared/projects/${slug}/PROJECT.md`, gitOpts);
+      execSync(`git commit -m "strategy: ${slug} — ${summary}" --allow-empty`, gitOpts);
+    } catch (gitErr) {
+      // Non-fatal: files are written, just not committed
+      console.error("[strategy-apply] Git commit failed (non-fatal):", gitErr.message);
+    }
+
     return res.json({ ok: true, lead, changes: { renamed, retired, added: addedIds, metrics_removed: metricsRemoved, metrics_added: metricsAdded } });
   } catch (err) {
     console.error("[strategy-apply] Error:", err);
