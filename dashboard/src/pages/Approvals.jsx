@@ -1,14 +1,14 @@
 import { useState, useEffect, useMemo } from"react";
-import { ShieldCheck } from"lucide-react";
+import { ShieldCheck, CheckCircle } from"lucide-react";
 import { getApprovals, resolveApproval, updateIssue, deleteIssue, getThemes } from"../api.js";
 import { RejectModal } from "../components/RejectModal.jsx";
 
 const THEME_COLORS = [
- { badgeBg: "bg-indigo-500/10", badgeBorder: "border-indigo-500/20", text: "text-indigo-400" },
- { badgeBg: "bg-emerald-500/10", badgeBorder: "border-emerald-500/20", text: "text-emerald-400" },
- { badgeBg: "bg-amber-500/10", badgeBorder: "border-amber-500/20", text: "text-amber-400" },
- { badgeBg: "bg-cyan-500/10", badgeBorder: "border-cyan-500/20", text: "text-cyan-400" },
- { badgeBg: "bg-rose-500/10", badgeBorder: "border-rose-500/20", text: "text-rose-400" },
+ { badgeBg: "bg-indigo-500/10", badgeBorder: "border-indigo-500/20", text: "text-indigo-400", headerBg: "bg-indigo-500/[0.02]", titleText: "text-indigo-100" },
+ { badgeBg: "bg-emerald-500/10", badgeBorder: "border-emerald-500/20", text: "text-emerald-400", headerBg: "bg-emerald-500/[0.02]", titleText: "text-emerald-100" },
+ { badgeBg: "bg-amber-500/10", badgeBorder: "border-amber-500/20", text: "text-amber-400", headerBg: "bg-amber-500/[0.02]", titleText: "text-amber-100" },
+ { badgeBg: "bg-cyan-500/10", badgeBorder: "border-cyan-500/20", text: "text-cyan-400", headerBg: "bg-cyan-500/[0.02]", titleText: "text-cyan-100" },
+ { badgeBg: "bg-rose-500/10", badgeBorder: "border-rose-500/20", text: "text-rose-400", headerBg: "bg-rose-500/[0.02]", titleText: "text-rose-100" },
 ];
 
 const TYPE_STYLES = {
@@ -46,7 +46,6 @@ export default function Approvals({ navigate }) {
   getApprovals()
    .then((items) => {
     setApprovals(items);
-    // Fetch themes for each unique project so we can render colored badges
     const projects = [...new Set(items.map((a) => a._project || a.project).filter(Boolean))];
     Promise.all(projects.map((p) => getThemes(p).then((themes) => [p, themes]).catch(() => [p, []])))
      .then((pairs) => setProjectThemes(Object.fromEntries(pairs)));
@@ -59,18 +58,20 @@ export default function Approvals({ navigate }) {
   refresh();
  }, []);
 
- // Resolve theme data (order, colors) for an approval
- function resolveThemeData(approval) {
+ // Resolve theme info for an approval
+ function getThemeInfo(approval) {
   const project = approval._project || approval.project;
   const themes = (projectThemes[project] || []).filter((t) => t.status === "approved").sort((a, b) => (a.order ?? 999) - (b.order ?? 999));
   const theme = themes.find((t) => t.title === approval.theme_title || t.id === approval.theme || t.id === approval.theme_id);
   if (!theme) return null;
   const idx = themes.indexOf(theme);
   const colors = THEME_COLORS[idx >= 0 ? idx % THEME_COLORS.length : 0];
-  const pms = theme.proxy_metrics || [];
-  const pmNames = approval.proxy_metric_names || [];
-  const pmIdx = pmNames.length > 0 ? pms.findIndex((p) => p.name === pmNames[0] || p.id === pmNames[0]) : -1;
-  return { theme, idx, colors, pmIdx };
+  return { theme, idx, colors };
+ }
+
+ // Get the theme key for grouping
+ function themeKey(approval) {
+  return approval.theme_title || approval.theme || approval.theme_id || "_untagged";
  }
 
  const pendingApprovals = useMemo(
@@ -80,24 +81,31 @@ export default function Approvals({ navigate }) {
 
  const displayedApprovals = tab ==="pending" ? pendingApprovals : approvals;
 
+ // Group by project, then by theme within each project
  const grouped = useMemo(() => {
-  const groups = {};
+  const projects = {};
   for (const item of displayedApprovals) {
    const project = item._project || item.project ||"Unknown";
-   if (!groups[project]) groups[project] = [];
-   groups[project].push(item);
+   if (!projects[project]) projects[project] = {};
+   const tk = themeKey(item);
+   if (!projects[project][tk]) projects[project][tk] = [];
+   projects[project][tk].push(item);
   }
-  return Object.entries(groups).sort(([a], [b]) => a.localeCompare(b));
- }, [displayedApprovals]);
+  // Sort projects, then sort themes within each project by theme order
+  return Object.entries(projects).sort(([a], [b]) => a.localeCompare(b)).map(([project, themeGroups]) => {
+   const sortedThemes = Object.entries(themeGroups).sort(([a], [b]) => {
+    if (a === "_untagged") return 1;
+    if (b === "_untagged") return -1;
+    return a.localeCompare(b);
+   });
+   return { project, themeGroups: sortedThemes, total: displayedApprovals.filter((a) => (a._project || a.project) === project).length };
+  });
+ }, [displayedApprovals, projectThemes]);
 
  async function handleApprove(approval) {
   try {
    if (approval._source ==="issue") {
-    await updateIssue(
-     approval.id,
-     approval._project || approval.project,
-     { status:"todo" }
-    );
+    await updateIssue(approval.id, approval._project || approval.project, { status:"todo" });
    } else {
     await resolveApproval({
      project: approval._project || approval.project,
@@ -120,10 +128,7 @@ export default function Approvals({ navigate }) {
  async function handleReject(approval) {
   if (approval._source ==="issue") {
    try {
-    await deleteIssue(
-     approval.id,
-     approval._project || approval.project
-    );
+    await deleteIssue(approval.id, approval._project || approval.project);
     refresh();
    } catch (err) {
     setError(err.message);
@@ -154,7 +159,7 @@ export default function Approvals({ navigate }) {
   }
  }
 
- /* Loading skeleton — Aura style */
+ /* Loading skeleton */
  if (loading && approvals.length === 0) {
   return (
    <div className="flex-1 flex flex-col h-full overflow-hidden bg-background relative">
@@ -177,7 +182,7 @@ export default function Approvals({ navigate }) {
 
  return (
   <div className="flex-1 flex flex-col h-full overflow-hidden bg-background relative">
-   {/* Page Header — Aura */}
+   {/* Page Header */}
    <header className="h-16 flex items-center justify-between px-8 border-b border-border shrink-0 bg-background/80 backdrop-blur-sm z-10 sticky top-0">
     <h1 className="text-[16px] font-medium uppercase tracking-[0.2em] text-zinc-100">Approvals</h1>
     <span className="text-[14px] text-zinc-400">
@@ -185,7 +190,7 @@ export default function Approvals({ navigate }) {
     </span>
    </header>
 
-   {/* Content Area — Aura */}
+   {/* Content Area */}
    <div className="flex-1 overflow-y-auto p-8">
     <div className="max-w-4xl mx-auto space-y-8 pb-12">
 
@@ -217,20 +222,18 @@ export default function Approvals({ navigate }) {
      )}
 
      {grouped.length === 0 ? (
-      /* Empty state — Aura */
+      /* Empty state */
       <div className="flex flex-col items-center justify-center py-16">
-       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-500 mb-3">
-        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/>
-       </svg>
+       <CheckCircle className="text-emerald-500 w-6 h-6 mb-3" />
        <span className="text-[14px] text-muted-foreground">
         {tab === "pending" ? "All clear — nothing needs your approval" : "No approvals"}
        </span>
       </div>
      ) : (
-      /* Project groups — Aura */
-      grouped.map(([project, items]) => (
+      /* Project → Theme groups */
+      grouped.map(({ project, themeGroups, total }) => (
        <div key={project} className="bg-card border border-border rounded-[2px] shadow-sm flex flex-col">
-        {/* Group Header — Aura */}
+        {/* Project Header */}
         <div className="flex items-center gap-3 px-5 py-3 bg-amber-500/[0.02] transition-colors">
          <div className="w-6 h-6 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
           <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
@@ -242,83 +245,94 @@ export default function Approvals({ navigate }) {
           {project}
          </button>
          <span className="text-[11px] font-mono bg-zinc-800 px-1.5 py-0.5 rounded-[2px] text-zinc-400">
-          {items.length}
+          {total}
          </span>
         </div>
 
-        {/* Approval Rows — Aura */}
+        {/* Theme sub-groups stacked inside */}
         <div className="flex flex-col">
-         {items.map((approval, i) => (
-          <div
-           key={approval.id || approval._file || i}
-           className={`flex flex-col gap-3 px-[20px] py-4 hover:bg-zinc-800/40 transition-colors cursor-pointer ${i < items.length - 1 ? "border-b border-border/50" : ""}`}
-           onClick={() => navigate("approval-detail", approval.id || approval._file)}
-          >
-           <div className="flex items-center gap-4">
-            <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-normal border shrink-0 ${typeStyle(approval._source || approval.gate || approval.type)}`}>
-             {approval._source || approval.gate || approval.type || "request"}
-            </span>
-            <span className="text-[15px] font-medium text-zinc-200 flex-1 truncate">
-             {approval.what || approval.title}
-            </span>
-            <span className="text-[12px] font-mono text-zinc-500 shrink-0">
-             {timeAgo(approval.created)}
-            </span>
-           </div>
-           {/* Theme + proxy metrics pills */}
-           {(() => {
-            const td = resolveThemeData(approval);
-            if (!td && !approval.theme_title && !(approval.proxy_metric_names && approval.proxy_metric_names.length > 0)) return null;
-            return (
-             <div className="flex items-center gap-2 flex-wrap">
-              {approval.theme_title && (
-               <div className="flex items-center gap-1.5 px-2 py-1 rounded-[4px] bg-zinc-800/40 border border-zinc-700/30">
-                <div className={`w-3.5 h-3.5 rounded-full ${td ? td.colors.badgeBg : "bg-zinc-800/50"} border ${td ? td.colors.badgeBorder : "border-zinc-700/50"} flex items-center justify-center text-[9px] font-mono font-medium ${td ? td.colors.text : "text-zinc-500"} flex-shrink-0`}>
-                 {td ? (td.theme.order ?? td.idx + 1) : "?"}
-                </div>
-                <span className="text-[12px] text-zinc-300">{approval.theme_title}</span>
-               </div>
-              )}
-              {approval.proxy_metric_names && approval.proxy_metric_names.length > 0 && approval.theme_title && (
-               <span className="text-zinc-600 text-[14px]">{"\u203A"}</span>
-              )}
-              {approval.proxy_metric_names && approval.proxy_metric_names.map((pm, j) => (
-               <div key={j} className="flex items-center gap-1.5 px-2 py-1 rounded-[4px] bg-zinc-800/40 border border-zinc-700/30">
-                <div className="w-3.5 h-3.5 rounded bg-zinc-800/50 border border-zinc-700/50 flex items-center justify-center text-[9px] font-mono text-zinc-500 flex-shrink-0">
-                 {String.fromCharCode(97 + (td && td.pmIdx >= 0 ? td.pmIdx : j))}
-                </div>
-                <span className="text-[12px] text-zinc-400">{pm}</span>
-               </div>
-              ))}
-             </div>
-            );
-           })()}
-           <div className="flex items-center justify-between mt-1">
-            <div className="flex items-center gap-2">
-             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-zinc-500">
-              <rect x="4" y="4" width="16" height="16" rx="2"/><path d="M9 9h6M9 13h6M9 17h6"/>
-             </svg>
-             <span className="text-[15px] text-zinc-400">
-              Requested by {approval.requester || "agent"}
+         {themeGroups.map(([themeName, items], gi) => {
+          // Get theme colors from first item that has theme info
+          const sampleApproval = items.find((a) => a.theme_title || a.theme);
+          const ti = sampleApproval ? getThemeInfo(sampleApproval) : null;
+          const colors = ti ? ti.colors : null;
+          const isUntagged = themeName === "_untagged";
+
+          return (
+           <div key={themeName} className={gi < themeGroups.length - 1 ? "border-b border-border/50" : ""}>
+            {/* Theme sub-header */}
+            <div className={`flex items-center gap-2.5 px-5 py-2.5 ${colors ? colors.headerBg : "bg-zinc-500/[0.02]"} transition-colors`}>
+             {!isUntagged && (
+              <div className={`w-3.5 h-3.5 rounded-full ${colors ? colors.badgeBg : "bg-zinc-800/50"} border ${colors ? colors.badgeBorder : "border-zinc-700/50"} flex items-center justify-center text-[9px] font-mono font-medium ${colors ? colors.text : "text-zinc-500"} flex-shrink-0`}>
+               {ti ? (ti.theme.order ?? ti.idx + 1) : "?"}
+              </div>
+             )}
+             <span className={`text-[14px] font-medium ${colors ? colors.titleText : "text-zinc-400"}`}>
+              {isUntagged ? "Untagged" : themeName}
+             </span>
+             <span className={`text-[10px] font-mono ${colors ? `${colors.badgeBg} border ${colors.badgeBorder} ${colors.text}` : "bg-zinc-800 border border-zinc-700/50 text-zinc-500"} px-1.5 py-0.5 rounded-[2px]`}>
+              {items.length}
              </span>
             </div>
-            <div className="flex items-center gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
-             <button
-              onClick={() => handleReject(approval)}
-              className="px-3 py-1.5 rounded-[6px] border border-red-500/30 bg-red-500/10 text-[15px] font-normal text-red-400 hover:bg-red-500/20 transition-colors"
-             >
-              Reject
-             </button>
-             <button
-              onClick={() => handleApprove(approval)}
-              className="px-3 py-1.5 rounded-[6px] border border-emerald-500/30 bg-emerald-500/10 text-[15px] font-normal text-emerald-400 hover:bg-emerald-500/20 transition-colors"
-             >
-              Approve
-             </button>
-            </div>
+
+            {/* Approval rows */}
+            {items.map((approval, i) => {
+             const pmNames = approval.proxy_metric_names || [];
+             return (
+              <div
+               key={approval.id || approval._file || i}
+               className={`flex flex-col gap-2.5 px-[20px] py-4 hover:bg-zinc-800/40 transition-colors cursor-pointer ${i < items.length - 1 ? "border-b border-border/30" : ""}`}
+               onClick={() => navigate("approval-detail", approval.id || approval._file)}
+              >
+               <div className="flex items-center gap-4">
+                <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-normal border shrink-0 ${typeStyle(approval._source || approval.gate || approval.type)}`}>
+                 {approval._source || approval.gate || approval.type || "request"}
+                </span>
+                <span className="text-[15px] font-medium text-zinc-200 flex-1 truncate">
+                 {approval.what || approval.title}
+                </span>
+                <span className="text-[12px] font-mono text-zinc-500 shrink-0">
+                 {timeAgo(approval.created)}
+                </span>
+               </div>
+               {/* Proxy metric pills — theme is already shown in the sub-header */}
+               {pmNames.length > 0 && (
+                <div className="flex items-center gap-2 flex-wrap">
+                 {pmNames.map((pm, j) => (
+                  <div key={j} className="flex items-center gap-1.5 px-2 py-1 rounded-[4px] bg-zinc-800/40 border border-zinc-700/30">
+                   <div className="w-3.5 h-3.5 rounded bg-zinc-800/50 border border-zinc-700/50 flex items-center justify-center text-[9px] font-mono text-zinc-500 flex-shrink-0">
+                    {String.fromCharCode(97 + j)}
+                   </div>
+                   <span className="text-[12px] text-zinc-400">{pm}</span>
+                  </div>
+                 ))}
+                </div>
+               )}
+               <div className="flex items-center justify-between">
+                <span className="text-[15px] text-zinc-400">
+                 Requested by {approval.requester || "agent"}
+                </span>
+                <div className="flex items-center gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
+                 <button
+                  onClick={() => handleReject(approval)}
+                  className="px-3 py-1.5 rounded-[6px] border border-red-500/30 bg-red-500/10 text-[15px] font-normal text-red-400 hover:bg-red-500/20 transition-colors"
+                 >
+                  Reject
+                 </button>
+                 <button
+                  onClick={() => handleApprove(approval)}
+                  className="px-3 py-1.5 rounded-[6px] border border-emerald-500/30 bg-emerald-500/10 text-[15px] font-normal text-emerald-400 hover:bg-emerald-500/20 transition-colors"
+                 >
+                  Approve
+                 </button>
+                </div>
+               </div>
+              </div>
+             );
+            })}
            </div>
-          </div>
-         ))}
+          );
+         })}
         </div>
        </div>
       ))
