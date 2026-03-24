@@ -124,6 +124,12 @@
 ### Protocol (Railway API)
 - [x] Update `experiments.md`: auto-execute rule, Required Tools format, pause decision, re-validate per action
 - [x] Update `autoresearch.md`: same changes
+- [x] Merge autoresearch.md into experiments.md — single canonical protocol with eval harness, never-stop rule, three-check tool validation
+- [x] autoresearch.md replaced with redirect to experiments.md
+
+### Deferred
+- [ ] ExperimentDetail page: show Required Tools section (not just approval view) — effort S
+- [ ] Per-tool `## How to Execute` / `## How to Measure` sections in `shared/tools/*.md` — Kavin owns
 
 ## 2026-03-23-issue-cost-governance
 
