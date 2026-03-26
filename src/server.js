@@ -43,7 +43,7 @@ const WORKSPACE_DIR =
 // Canonical heartbeat message — source of truth is shared/protocols/projects.md
 const DASHBOARD_URL = "https://dash.belowthesurface.studio/mc";
 
-const HEARTBEAT_MESSAGE = `Project heartbeat (scan only — do NOT do actual work): Read shared/protocols/projects.md. Check shared/projects/ for projects where you are lead. (1) Check notifications/ — process and delete. (2) Check issues/ — update statuses, propose new issues if needed (status: proposed). (3) Post daily standup if not done today. (4) If .budget-exceeded exists, message Kavin you are paused. Do NOT execute work items in this turn. When referencing the dashboard, always include a direct link: ${DASHBOARD_URL}#/projects/{project-slug}/issues for issues, ${DASHBOARD_URL}#/projects/{project-slug} for project overview.`;
+const HEARTBEAT_MESSAGE = `Project heartbeat (scan only — do NOT do actual work): Read shared/protocols/projects.md. Check shared/projects/ for projects where you are lead. (1) Check notifications/ — process and delete. (2) Check issues/ — update statuses, propose new issues if needed (status: proposed). (3) Post daily standup if not done today — ONLY if you are the project lead (skip if you are not lead). (4) If .budget-exceeded exists, message Kavin you are paused. Do NOT execute work items in this turn. When referencing the dashboard, always include a direct link: ${DASHBOARD_URL}#/projects/{project-slug}/issues for issues, ${DASHBOARD_URL}#/projects/{project-slug} for project overview.`;
 
 // Protect /setup with a user-provided password.
 const SETUP_PASSWORD = process.env.SETUP_PASSWORD?.trim();
@@ -1597,7 +1597,7 @@ function findExperimentProgram(projectsDir, projectName, approvalData) {
   // Fallback: find the most recent experiment directory (highest exp-NNN)
   try {
     const entries = fs.readdirSync(expDir, { withFileTypes: true })
-      .filter((e) => e.isDirectory())
+      .filter((e) => e.isDirectory() && !e.name.startsWith("_"))
       .sort((a, b) => b.name.localeCompare(a.name)); // descending — most recent first
     for (const entry of entries) {
       const programPath = path.join(expDir, entry.name, "program.md");
@@ -1616,7 +1616,7 @@ app.get("/mc/api/approvals/:id", requireSetupAuth, (req, res) => {
   // Search project-format approvals (pending + resolved)
   const projectsDir = path.join(STATE_DIR, "shared", "projects");
   if (fs.existsSync(projectsDir)) {
-    const projects = fs.readdirSync(projectsDir, { withFileTypes: true }).filter((e) => e.isDirectory());
+    const projects = fs.readdirSync(projectsDir, { withFileTypes: true }).filter((e) => e.isDirectory() && !e.name.startsWith("_"));
     for (const proj of projects) {
       // Check pending
       const pendingPath = path.join(projectsDir, proj.name, "approvals", "pending", `${id}.json`);
@@ -1761,7 +1761,7 @@ app.get("/mc/api/approvals/:id", requireSetupAuth, (req, res) => {
 
   // Check proposed issues (shared/projects/*/issues/*.json with status "proposed")
   if (fs.existsSync(projectsDir)) {
-    const projects = fs.readdirSync(projectsDir, { withFileTypes: true }).filter((e) => e.isDirectory());
+    const projects = fs.readdirSync(projectsDir, { withFileTypes: true }).filter((e) => e.isDirectory() && !e.name.startsWith("_"));
     for (const proj of projects) {
       const issuesDir = path.join(projectsDir, proj.name, "issues");
       if (!fs.existsSync(issuesDir)) continue;
@@ -1817,7 +1817,7 @@ app.get("/mc/api/approvals/:id", requireSetupAuth, (req, res) => {
 
   // Check proposed themes (shared/projects/*/themes/*.json)
   if (fs.existsSync(projectsDir)) {
-    const projects = fs.readdirSync(projectsDir, { withFileTypes: true }).filter((e) => e.isDirectory());
+    const projects = fs.readdirSync(projectsDir, { withFileTypes: true }).filter((e) => e.isDirectory() && !e.name.startsWith("_"));
     for (const proj of projects) {
       const themesDir = path.join(projectsDir, proj.name, "themes");
       if (!fs.existsSync(themesDir)) continue;
@@ -1857,7 +1857,7 @@ app.get("/mc/api/approvals", requireSetupAuth, (req, res) => {
 
   const projectsDir = path.join(STATE_DIR, "shared", "projects");
   if (fs.existsSync(projectsDir)) {
-    const projects = fs.readdirSync(projectsDir, { withFileTypes: true }).filter((e) => e.isDirectory());
+    const projects = fs.readdirSync(projectsDir, { withFileTypes: true }).filter((e) => e.isDirectory() && !e.name.startsWith("_"));
     for (const proj of projects) {
       if (filterProject && proj.name !== filterProject) continue;
 
@@ -2850,7 +2850,7 @@ app.get("/mc/api/activity", requireSetupAuth, (req, res) => {
   const filterAgent = req.query.agent || null;
 
   const events = [];
-  const projects = fs.readdirSync(projectsDir, { withFileTypes: true }).filter((e) => e.isDirectory());
+  const projects = fs.readdirSync(projectsDir, { withFileTypes: true }).filter((e) => e.isDirectory() && !e.name.startsWith("_"));
 
   for (const proj of projects) {
     if (filterProject && proj.name !== filterProject) continue;
@@ -3093,7 +3093,7 @@ app.get("/mc/api/agents/:id", requireSetupAuth, (req, res) => {
   agent.projects = [];
   const projectsDir = path.join(STATE_DIR, "shared", "projects");
   if (fs.existsSync(projectsDir)) {
-    const projEntries = fs.readdirSync(projectsDir, { withFileTypes: true }).filter((e) => e.isDirectory());
+    const projEntries = fs.readdirSync(projectsDir, { withFileTypes: true }).filter((e) => e.isDirectory() && !e.name.startsWith("_"));
     for (const proj of projEntries) {
       const projectPath = path.join(projectsDir, proj.name, "PROJECT.md");
       if (fs.existsSync(projectPath)) {
@@ -3925,7 +3925,7 @@ app.get("/mc/api/costs/overview", requireSetupAuth, (_req, res) => {
   let totalBudget = 0;
 
   for (const entry of dirs) {
-    if (!entry.isDirectory()) continue;
+    if (!entry.isDirectory() || entry.name.startsWith("_")) continue;
     const slug = entry.name;
     const costData = loadProjectCosts(slug);
     const policy = loadBudgetPolicy(slug);
@@ -4093,7 +4093,7 @@ app.get("/mc/api/projects/summary", requireSetupAuth, (_req, res) => {
   try {
     const entries = fs.readdirSync(projectsDir, { withFileTypes: true });
     const projects = entries
-      .filter((e) => e.isDirectory())
+      .filter((e) => e.isDirectory() && !e.name.startsWith("_"))
       .map((e) => {
         const projDir = path.join(projectsDir, e.name);
         const projectPath = path.join(projDir, "PROJECT.md");
@@ -4213,7 +4213,7 @@ app.get("/mc/api/org-chart", requireSetupAuth, (_req, res) => {
     const projectLeads = {};
     if (fs.existsSync(projectsDir)) {
       for (const entry of fs.readdirSync(projectsDir, { withFileTypes: true })) {
-        if (!entry.isDirectory()) continue;
+        if (!entry.isDirectory() || entry.name.startsWith("_")) continue;
         const projMd = path.join(projectsDir, entry.name, "PROJECT.md");
         if (fs.existsSync(projMd)) {
           const raw = fs.readFileSync(projMd, "utf8");
@@ -4518,7 +4518,7 @@ function buildAgentProjectMap() {
   try {
     const entries = fs.readdirSync(projectsDir, { withFileTypes: true });
     for (const entry of entries) {
-      if (!entry.isDirectory()) continue;
+      if (!entry.isDirectory() || entry.name.startsWith("_")) continue;
       const slug = entry.name;
       const projectPath = path.join(projectsDir, slug, "PROJECT.md");
       if (!fs.existsSync(projectPath)) continue;
@@ -4554,7 +4554,7 @@ function runCostCompiler() {
 
     const agentProjectMap = buildAgentProjectMap();
     const agentDirs = fs.readdirSync(agentsDir, { withFileTypes: true })
-      .filter((e) => e.isDirectory())
+      .filter((e) => e.isDirectory() && !e.name.startsWith("_"))
       .map((e) => e.name);
 
     const currentMonday = getMondayOfWeek(new Date());
