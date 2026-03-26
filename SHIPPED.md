@@ -1,6 +1,7 @@
 # SHIPPED.md
 
 ## 2026-03-26
+- **fix:** One standup per project per day — heartbeat now tells agents to check if today's file exists before writing; filename must be exactly `YYYY-MM-DD.md` (no agent name, no suffix); protocol updated on Railway
 - **fix:** Only leads post standups — strengthened heartbeat message so agents skip projects they don't lead; deleted fake `standups` project directory; all project endpoints now require PROJECT.md to exist (stray directories ignored); cleaned up non-lead standup files from lia-first-100
 - **fix:** Heartbeat cron now explicitly tells agents only leads post standups; `_org-level` filtered from all project-listing endpoints (sidebar, costs, approvals, agents — not just inbox)
 - **feat:** Blocked-on-operator detection — agents can flag when they're waiting on you (`blocked_on: "operator"`); shows in Briefing Section 1 with orange badge, inline reason text, and agent name; API scans issues for blocker fields

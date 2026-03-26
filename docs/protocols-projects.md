@@ -76,7 +76,7 @@ During your heartbeat check:
 - Read `shared/projects/{slug}/PROJECT.md` for mission and NSM
 - Check `shared/projects/{slug}/themes/` for approved themes
 - Check your pending issues and experiments
-- **Only the project lead** posts standups to `shared/projects/{slug}/standups/YYYY-MM-DD.md`. If you are not the lead (check `**Lead:**` in PROJECT.md), do not write standup files.
+- **Standup (lead only):** List files in `standups/`. If ANY file starting with today's date exists, skip — do NOT write another. If none exists, write exactly `YYYY-MM-DD.md` (no agent name, no suffix, no timestamp). Only the project lead posts standups. Non-leads must never write to `standups/`.
 - Log activity to `shared/projects/{slug}/activity.log`
 
 ## Key Rules
