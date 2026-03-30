@@ -1617,20 +1617,65 @@ app.get("/mc/api/approvals/:id", requireSetupAuth, (req, res) => {
   const projectsDir = path.join(STATE_DIR, "shared", "projects");
   if (fs.existsSync(projectsDir)) {
     const projects = fs.readdirSync(projectsDir, { withFileTypes: true }).filter((e) => e.isDirectory() && !e.name.startsWith("_"));
+    // Helper: find a pending approval by id — first try direct filename, then scan all files
+    function findPendingApproval(projectsDir, projName, id) {
+      const pendingDir = path.join(projectsDir, projName, "approvals", "pending");
+      if (!fs.existsSync(pendingDir)) return null;
+      // Fast path: filename matches id
+      const directPath = path.join(pendingDir, `${id}.json`);
+      if (fs.existsSync(directPath)) {
+        try {
+          return { data: JSON.parse(fs.readFileSync(directPath, "utf8")), file: `${id}.json` };
+        } catch { /* fall through to scan */ }
+      }
+      // Slow path: scan all files and match on internal id field
+      try {
+        const files = fs.readdirSync(pendingDir).filter((f) => f.endsWith(".json"));
+        for (const file of files) {
+          try {
+            const raw = fs.readFileSync(path.join(pendingDir, file), "utf8");
+            const data = JSON.parse(raw);
+            if (data.id === id) return { data, file };
+          } catch { /* skip malformed */ }
+        }
+      } catch { /* skip */ }
+      return null;
+    }
+
+    // Helper: find a resolved approval by id — first try direct filename, then scan all files
+    function findResolvedApproval(projectsDir, projName, id) {
+      const resolvedDir = path.join(projectsDir, projName, "approvals", "resolved");
+      if (!fs.existsSync(resolvedDir)) return null;
+      const directPath = path.join(resolvedDir, `${id}.json`);
+      if (fs.existsSync(directPath)) {
+        try {
+          return { data: JSON.parse(fs.readFileSync(directPath, "utf8")), file: `${id}.json` };
+        } catch { /* fall through to scan */ }
+      }
+      try {
+        const files = fs.readdirSync(resolvedDir).filter((f) => f.endsWith(".json"));
+        for (const file of files) {
+          try {
+            const raw = fs.readFileSync(path.join(resolvedDir, file), "utf8");
+            const data = JSON.parse(raw);
+            if (data.id === id) return { data, file };
+          } catch { /* skip malformed */ }
+        }
+      } catch { /* skip */ }
+      return null;
+    }
+
     for (const proj of projects) {
       // Check pending
-      const pendingPath = path.join(projectsDir, proj.name, "approvals", "pending", `${id}.json`);
-      if (fs.existsSync(pendingPath)) {
+      const pendingResult = findPendingApproval(projectsDir, proj.name, id);
+      if (pendingResult) {
         try {
-          const raw = fs.readFileSync(pendingPath, "utf8");
-          const data = JSON.parse(raw);
+          const data = pendingResult.data;
           if (data.status === "resolved") {
             // It's a tombstone — look in resolved
-            const resolvedPath = path.join(projectsDir, proj.name, "approvals", "resolved", `${id}.json`);
-            if (fs.existsSync(resolvedPath)) {
-              const resolvedRaw = fs.readFileSync(resolvedPath, "utf8");
-              const resolvedData = JSON.parse(resolvedRaw);
-              return res.json({ ...resolvedData, _project: proj.name });
+            const resolvedResult = findResolvedApproval(projectsDir, proj.name, id);
+            if (resolvedResult) {
+              return res.json({ ...resolvedResult.data, _project: proj.name });
             }
           }
           const enriched = { ...data, _project: proj.name };
@@ -1678,11 +1723,10 @@ app.get("/mc/api/approvals/:id", requireSetupAuth, (req, res) => {
         } catch { /* skip */ }
       }
       // Check resolved
-      const resolvedPath = path.join(projectsDir, proj.name, "approvals", "resolved", `${id}.json`);
-      if (fs.existsSync(resolvedPath)) {
+      const resolvedResult = findResolvedApproval(projectsDir, proj.name, id);
+      if (resolvedResult) {
         try {
-          const raw = fs.readFileSync(resolvedPath, "utf8");
-          const data = JSON.parse(raw);
+          const data = resolvedResult.data;
           const enriched = { ...data, _project: proj.name };
           if (data.gate === "experiment-start" || data.gate === "autoresearch-start") {
             const programMd = findExperimentProgram(projectsDir, proj.name, data);

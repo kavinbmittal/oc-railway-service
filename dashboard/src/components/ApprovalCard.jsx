@@ -14,6 +14,7 @@ function TypeBadge({ type }) {
   "proposed-theme": { label:"Theme", cls:"border-teal-500/20 bg-teal-500/10 text-teal-400" },
   theme: { label:"Theme", cls:"border-teal-500/20 bg-teal-500/10 text-teal-400" },
   "deliverable-review": { label:"Deliverable", cls:"border-blue-500/20 bg-blue-500/10 text-blue-400" },
+  "content-publish": { label:"Content", cls:"border-teal-500/20 bg-teal-500/10 text-teal-400" },
   "budget-exceeded": { label:"Budget", cls:"border-amber-500/20 bg-amber-500/10 text-amber-400" },
  };
 
