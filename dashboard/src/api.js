@@ -466,6 +466,86 @@ export async function resolveApproval({ project, id, decision, comment, requeste
   ]);
 }
 
+// Resolve a content-publish gate with per-post decisions
+export async function resolveContentReview({ project, id, posts, requester, gate, what, created }) {
+  const now = new Date().toISOString();
+  const timestamp = Date.now();
+
+  // Gate is approved only when every post is approved or rejected (no revision_requested)
+  const hasRevisions = posts.some((p) => p.status === "revision_requested");
+  const decision = hasRevisions ? "revision_requested" : "approved";
+
+  if (hasRevisions) {
+    // Keep in pending with per-post feedback — nothing gets scheduled
+    const updated = {
+      id,
+      project,
+      requester,
+      gate,
+      what,
+      created,
+      status: "revision_requested",
+      posts,
+      revision_requested_at: now,
+      revision_requested_by: "kavin",
+    };
+
+    const notification = {
+      type: "approval-revision-requested",
+      to: requester,
+      project,
+      approval_id: id,
+      feedback: posts.filter((p) => p.status === "revision_requested").map((p) => `${p.title}: ${p.comment}`).join("\n"),
+      created: now,
+      read: false,
+    };
+
+    await Promise.all([
+      writeFile(`shared/projects/${project}/approvals/pending/${id}.json`, JSON.stringify(updated, null, 2)),
+      writeFile(`shared/projects/${project}/notifications/${timestamp}-revision-${id}.json`, JSON.stringify(notification, null, 2)),
+    ]);
+  } else {
+    // All posts approved/rejected — resolve the gate
+    const resolved = {
+      id,
+      project,
+      requester,
+      gate,
+      what,
+      created,
+      status: decision,
+      resolved_at: now,
+      resolved_by: "kavin",
+      decision,
+      posts,
+    };
+
+    const tombstone = {
+      id,
+      status: "resolved",
+      resolved_at: now,
+      see: `approvals/resolved/${id}.json`,
+    };
+
+    const notification = {
+      type: "approval-resolved",
+      to: requester,
+      project,
+      approval_id: id,
+      decision,
+      comment: null,
+      created: now,
+      read: false,
+    };
+
+    await Promise.all([
+      writeFile(`shared/projects/${project}/approvals/resolved/${id}.json`, JSON.stringify(resolved, null, 2)),
+      writeFile(`shared/projects/${project}/approvals/pending/${id}.json`, JSON.stringify(tombstone, null, 2)),
+      writeFile(`shared/projects/${project}/notifications/${timestamp}-approval-${id}.json`, JSON.stringify(notification, null, 2)),
+    ]);
+  }
+}
+
 export async function requestRevision({ project, id, feedback, requester, gate, what, why, created, isIssue }) {
   const now = new Date().toISOString();
   const timestamp = Date.now();
