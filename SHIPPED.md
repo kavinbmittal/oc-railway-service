@@ -1,5 +1,9 @@
 # SHIPPED.md
 
+## 2026-03-30
+- **feat:** Content-publish gate support — new `content-publish` approval gate type with teal "Content" badge, "Content for Review" detail rendering, and metadata sidebar showing post count, platforms, and linked issue/experiment (`5d192c6`)
+- **fix:** Approval detail 404 when filename ≠ ID — detail endpoint now falls back to scanning files by internal ID field instead of only matching by filename (`5d192c6`)
+
 ## 2026-03-26
 - **fix:** One standup per project per day — heartbeat now tells agents to check if today's file exists before writing; filename must be exactly `YYYY-MM-DD.md` (no agent name, no suffix); protocol updated on Railway
 - **fix:** Only leads post standups — strengthened heartbeat message so agents skip projects they don't lead; deleted fake `standups` project directory; all project endpoints now require PROJECT.md to exist (stray directories ignored); cleaned up non-lead standup files from lia-first-100
