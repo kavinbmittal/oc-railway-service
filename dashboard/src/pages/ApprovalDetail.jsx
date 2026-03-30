@@ -4,7 +4,7 @@
  */
 import { useState, useEffect } from"react";
 import { CheckCircle2, XCircle, RotateCcw, Loader2, CircleDot, FlaskConical, FileText, Compass, BarChart3, Clock, ShieldCheck, Wrench, Target, Activity, AlertTriangle } from"lucide-react";
-import { getApprovalDetail, resolveApproval, requestRevision, updateIssue, deleteIssue, resolveTheme, getThemes } from"../api.js";
+import { getApprovalDetail, resolveApproval, resolveContentReview, requestRevision, updateIssue, deleteIssue, resolveTheme, getThemes } from"../api.js";
 import { formatTimeAgo } from"../utils/formatDate.js";
 import Markdown from"../components/Markdown.jsx";
 import { StatusBadge } from"../components/StatusBadge.jsx";
@@ -45,6 +45,9 @@ export default function ApprovalDetail({ approvalId, navigate }) {
  const [comment, setComment] = useState("");
  const [submitting, setSubmitting] = useState(false);
  const [resolved, setResolved] = useState(null);
+ // Per-post decisions for content-publish gates: { [postId]: { status, comment } }
+ const [postDecisions, setPostDecisions] = useState({});
+ const [activeCommentPost, setActiveCommentPost] = useState(null);
 
  useEffect(() => {
   setLoading(true);
@@ -125,6 +128,42 @@ export default function ApprovalDetail({ approvalId, navigate }) {
     const updated = await getApprovalDetail(approvalId).catch(() => null);
     if (updated) setApproval(updated);
    }
+  } catch (err) {
+   setError(err.message);
+  } finally {
+   setSubmitting(false);
+  }
+ }
+
+ // Submit per-post review for content-publish gates
+ async function handleContentReview() {
+  setSubmitting(true);
+  setError(null);
+  try {
+   const projectName = approval._project || approval.project;
+   const posts = approval.posts.map((post) => {
+    // Posts already decided from a previous round stay as-is
+    if (post.status === "approved" || post.status === "rejected") return post;
+    const decision = postDecisions[post.id];
+    return {
+     ...post,
+     status: decision?.status || "pending",
+     comment: decision?.comment || null,
+    };
+   });
+   await resolveContentReview({
+    project: projectName,
+    id: approval.id,
+    posts,
+    requester: approval.requester,
+    gate: approval.gate,
+    what: approval.what || approval.title,
+    created: approval.created,
+   });
+   const hasRevisions = posts.some((p) => p.status === "revision_requested");
+   setResolved({ decision: hasRevisions ? "revision_requested" : "approved" });
+   const updated = await getApprovalDetail(approvalId).catch(() => null);
+   if (updated) setApproval(updated);
   } catch (err) {
    setError(err.message);
   } finally {
@@ -424,8 +463,120 @@ export default function ApprovalDetail({ approvalId, navigate }) {
        </section>
       )}
 
+      {/* Content Review Cards — per-post approve/reject/comment for content-publish gates */}
+      {isContentPublish && Array.isArray(approval.posts) && approval.posts.length > 0 && (
+       <section className="space-y-4">
+        <div className="flex items-center gap-3 mb-2">
+         <div className="w-6 h-6 rounded-full bg-teal-500/10 border border-teal-500/20 flex items-center justify-center">
+          <FileText className="w-3.5 h-3.5 text-teal-400" />
+         </div>
+         <span className="text-[15px] font-medium text-teal-100">Content Review</span>
+         <span className="text-[12px] font-mono text-zinc-500">{approval.posts.length} post{approval.posts.length !== 1 ? "s" : ""}</span>
+        </div>
+        {approval.posts.map((post, idx) => {
+         const isLocked = post.status === "approved" || post.status === "rejected";
+         const decision = postDecisions[post.id];
+         const currentStatus = isLocked ? post.status : (decision?.status || null);
+         const platformColors = {
+          x: "border-sky-500/30 bg-sky-500/10 text-sky-400",
+          linkedin: "border-blue-500/30 bg-blue-500/10 text-blue-400",
+          reddit: "border-orange-500/30 bg-orange-500/10 text-orange-400",
+         };
+         return (
+          <div key={post.id || idx} className={`border rounded-[2px] shadow-sm flex flex-col ${
+           isLocked ? "opacity-60 border-border/40 bg-zinc-900/30" :
+           currentStatus === "approved" ? "border-emerald-500/20 bg-emerald-500/[0.03]" :
+           currentStatus === "rejected" ? "border-red-500/20 bg-red-500/[0.03]" :
+           currentStatus === "revision_requested" ? "border-amber-500/20 bg-amber-500/[0.03]" :
+           "border-border bg-card"
+          }`}>
+           {/* Post header */}
+           <div className="flex items-center gap-3 px-5 py-3 border-b border-border/60">
+            <span className="text-[14px] font-mono text-zinc-500 shrink-0">{idx + 1}</span>
+            <span className="text-[14px] font-medium text-zinc-100 flex-1 truncate">{post.title || `Post ${idx + 1}`}</span>
+            {post.platform && (
+             <span className={`px-2 py-0.5 rounded-full text-[11px] font-mono border ${platformColors[post.platform] || "border-zinc-500/30 bg-zinc-500/10 text-zinc-400"}`}>
+              {post.platform.toUpperCase()}
+             </span>
+            )}
+            {post.scheduled_slot && (
+             <span className="text-[12px] text-zinc-500 flex items-center gap-1">
+              <Clock size={12} /> {post.scheduled_slot}
+             </span>
+            )}
+            {isLocked && (
+             <span className={`px-2 py-0.5 rounded-full text-[11px] font-mono border ${
+              post.status === "approved" ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-400" : "border-red-500/30 bg-red-500/10 text-red-400"
+             }`}>{post.status === "approved" ? "Approved" : "Rejected"}</span>
+            )}
+           </div>
+           {/* Post content */}
+           <div className="p-5 mc-prose">
+            <Markdown content={post.content || ""} />
+           </div>
+           {/* Per-post actions — only for pending posts when gate is pending */}
+           {!isLocked && isPending && !resolved && (
+            <div className="px-5 py-3 border-t border-border/60 flex items-center gap-2">
+             <button
+              onClick={() => { setPostDecisions((prev) => ({ ...prev, [post.id]: { status: "approved", comment: null } })); setActiveCommentPost(null); }}
+              className={`px-3 py-1.5 rounded-[4px] text-[13px] font-medium border transition-all flex items-center gap-1.5 ${
+               currentStatus === "approved" ? "border-emerald-500/50 bg-emerald-500/20 text-emerald-300" : "border-emerald-500/20 bg-emerald-500/5 text-emerald-400 hover:bg-emerald-500/10"
+              }`}
+             >
+              <CheckCircle2 size={14} /> Approve
+             </button>
+             <button
+              onClick={() => { setPostDecisions((prev) => ({ ...prev, [post.id]: { status: "rejected", comment: null } })); setActiveCommentPost(null); }}
+              className={`px-3 py-1.5 rounded-[4px] text-[13px] font-medium border transition-all flex items-center gap-1.5 ${
+               currentStatus === "rejected" ? "border-red-500/50 bg-red-500/20 text-red-300" : "border-red-500/20 bg-red-500/5 text-red-400 hover:bg-red-500/10"
+              }`}
+             >
+              <XCircle size={14} /> Reject
+             </button>
+             <button
+              onClick={() => setActiveCommentPost(activeCommentPost === post.id ? null : post.id)}
+              className={`px-3 py-1.5 rounded-[4px] text-[13px] font-medium border transition-all flex items-center gap-1.5 ${
+               currentStatus === "revision_requested" ? "border-amber-500/50 bg-amber-500/20 text-amber-300" : "border-amber-500/20 bg-amber-500/5 text-amber-400 hover:bg-amber-500/10"
+              }`}
+             >
+              <RotateCcw size={14} /> Revise
+             </button>
+             {currentStatus && (
+              <button
+               onClick={() => { setPostDecisions((prev) => { const next = { ...prev }; delete next[post.id]; return next; }); setActiveCommentPost(null); }}
+               className="ml-auto px-2 py-1 text-[12px] text-zinc-500 hover:text-zinc-300 transition-colors"
+              >Clear</button>
+             )}
+            </div>
+           )}
+           {/* Inline comment input for revision */}
+           {activeCommentPost === post.id && !isLocked && isPending && !resolved && (
+            <div className="px-5 pb-4 flex gap-2">
+             <input
+              type="text"
+              autoFocus
+              value={decision?.comment || ""}
+              onChange={(e) => setPostDecisions((prev) => ({ ...prev, [post.id]: { status: "revision_requested", comment: e.target.value } }))}
+              onKeyDown={(e) => { if (e.key === "Enter" && decision?.comment?.trim()) setActiveCommentPost(null); }}
+              className="flex-1 rounded-[4px] border border-border bg-background text-[13px] text-zinc-200 px-3 py-2 placeholder:text-zinc-600 focus-visible:outline-none focus-visible:ring-[2px] focus-visible:ring-amber-500/30"
+              placeholder="What needs to change..."
+             />
+            </div>
+           )}
+           {/* Show existing comment for revision_requested */}
+           {currentStatus === "revision_requested" && decision?.comment && activeCommentPost !== post.id && (
+            <div className="px-5 pb-3">
+             <p className="text-[13px] text-amber-400/80 italic">&ldquo;{decision.comment}&rdquo;</p>
+            </div>
+           )}
+          </div>
+         );
+        })}
+       </section>
+      )}
+
       {/* Details Card — Aura card (fallback for old experiments with `why`, non-experiment gates, issues) */}
-      {approval.why && !(isExperiment && approval.hypothesis) && (
+      {approval.why && !(isExperiment && approval.hypothesis) && !(isContentPublish && Array.isArray(approval.posts) && approval.posts.length > 0) && (
        <section className="bg-card border border-border rounded-[2px] shadow-sm flex flex-col">
         <header className="flex items-center gap-3 px-5 py-3 bg-amber-500/[0.02] transition-colors">
          <div className="w-6 h-6 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
@@ -602,10 +753,10 @@ export default function ApprovalDetail({ approvalId, navigate }) {
          <div className="text-[15px] font-medium text-teal-100">Content Details</div>
         </header>
         <div className="p-[20px] space-y-3 text-[14px]">
-         {approval.post_count != null && (
+         {(approval.post_count != null || (Array.isArray(approval.posts) && approval.posts.length > 0)) && (
           <div className="flex justify-between">
            <span className="text-zinc-500">Posts</span>
-           <span className="text-zinc-100 font-mono">{approval.post_count}</span>
+           <span className="text-zinc-100 font-mono">{Array.isArray(approval.posts) ? approval.posts.length : approval.post_count}</span>
           </div>
          )}
          {approval.platforms && approval.platforms.length > 0 && (
@@ -630,8 +781,58 @@ export default function ApprovalDetail({ approvalId, navigate }) {
        </section>
       )}
 
-      {/* Actions Card — Aura: sticky, approve/reject buttons */}
-      {isPending && !resolved && (
+      {/* Actions Card — content-publish: Submit Review; others: standard approve/reject */}
+      {isPending && !resolved && isContentPublish && Array.isArray(approval.posts) && approval.posts.length > 0 && (() => {
+       const pendingPosts = approval.posts.filter((p) => p.status !== "approved" && p.status !== "rejected");
+       const decidedCount = pendingPosts.filter((p) => postDecisions[p.id]?.status).length;
+       const allDecided = decidedCount === pendingPosts.length && pendingPosts.length > 0;
+       const approvedCount = approval.posts.filter((p) => p.status === "approved" || postDecisions[p.id]?.status === "approved").length;
+       const rejectedCount = approval.posts.filter((p) => p.status === "rejected" || postDecisions[p.id]?.status === "rejected").length;
+       const revisionCount = Object.values(postDecisions).filter((d) => d.status === "revision_requested").length;
+       return (
+        <section className="bg-card border border-border rounded-[2px] shadow-sm flex flex-col sticky top-0">
+         <header className="flex items-center gap-3 px-5 py-3 bg-teal-500/[0.02] transition-colors">
+          <div className="w-6 h-6 rounded-full bg-teal-500/10 border border-teal-500/20 flex items-center justify-center">
+           <ShieldCheck className="w-3.5 h-3.5 text-teal-400" />
+          </div>
+          <div className="text-[15px] font-medium text-teal-100">Review</div>
+         </header>
+         <div className="p-[20px] space-y-4">
+          {/* Progress summary */}
+          <div className="space-y-2 text-[13px]">
+           <div className="flex justify-between text-zinc-400">
+            <span>Reviewed</span>
+            <span className="font-mono">{decidedCount} / {pendingPosts.length}</span>
+           </div>
+           <div className="w-full h-1.5 bg-zinc-800 rounded-full overflow-hidden">
+            <div className="h-full bg-teal-500/60 transition-all" style={{ width: `${pendingPosts.length > 0 ? (decidedCount / pendingPosts.length) * 100 : 0}%` }} />
+           </div>
+           {decidedCount > 0 && (
+            <div className="flex gap-3 text-[12px] font-mono pt-1">
+             {approvedCount > 0 && <span className="text-emerald-400">{approvedCount} approved</span>}
+             {rejectedCount > 0 && <span className="text-red-400">{rejectedCount} rejected</span>}
+             {revisionCount > 0 && <span className="text-amber-400">{revisionCount} revision</span>}
+            </div>
+           )}
+          </div>
+
+          <button
+           onClick={handleContentReview}
+           disabled={submitting || !allDecided}
+           className="w-full py-2.5 rounded-[6px] border border-teal-500/30 bg-teal-500/10 text-[14px] font-medium text-teal-400 hover:bg-teal-500/20 transition-all flex justify-center items-center gap-2 outline-none focus-visible:ring-[3px] focus-visible:ring-teal-500/50 disabled:opacity-50"
+          >
+           {submitting ? <Loader2 size={18} className="animate-spin" /> : <CheckCircle2 size={18} />}
+           Submit Review
+          </button>
+          {!allDecided && pendingPosts.length > 0 && (
+           <p className="text-[12px] text-zinc-500 text-center">Review all {pendingPosts.length} post{pendingPosts.length !== 1 ? "s" : ""} to submit</p>
+          )}
+          {error && <p className="text-[15px] text-red-400 mt-2">{error}</p>}
+         </div>
+        </section>
+       );
+      })()}
+      {isPending && !resolved && !(isContentPublish && Array.isArray(approval.posts) && approval.posts.length > 0) && (
        <section className="bg-card border border-border rounded-[2px] shadow-sm flex flex-col sticky top-0">
         <header className="flex items-center gap-3 px-5 py-3 bg-amber-500/[0.02] transition-colors">
          <div className="w-6 h-6 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
