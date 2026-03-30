@@ -158,6 +158,7 @@ export default function ApprovalDetail({ approvalId, navigate }) {
  const isRevisionRequested = status ==="revision_requested";
  const isDeliverable = approval._source ==="deliverables" || approval.gate ==="deliverable" || approval.gate ==="deliverable-review";
  const isExperiment = approval.gate ==="experiment-start" || approval.gate ==="autoresearch-start";
+ const isContentPublish = approval.gate ==="content-publish";
  const hasBlockedTools = isExperiment && Array.isArray(approval.required_tools) && approval.required_tools.some((t) => !t.checked);
  const isIssue = approval._source ==="issue";
  const isTheme = approval._source ==="theme";
@@ -431,7 +432,7 @@ export default function ApprovalDetail({ approvalId, navigate }) {
           <FileText className="w-3.5 h-3.5 text-amber-400" />
          </div>
          <div className="text-[15px] font-medium text-amber-100">
-          {isExperiment ?"Approval Request" : isDeliverable ?"Deliverable" : isIssue ?"Proposed Issue" :"Details"}
+          {isExperiment ?"Approval Request" : isDeliverable ?"Deliverable" : isIssue ?"Proposed Issue" : isContentPublish ?"Content for Review" :"Details"}
          </div>
         </header>
         <div className="p-[20px] text-[14px] text-zinc-300 leading-relaxed space-y-5 mc-prose">
@@ -590,6 +591,44 @@ export default function ApprovalDetail({ approvalId, navigate }) {
 
      {/* Right Column — 1/3 */}
      <div className="xl:col-span-1 space-y-6">
+
+      {/* Content metadata — post count, platforms, linked issue */}
+      {isContentPublish && (
+       <section className="bg-card border border-border rounded-[2px] shadow-sm flex flex-col">
+        <header className="flex items-center gap-3 px-5 py-3 bg-teal-500/[0.02] transition-colors">
+         <div className="w-6 h-6 rounded-full bg-teal-500/10 border border-teal-500/20 flex items-center justify-center">
+          <FileText className="w-3.5 h-3.5 text-teal-400" />
+         </div>
+         <div className="text-[15px] font-medium text-teal-100">Content Details</div>
+        </header>
+        <div className="p-[20px] space-y-3 text-[14px]">
+         {approval.post_count != null && (
+          <div className="flex justify-between">
+           <span className="text-zinc-500">Posts</span>
+           <span className="text-zinc-100 font-mono">{approval.post_count}</span>
+          </div>
+         )}
+         {approval.platforms && approval.platforms.length > 0 && (
+          <div className="flex justify-between">
+           <span className="text-zinc-500">Platforms</span>
+           <span className="text-zinc-100">{approval.platforms.join(", ")}</span>
+          </div>
+         )}
+         {approval.issue != null && (
+          <div className="flex justify-between">
+           <span className="text-zinc-500">Issue</span>
+           <span className="text-zinc-100 font-mono">#{approval.issue}</span>
+          </div>
+         )}
+         {approval.experiment != null && (
+          <div className="flex justify-between">
+           <span className="text-zinc-500">Experiment</span>
+           <span className="text-zinc-100 font-mono">{approval.experiment}</span>
+          </div>
+         )}
+        </div>
+       </section>
+      )}
 
       {/* Actions Card — Aura: sticky, approve/reject buttons */}
       {isPending && !resolved && (
