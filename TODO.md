@@ -105,13 +105,21 @@
 ## 2026-03-23-issue-cost-governance
 
 ### Dashboard Build
-- [ ] ApprovalCard: show tier badge + estimated cost on proposed issues, "No estimate" warning if missing
-- [ ] ApprovalCard: budget approval type — budget vs actual, Continue/Stop actions
-- [ ] IssueDetail: cost card — estimated, actual, delta (green/red)
-- [ ] CreateIssue: budget field (editable, dollar amount)
-- [ ] EditIssue: budget field (editable, dollar amount)
-- [ ] API: accept + persist estimated_cost, budget, actual_cost, budget_status on issues
-- [ ] Build dist
+- [x] ApprovalCard: show tier badge on proposed issues
+- Remaining moved to v2
+
+## v2: Issue Cost Governance (dashboard)
+- [ ] ApprovalCard: estimated cost display + "No estimate" warning if missing — effort S
+- [ ] ApprovalCard: budget approval type — budget vs actual, Continue/Stop actions — effort M
+- [ ] IssueDetail: cost card — estimated, actual, delta (green/red) — effort S
+- [ ] API: accept + persist estimated_cost, budget, actual_cost, budget_status on issues — effort M
+
+## v2: Coder Agent Integration
+
+- [ ] Agent protocol: when issue complexity is `claude-code`, lead agent sends `exec` tool call to Coder agent with `claude -p '...'` and project `workdir` — effort M
+- [ ] Lead agent writes Coder agent output as comment on issue after completion — effort S
+- [ ] Lead agent updates issue status based on Coder agent result (done or blocked) — effort S
+- [ ] Add `workdir` field to project create/edit (local path for Claude Code execution) — effort S
 
 ## v2: Agent Protocol — Cost Governance + Model Routing (bundle)
 
