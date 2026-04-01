@@ -1914,6 +1914,8 @@ app.get("/mc/api/approvals", requireSetupAuth, (req, res) => {
             const raw = fs.readFileSync(path.join(pendingDir, file), "utf8");
             const data = JSON.parse(raw);
             if (data.status === "resolved") continue; // skip tombstones
+            // Skip malformed entries — no gate and no description means nothing actionable
+            if (!data.gate && !data.what) continue;
             const entry = {
               ...data,
               type: data.gate || "unknown",
@@ -2581,7 +2583,9 @@ app.get("/mc/api/inbox", requireSetupAuth, (_req, res) => {
       for (const file of files) {
         try {
           const data = JSON.parse(fs.readFileSync(path.join(pendingDir, file), "utf8"));
-          if (data.status === "resolved") continue;
+          if (data.status === "resolved" || data.status === "revision_requested") continue;
+          // Skip malformed entries — no gate and no description means nothing actionable
+          if (!data.gate && !data.what) continue;
           items.push({
             type: "approval",
             project: proj.name,

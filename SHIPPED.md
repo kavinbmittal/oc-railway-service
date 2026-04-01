@@ -1,5 +1,9 @@
 # SHIPPED.md
 
+## 2026-04-01
+- **fix:** Decisions Waiting no longer shows items you've already requested revision on — they reappear when the agent resubmits (`d357c7b`)
+- **fix:** Ghost "Pending approval" / "unknown" entries with no content filtered out of Briefing and Approvals (`d357c7b`)
+
 ## 2026-03-30
 - **feat:** Content-publish gate support — new `content-publish` approval gate type with teal "Content" badge, "Content for Review" detail rendering, and metadata sidebar showing post count, platforms, and linked issue/experiment (`5d192c6`)
 - **fix:** Approval detail 404 when filename ≠ ID — detail endpoint now falls back to scanning files by internal ID field instead of only matching by filename (`5d192c6`)
