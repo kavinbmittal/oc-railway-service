@@ -2585,30 +2585,8 @@ app.get("/mc/api/inbox", requireSetupAuth, (_req, res) => {
   for (const proj of projects) {
     const projDir = path.join(projectsDir, proj.name);
 
-    // A. Pending Approvals
-    const pendingDir = path.join(projDir, "approvals", "pending");
-    if (fs.existsSync(pendingDir)) {
-      const files = fs.readdirSync(pendingDir).filter((f) => f.endsWith(".json"));
-      for (const file of files) {
-        try {
-          const data = JSON.parse(fs.readFileSync(path.join(pendingDir, file), "utf8"));
-          if (data.status === "resolved" || data.status === "revision_requested") continue;
-          // Skip malformed entries — no gate and no description means nothing actionable
-          if (!data.gate && !data.what) continue;
-          items.push({
-            type: "approval",
-            project: proj.name,
-            id: data.id || file,
-            title: data.what || "Pending approval",
-            subtitle: data.why || null,
-            requester: data.requester || "unknown",
-            gate: data.gate || "unknown",
-            timestamp: data.created || new Date().toISOString(),
-            data,
-          });
-        } catch { /* skip */ }
-      }
-    }
+    // A. Approvals — handled exclusively by /mc/api/approvals and the Approvals page.
+    //    Not shown in Briefing to avoid duplication.
 
     // B. Budget Warnings — read costs/ and PROJECT.md
     const costsDir = path.join(projDir, "costs");
@@ -2760,40 +2738,6 @@ app.get("/mc/api/inbox", requireSetupAuth, (_req, res) => {
     }
   }
 
-  // E. Legacy deliverables needing feedback (shared/output/index.json)
-  const indexPath = path.join(STATE_DIR, "shared", "output", "index.json");
-  if (fs.existsSync(indexPath)) {
-    try {
-      const indexRaw = fs.readFileSync(indexPath, "utf8");
-      const index = JSON.parse(indexRaw);
-      const entries = Array.isArray(index) ? index : (index.deliverables || index.entries || []);
-      for (const entry of entries) {
-        if (entry.status !== "needs-feedback") continue;
-        // Read deliverable content if file exists
-        let deliverableContent = null;
-        if (entry.deliverable) {
-          const delivPath = path.join(STATE_DIR, entry.deliverable);
-          if (fs.existsSync(delivPath)) {
-            try { deliverableContent = fs.readFileSync(delivPath, "utf8"); } catch {}
-          }
-        }
-        items.push({
-          type: "approval",
-          project: entry.project || null,
-          id: entry.id || entry.taskId || entry.file,
-          title: entry.summary || entry.title || entry.description || "Deliverable review",
-          subtitle: entry.description || entry.summary || null,
-          requester: entry.agent || entry.author || "unknown",
-          gate: "deliverable-review",
-          timestamp: entry.created || entry.timestamp || entry.date || new Date().toISOString(),
-          _source: "deliverables",
-          _deliverableContent: deliverableContent,
-          data: entry,
-        });
-      }
-    } catch { /* skip malformed index.json */ }
-  }
-
   // E. Proposed Issues — issues with status "proposed" awaiting Kavin's review
   for (const proj of projects) {
     const issuesDir = path.join(projectsDir, proj.name, "issues");
@@ -2912,7 +2856,7 @@ app.get("/mc/api/inbox", requireSetupAuth, (_req, res) => {
   dedupedItems.sort((a, b) => (b.timestamp || "").localeCompare(a.timestamp || ""));
 
   const counts = {
-    approvals: dedupedItems.filter((i) => i.type === "approval").length,
+    approvals: 0, // approvals live on the Approvals page, not in Briefing
     budget: dedupedItems.filter((i) => i.type === "budget").length,
     tasks: dedupedItems.filter((i) => i.type === "stale_task").length,
     standups: dedupedItems.filter((i) => i.type === "standup").length,
