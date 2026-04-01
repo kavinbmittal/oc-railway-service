@@ -4,7 +4,7 @@
 - **fix:** Decisions Waiting no longer shows items you've already requested revision on — they reappear when the agent resubmits (`d357c7b`)
 - **fix:** Ghost "Pending approval" / "unknown" entries with no content filtered out of Briefing and Approvals (`d357c7b`)
 - **fix:** Duplicate approvals no longer appear — deduplication by ID across all sources on both Briefing and Approvals (`4f744c9`)
-- **fix:** Briefing only shows untouched approvals — if you've reviewed, commented, or requested revision on something, it drops out of Decisions Waiting until the agent resubmits fresh (`20dfefc`)
+- **fix:** Briefing only shows untouched approvals — if you've reviewed, commented, or requested revision on something, it drops out of Decisions Waiting until the agent resubmits fresh; also fixes approved items reappearing due to filename/ID mismatch in pending files (`eee82af`)
 
 ## 2026-03-30
 - **feat:** Content-publish gate support — new `content-publish` approval gate type with teal "Content" badge, "Content for Review" detail rendering, and metadata sidebar showing post count, platforms, and linked issue/experiment (`5d192c6`)

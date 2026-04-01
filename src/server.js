@@ -1908,12 +1908,27 @@ app.get("/mc/api/approvals", requireSetupAuth, (req, res) => {
       // Source 1: Project-format approvals (shared/projects/*/approvals/pending/*.json)
       const pendingDir = path.join(projectsDir, proj.name, "approvals", "pending");
       if (fs.existsSync(pendingDir)) {
+        // Build set of resolved IDs to catch filename/ID mismatches
+        const resolvedDir = path.join(projectsDir, proj.name, "approvals", "resolved");
+        const resolvedIds = new Set();
+        if (fs.existsSync(resolvedDir)) {
+          for (const rf of fs.readdirSync(resolvedDir).filter((f) => f.endsWith(".json"))) {
+            resolvedIds.add(rf.replace(".json", ""));
+            try {
+              const rd = JSON.parse(fs.readFileSync(path.join(resolvedDir, rf), "utf8"));
+              if (rd.id) resolvedIds.add(rd.id);
+            } catch { /* skip */ }
+          }
+        }
         const files = fs.readdirSync(pendingDir).filter((f) => f.endsWith(".json"));
         for (const file of files) {
           try {
             const raw = fs.readFileSync(path.join(pendingDir, file), "utf8");
             const data = JSON.parse(raw);
             if (data.status === "resolved") continue; // skip tombstones
+            // Skip if resolved file exists (catches filename/ID mismatches)
+            const approvalId = data.id || file.replace(".json", "");
+            if (resolvedIds.has(approvalId)) continue;
             // Skip malformed entries — no gate and no description means nothing actionable
             if (!data.gate && !data.what) continue;
             const entry = {
@@ -2587,23 +2602,37 @@ app.get("/mc/api/inbox", requireSetupAuth, (_req, res) => {
 
     // A. Pending Approvals — only brand-new, untouched items
     const pendingDir = path.join(projDir, "approvals", "pending");
+    const resolvedDir = path.join(projDir, "approvals", "resolved");
     if (fs.existsSync(pendingDir)) {
+      // Build set of resolved IDs to catch filename/ID mismatches
+      const resolvedIds = new Set();
+      if (fs.existsSync(resolvedDir)) {
+        for (const rf of fs.readdirSync(resolvedDir).filter((f) => f.endsWith(".json"))) {
+          resolvedIds.add(rf.replace(".json", ""));
+          try {
+            const rd = JSON.parse(fs.readFileSync(path.join(resolvedDir, rf), "utf8"));
+            if (rd.id) resolvedIds.add(rd.id);
+          } catch { /* skip */ }
+        }
+      }
       const files = fs.readdirSync(pendingDir).filter((f) => f.endsWith(".json"));
       for (const file of files) {
         try {
           const data = JSON.parse(fs.readFileSync(path.join(pendingDir, file), "utf8"));
-          // Skip anything already acted on
+          const approvalId = data.id || file.replace(".json", "");
+          // Skip anything already acted on — by status field or by resolved file existing
           if (data.status === "resolved" || data.status === "revision_requested") continue;
+          if (resolvedIds.has(approvalId)) continue;
           // Skip malformed entries — no gate and no description means nothing actionable
           if (!data.gate && !data.what) continue;
-          // Skip if any interaction has occurred (comments, partial review, etc.)
-          if (data.resolved_by || data.revision_requested_at || data.commented_at) continue;
+          // Skip if any interaction has occurred (partial review, revision, etc.)
+          if (data.resolved_by || data.revision_requested_at) continue;
           // For content-publish gates, skip if any post has been reviewed
           if (data.posts && Array.isArray(data.posts) && data.posts.some((p) => p.status && p.status !== "pending")) continue;
           items.push({
             type: "approval",
             project: proj.name,
-            id: data.id || file,
+            id: approvalId,
             title: data.what || "Pending approval",
             subtitle: data.why || null,
             requester: data.requester || "unknown",
