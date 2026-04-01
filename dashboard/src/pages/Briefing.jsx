@@ -38,6 +38,7 @@ const SECTIONS = [
     title: "Decisions Waiting",
     icon: ShieldCheck,
     filter: (item) =>
+      item.type === "approval" ||
       item.type === "proposed_issue" ||
       item.type === "budget" ||
       item.type === "blocked_on_operator",
@@ -69,6 +70,11 @@ const SECTIONS = [
  */
 function getItemBadge(item) {
   switch (item.type) {
+    case "approval":
+      return {
+        classes: "border-amber-500/20 bg-amber-500/10 text-amber-400",
+        label: item.gate || "Approval",
+      };
     case "proposed_issue":
       return {
         classes: "border-violet-500/20 bg-violet-500/10 text-violet-400",
@@ -128,6 +134,7 @@ function getItemBadge(item) {
 /** Row icon by item type */
 function getRowIcon(item) {
   switch (item.type) {
+    case "approval":
     case "proposed_issue":
       return ShieldCheck;
     case "budget":
@@ -152,6 +159,7 @@ function getRowIcon(item) {
 /** Navigate to the right detail page for each item type */
 function handleClick(item, navigate) {
   switch (item.type) {
+    case "approval":
     case "proposed_issue":
       navigate("approval-detail", item.id);
       break;
