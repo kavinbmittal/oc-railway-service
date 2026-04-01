@@ -207,3 +207,12 @@
 When a model fallback alert fires, include an inline "Switch" button that rewrites `agents.defaults.model.primary` in `openclaw.json` via an HMAC-secured `/ops/model-switch` endpoint. Also add an "Undo" button to the confirmation message so switching back is one more tap.
 
 Deferred because it writes to `openclaw.json` on the live volume — needs careful testing for race conditions and a rollback mechanism before shipping.
+
+## 2026-04-01-clean-decisions-queue
+
+- [ ] Backend: inbox endpoint — skip `revision_requested` items from Decisions Waiting
+- [ ] Backend: inbox endpoint — skip malformed approvals (no `gate` + no `what`)
+- [ ] Backend: approvals endpoint — skip malformed approvals (no `gate` + no `what`)
+- [ ] Frontend: rebuild dist
+- [ ] Verify: confirm both filters work correctly
+
