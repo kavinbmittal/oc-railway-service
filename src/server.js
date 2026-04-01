@@ -2064,8 +2064,17 @@ app.get("/mc/api/approvals", requireSetupAuth, (req, res) => {
     }
   }
 
-  approvals.sort((a, b) => (b.created || "").localeCompare(a.created || ""));
-  return res.json({ approvals });
+  // Deduplicate by id — prefer gate source over deliverables
+  const seen = new Map();
+  for (const a of approvals) {
+    const key = a.id;
+    if (!key || !seen.has(key)) {
+      seen.set(key, a);
+    }
+  }
+  const deduped = [...seen.values()];
+  deduped.sort((a, b) => (b.created || "").localeCompare(a.created || ""));
+  return res.json({ approvals: deduped });
 });
 
 // List all projects
@@ -2890,23 +2899,32 @@ app.get("/mc/api/inbox", requireSetupAuth, (_req, res) => {
     }
   }
 
+  // Deduplicate by id — same item can appear from multiple sources
+  const seenIds = new Set();
+  const dedupedItems = [];
+  for (const item of items) {
+    if (item.id && seenIds.has(item.id)) continue;
+    if (item.id) seenIds.add(item.id);
+    dedupedItems.push(item);
+  }
+
   // Sort by recency
-  items.sort((a, b) => (b.timestamp || "").localeCompare(a.timestamp || ""));
+  dedupedItems.sort((a, b) => (b.timestamp || "").localeCompare(a.timestamp || ""));
 
   const counts = {
-    approvals: items.filter((i) => i.type === "approval").length,
-    budget: items.filter((i) => i.type === "budget").length,
-    tasks: items.filter((i) => i.type === "stale_task").length,
-    standups: items.filter((i) => i.type === "standup").length,
-    proposed: items.filter((i) => i.type === "proposed_issue").length,
-    updates: items.filter((i) => i.type === "experiment_update").length,
-    overdue: items.filter((i) => i.type === "overdue_issue").length,
-    paused: items.filter((i) => i.type === "paused_experiment").length,
-    blocked: items.filter((i) => i.type === "blocked_on_operator").length,
+    approvals: dedupedItems.filter((i) => i.type === "approval").length,
+    budget: dedupedItems.filter((i) => i.type === "budget").length,
+    tasks: dedupedItems.filter((i) => i.type === "stale_task").length,
+    standups: dedupedItems.filter((i) => i.type === "standup").length,
+    proposed: dedupedItems.filter((i) => i.type === "proposed_issue").length,
+    updates: dedupedItems.filter((i) => i.type === "experiment_update").length,
+    overdue: dedupedItems.filter((i) => i.type === "overdue_issue").length,
+    paused: dedupedItems.filter((i) => i.type === "paused_experiment").length,
+    blocked: dedupedItems.filter((i) => i.type === "blocked_on_operator").length,
   };
   counts.total = counts.approvals + counts.budget + counts.tasks + counts.standups + counts.proposed + counts.updates + counts.overdue + counts.paused + counts.blocked;
 
-  return res.json({ items, counts });
+  return res.json({ items: dedupedItems, counts });
 });
 
 // Global activity feed — aggregates activity across all projects
