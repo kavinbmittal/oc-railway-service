@@ -2,7 +2,7 @@
 
 ## Mission Control Dashboard
 - View project overview, issues, costs, and agent activity
-- Briefing page: priority-ordered view of everything that needs attention, grouped by project — Decisions Waiting (approvals, proposed issues, budget alerts, blocked agents) at the top with elevated card, Risks (stale tasks, overdue issues, paused experiments) in the middle, What Happened (standups, experiment updates) at the bottom with muted styling; agents waiting on you show inline reason text so you can triage at a glance; items you've already acted on (revision requested) automatically hide until the agent resubmits
+- Briefing page: priority-ordered view of everything that needs attention, grouped by project — Decisions Waiting (proposed issues, budget alerts, blocked agents) at the top with elevated card, Risks (stale tasks, overdue issues, paused experiments) in the middle, What Happened (standups, experiment updates) at the bottom with muted styling; agents waiting on you show inline reason text so you can triage at a glance; approvals have their own dedicated page and don't appear in Briefing
 - Unified Approvals page: proposed issues, experiment gates, and deliverable reviews in one view, grouped by project
 - Approve, reject, or request revision on any pending item (proposed issue, gate request, or content-publish gate) from the Approvals page or per-project Approvals tab
 - Content-publish gates: review batches of content posts before they go live — see full post text, platform, post count, and linked issue/experiment in a dedicated detail view
