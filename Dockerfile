@@ -22,7 +22,7 @@ WORKDIR /openclaw
 
 # Pin to a known-good ref (tag/branch). Override in Railway template settings if needed.
 # Using a released tag avoids build breakage when `main` temporarily references unpublished packages.
-ARG OPENCLAW_GIT_REF=v2026.3.13-1
+ARG OPENCLAW_GIT_REF=v2026.4.8
 RUN echo "openclaw-ref: ${OPENCLAW_GIT_REF}" && git clone --depth 1 --branch "${OPENCLAW_GIT_REF}" https://github.com/openclaw/openclaw.git .
 
 # Patch: relax version requirements for packages that may reference unpublished versions.
@@ -84,6 +84,12 @@ RUN printf '%s\n' '#!/usr/bin/env bash' 'exec node /openclaw/dist/entry.js "$@"'
 
 COPY src ./src
 COPY dashboard/dist ./dashboard/dist
+
+# Lia compaction provider plugin — Q&A-preserving compaction prompt
+COPY plugins/lia-compaction/package.json /app/plugins/lia-compaction/package.json
+RUN cd /app/plugins/lia-compaction && npm install --omit=dev --ignore-scripts && npm cache clean --force
+COPY plugins/lia-compaction/dist /app/plugins/lia-compaction/dist
+COPY plugins/lia-compaction/openclaw.plugin.json /app/plugins/lia-compaction/openclaw.plugin.json
 
 # The wrapper listens on $PORT.
 # IMPORTANT: Do not set a default PORT here.

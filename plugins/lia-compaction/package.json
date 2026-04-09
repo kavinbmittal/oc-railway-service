@@ -1,0 +1,24 @@
+{
+  "name": "lia-compaction",
+  "version": "1.0.0",
+  "description": "Q&A-preserving compaction provider for OpenClaw — keeps decisions, commitments, and conversation structure intact during context compaction.",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch"
+  },
+  "peerDependencies": {
+    "openclaw": "*"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.52.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "id": "lia-compaction",
+  "kind": "compaction-provider",
+  "name": "Lia Compaction",
+  "version": "1.0.0",
+  "description": "Q&A-preserving compaction that keeps conversation structure, decisions, commitments, and emotional context intact.",
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "model": {
+        "type": "string",
+        "description": "Model for summarization (provider/model format)",
+        "default": "anthropic/claude-sonnet-4-6"
+      }
+    },
+    "required": []
+  }
+}
