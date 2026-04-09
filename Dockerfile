@@ -87,9 +87,11 @@ COPY dashboard/dist ./dashboard/dist
 
 # Lia compaction provider plugin — Q&A-preserving compaction prompt
 COPY plugins/lia-compaction/package.json /app/plugins/lia-compaction/package.json
+COPY plugins/lia-compaction/openclaw.plugin.json /app/plugins/lia-compaction/openclaw.plugin.json
 RUN cd /app/plugins/lia-compaction && npm install --omit=dev --ignore-scripts && npm cache clean --force
 COPY plugins/lia-compaction/dist /app/plugins/lia-compaction/dist
-COPY plugins/lia-compaction/openclaw.plugin.json /app/plugins/lia-compaction/openclaw.plugin.json
+# OpenClaw also looks for manifest at dist/openclaw.plugin.json
+RUN cp /app/plugins/lia-compaction/openclaw.plugin.json /app/plugins/lia-compaction/dist/openclaw.plugin.json
 
 # The wrapper listens on $PORT.
 # IMPORTANT: Do not set a default PORT here.
