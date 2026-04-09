@@ -5,8 +5,8 @@
  */
 import { useState, useEffect, useMemo } from"react";
 import { getIssues, updateIssue } from"../api.js";
-import { List, LayoutGrid, Plus, Search, CircleDot, ChevronDown } from"lucide-react";
-import { formatTimeAgo } from"../utils/formatDate.js";
+import { List, LayoutGrid, Plus, Search, CircleDot, ChevronDown, FlaskConical } from"lucide-react";
+import { formatTimeAgo, formatTargetDate } from"../utils/formatDate.js";
 import { Skeleton } from"../components/ui/Skeleton.jsx";
 import { StatusBadge } from"../components/StatusBadge.jsx";
 import { EmptyState } from"../components/EmptyState.jsx";
@@ -33,8 +33,10 @@ const THEME_COLORS = [
 ];
 
 /** Single issue row inside a theme group */
-function IssueRow({ issue, onClick }) {
+function IssueRow({ issue, onClick, themeProxyMetrics = [] }) {
  const isDone = issue.status === "done" || issue.status === "cancelled";
+ // Resolve which proxy metric letters this issue is tagged to
+ const issuePmIds = (issue.proxy_metrics || []).map(pm => typeof pm === "string" ? pm : pm.id);
  return (
   <div
    onClick={onClick}
@@ -46,16 +48,86 @@ function IssueRow({ issue, onClick }) {
    <span className={`text-[15px] flex-1 truncate ${isDone ? "text-zinc-500 line-through decoration-zinc-600" : "text-zinc-200"}`}>
     {issue.title}
    </span>
+   {issuePmIds.length > 0 && (
+    <div className="flex items-center gap-1.5 shrink-0">
+     {themeProxyMetrics.map((pm, pmIdx) =>
+      issuePmIds.includes(pm.id) ? (
+       <span key={pm.id} className="text-[11px] px-2 py-0.5 rounded-full bg-zinc-800/60 border border-zinc-700/50 text-zinc-400 whitespace-nowrap">
+        {String.fromCharCode(97 + pmIdx)}. {pm.name}
+       </span>
+      ) : null
+     )}
+    </div>
+   )}
    <StatusBadge status={issue.status} />
+   {(() => {
+    const td = formatTargetDate(issue.target_date);
+    if (!td) return null;
+    return <span className={`text-[12px] shrink-0 ${td.colorClass}`}>{td.text === "overdue" ? "overdue" : td.text}</span>;
+   })()}
    {issue.assignee && (
-    <span className="text-[12px] text-zinc-400 w-24 truncate capitalize hidden sm:block">{issue.assignee}</span>
+    <span className="text-[12px] text-zinc-400 w-12 truncate capitalize hidden sm:block">{issue.assignee}</span>
    )}
    <span className="text-[12px] font-mono text-zinc-500 w-20 text-right shrink-0">{timeAgo(issue.updated)}</span>
   </div>
  );
 }
 
-export default function Issues({ projectSlug, navigate, themes = [] }) {
+const EXP_STATUS_STYLES = {
+ planned: "border-zinc-500/20 bg-zinc-500/10 text-zinc-400",
+ running: "border-cyan-500/20 bg-cyan-500/10 text-cyan-400",
+ complete: "border-emerald-500/20 bg-emerald-500/10 text-emerald-400",
+ killed: "border-red-500/20 bg-red-500/10 text-red-400",
+ paused: "border-amber-500/20 bg-amber-500/10 text-amber-400",
+};
+
+/** Mode badge for experiments */
+function ModeBadge({ mode }) {
+ const isAutoloop = (mode || "autoloop") === "autoloop";
+ return (
+  <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium border shrink-0 ${isAutoloop ? "border-orange-500/20 bg-orange-500/10 text-orange-400" : "border-blue-500/20 bg-blue-500/10 text-blue-400"}`}>
+   {isAutoloop ? "autoloop" : "one-shot"}
+  </span>
+ );
+}
+
+/** Single experiment row inside a theme group */
+function ExperimentRow({ exp, onClick, themeProxyMetrics = [] }) {
+ const expPmIds = (exp.proxy_metrics || []).map(pm => typeof pm === "string" ? pm : pm.id);
+ const statusCls = EXP_STATUS_STYLES[exp.status] || EXP_STATUS_STYLES.planned;
+ return (
+  <div
+   onClick={onClick}
+   className="flex items-center gap-4 px-5 py-3 border-t border-border/50 hover:bg-zinc-800/30 cursor-pointer transition-colors"
+  >
+   <FlaskConical size={14} className="text-cyan-500/60 shrink-0" />
+   <span className="text-[12px] font-mono text-zinc-500 shrink-0 whitespace-nowrap">{exp.dir}</span>
+   <ModeBadge mode={exp.mode} />
+   <span className="text-[15px] flex-1 truncate text-zinc-200">
+    {exp.name || exp.dir}
+   </span>
+   {expPmIds.length > 0 && (
+    <div className="flex items-center gap-1.5 shrink-0">
+     {themeProxyMetrics.map((pm, pmIdx) =>
+      expPmIds.includes(pm.id) ? (
+       <span key={pm.id} className="text-[11px] px-2 py-0.5 rounded-full bg-zinc-800/60 border border-zinc-700/50 text-zinc-400 whitespace-nowrap">
+        {String.fromCharCode(97 + pmIdx)}. {pm.name}
+       </span>
+      ) : null
+     )}
+    </div>
+   )}
+   <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-medium border shrink-0 ${statusCls}`}>
+    {(exp.status || "planned").charAt(0).toUpperCase() + (exp.status || "planned").slice(1)}
+   </span>
+   {exp.result_count > 0 && (
+    <span className="text-[12px] font-mono text-zinc-500 shrink-0">{exp.result_count} runs</span>
+   )}
+  </div>
+ );
+}
+
+export default function Issues({ projectSlug, navigate, themes = [], experiments = [] }) {
  const [issues, setIssues] = useState([]);
  const [loading, setLoading] = useState(true);
  const [view, setView] = useState("list");
@@ -217,8 +289,11 @@ export default function Issues({ projectSlug, navigate, themes = [] }) {
      {/* Theme groups */}
      {sortedThemes.map((theme, themeIdx) => {
       const themeIssues = filteredIssues.filter(i => i.theme === theme.id);
+      const themeExps = experiments.filter(e => e.theme === theme.id || e.theme === theme.title);
+      const totalItems = themeIssues.length + themeExps.length;
       const isExpanded = expandedThemes[theme.id] !== false; // default expanded
       const themeColors = THEME_COLORS[themeIdx % THEME_COLORS.length];
+      const sortedPMs = (theme.proxy_metrics || []).sort((a, b) => (a.order ?? 999) - (b.order ?? 999));
 
       return (
        <div key={theme.id} className="bg-card border border-border rounded-[2px] shadow-sm flex flex-col">
@@ -232,7 +307,7 @@ export default function Issues({ projectSlug, navigate, themes = [] }) {
          </div>
          <div className={`text-[15px] font-medium ${themeColors.titleText}`}>{theme.title}</div>
          <div className={`text-[11px] font-mono ${themeColors.countBg} border ${themeColors.countBorder} px-1.5 py-0.5 rounded-[2px] ${themeColors.text}`}>
-          {themeIssues.length}
+          {totalItems}
          </div>
          <ChevronDown size={14} className={`${themeColors.chevron} ml-auto transition-transform duration-200 ${isExpanded ? "" : "-rotate-90"}`} />
         </div>
@@ -241,9 +316,9 @@ export default function Issues({ projectSlug, navigate, themes = [] }) {
         {isExpanded && (
          <div className="border-t border-border/50">
           {/* Proxy Metrics */}
-          {(theme.proxy_metrics || []).length > 0 && (
+          {sortedPMs.length > 0 && (
            <div className="ml-9 mb-2 mt-2 space-y-1.5">
-            {(theme.proxy_metrics || []).sort((a, b) => (a.order ?? 999) - (b.order ?? 999)).map((pm, pmIdx) => (
+            {sortedPMs.map((pm, pmIdx) => (
              <div key={pm.id} className="flex items-center gap-2 text-[12px] text-zinc-400">
               <div className="w-4 h-4 rounded bg-zinc-800/50 border border-zinc-700/50 flex items-center justify-center text-[9px] font-mono text-zinc-500 flex-shrink-0">
                {String.fromCharCode(97 + pmIdx)}
@@ -254,15 +329,18 @@ export default function Issues({ projectSlug, navigate, themes = [] }) {
            </div>
           )}
 
-          {/* Issue rows or empty state */}
-          {themeIssues.length === 0 ? (
+          {/* Issue + experiment rows or empty state */}
+          {totalItems === 0 ? (
            <div className="text-center text-[15px] text-zinc-500 py-4 border-t border-border/50">
-            No issues for this theme
+            No work for this theme
            </div>
           ) : (
            <div>
             {themeIssues.map(issue => (
-             <IssueRow key={issue.id} issue={issue} onClick={() => handleIssueClick(issue)} />
+             <IssueRow key={issue.id} issue={issue} onClick={() => handleIssueClick(issue)} themeProxyMetrics={sortedPMs} />
+            ))}
+            {themeExps.map(exp => (
+             <ExperimentRow key={exp.dir} exp={exp} onClick={() => navigate("experiment-detail", { slug: projectSlug, dir: exp.dir })} themeProxyMetrics={sortedPMs} />
             ))}
            </div>
           )}
@@ -273,26 +351,34 @@ export default function Issues({ projectSlug, navigate, themes = [] }) {
      })}
 
      {/* Unthemed group */}
-     {unthemedIssues.length > 0 && (
-      <div className="bg-card border border-border rounded-[2px] shadow-sm flex flex-col">
-       <div
-        onClick={() => toggleTheme("_unthemed")}
-        className="flex items-center gap-3 px-5 py-3 bg-zinc-800/[0.2] hover:bg-zinc-800/[0.4] transition-colors cursor-pointer select-none"
-       >
-        <div className="w-6 h-6 rounded-full border border-dashed border-zinc-700 bg-zinc-800/30 flex items-center justify-center text-[11px] font-medium text-zinc-400 flex-shrink-0">&mdash;</div>
-        <div className="text-[15px] font-medium text-zinc-200">Unthemed</div>
-        <div className="text-[11px] font-mono bg-zinc-800/50 border border-zinc-700/50 px-1.5 py-0.5 rounded-[2px] text-zinc-400">{unthemedIssues.length}</div>
-        <ChevronDown size={14} className={`text-zinc-500 ml-auto transition-transform duration-200 ${expandedThemes["_unthemed"] === false ? "-rotate-90" : ""}`} />
-       </div>
-       {expandedThemes["_unthemed"] !== false && (
-        <div className="border-t border-border/50">
-         {unthemedIssues.map(issue => (
-          <IssueRow key={issue.id} issue={issue} onClick={() => handleIssueClick(issue)} />
-         ))}
+     {(() => {
+      const unthemedExps = experiments.filter(e => !e.theme || !sortedThemes.find(t => t.id === e.theme || t.title === e.theme));
+      const unthemedTotal = unthemedIssues.length + unthemedExps.length;
+      if (unthemedTotal === 0) return null;
+      return (
+       <div className="bg-card border border-border rounded-[2px] shadow-sm flex flex-col">
+        <div
+         onClick={() => toggleTheme("_unthemed")}
+         className="flex items-center gap-3 px-5 py-3 bg-zinc-800/[0.2] hover:bg-zinc-800/[0.4] transition-colors cursor-pointer select-none"
+        >
+         <div className="w-6 h-6 rounded-full border border-dashed border-zinc-700 bg-zinc-800/30 flex items-center justify-center text-[11px] font-medium text-zinc-400 flex-shrink-0">&mdash;</div>
+         <div className="text-[15px] font-medium text-zinc-200">Untagged</div>
+         <div className="text-[11px] font-mono bg-zinc-800/50 border border-zinc-700/50 px-1.5 py-0.5 rounded-[2px] text-zinc-400">{unthemedTotal}</div>
+         <ChevronDown size={14} className={`text-zinc-500 ml-auto transition-transform duration-200 ${expandedThemes["_unthemed"] === false ? "-rotate-90" : ""}`} />
         </div>
-       )}
-      </div>
-     )}
+        {expandedThemes["_unthemed"] !== false && (
+         <div className="border-t border-border/50">
+          {unthemedIssues.map(issue => (
+           <IssueRow key={issue.id} issue={issue} onClick={() => handleIssueClick(issue)} />
+          ))}
+          {unthemedExps.map(exp => (
+           <ExperimentRow key={exp.dir} exp={exp} onClick={() => navigate("experiment-detail", { slug: projectSlug, dir: exp.dir })} />
+          ))}
+         </div>
+        )}
+       </div>
+      );
+     })()}
     </div>
    )}
   </div>

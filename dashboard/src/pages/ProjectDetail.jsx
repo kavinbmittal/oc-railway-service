@@ -22,6 +22,7 @@ import { CollapsibleSection } from"../components/CollapsibleSection.jsx";
 import ApprovalCard from "../components/ApprovalCard.jsx";
 import { RejectModal } from "../components/RejectModal.jsx";
 import { CreateExperiment } from "../components/CreateExperiment.jsx";
+import { EditStrategyModal } from "../components/EditStrategyModal.jsx";
 
 const THEME_COLORS = [
  { badgeBg: "bg-indigo-500/10", badgeBorder: "border-indigo-500/20", text: "text-indigo-400" },
@@ -104,6 +105,8 @@ export default function ProjectDetail({ projectId, navigate, initialTab }) {
  const [experiments, setExperiments] = useState([]);
  const [themes, setThemes] = useState([]);
  const [loading, setLoading] = useState(true);
+ const [showEditStrategy, setShowEditStrategy] = useState(false);
+ const [strategyToast, setStrategyToast] = useState(null);
 
  useEffect(() => {
   Promise.all([
@@ -238,13 +241,22 @@ export default function ProjectDetail({ projectId, navigate, initialTab }) {
       {project.title || projectId}
      </h1>
      <StatusBadge status={project.status} />
-     <button
-      onClick={() => navigate("edit-project", projectId)}
-      className="ml-auto px-3 py-1.5 rounded-[6px] border border-border bg-card text-[14px] font-medium text-muted-foreground hover:bg-accent hover:text-foreground transition-colors flex items-center gap-1.5"
-     >
-      <Pencil size={13} />
-      Edit
-     </button>
+     <div className="ml-auto flex items-center gap-2">
+      <button
+       onClick={() => setShowEditStrategy(true)}
+       className="px-3 py-1.5 rounded-[6px] border border-indigo-500/50 bg-indigo-500/10 text-[14px] font-medium text-indigo-300 hover:bg-indigo-500/20 transition-colors flex items-center gap-1.5"
+      >
+       <Target size={13} />
+       Edit Strategy
+      </button>
+      <button
+       onClick={() => navigate("edit-project", projectId)}
+       className="px-3 py-1.5 rounded-[6px] border border-border bg-card text-[14px] font-medium text-muted-foreground hover:bg-accent hover:text-foreground transition-colors flex items-center gap-1.5"
+      >
+       <Pencil size={13} />
+       Edit
+      </button>
+     </div>
     </div>
 
     {/* Metadata */}
@@ -466,7 +478,7 @@ export default function ProjectDetail({ projectId, navigate, initialTab }) {
     {/* ──────────────── ISSUES TAB ──────────────── */}
     <TabsContent value="issues">
      <div className="mt-6">
-      <Issues projectSlug={projectId} navigate={navigate} themes={themes.filter((t) => t.status === "approved")} />
+      <Issues projectSlug={projectId} navigate={navigate} themes={themes.filter((t) => t.status === "approved")} experiments={experiments} />
      </div>
     </TabsContent>
 
@@ -576,6 +588,29 @@ export default function ProjectDetail({ projectId, navigate, initialTab }) {
    </Tabs>
    </div>
    </div>
+
+   {/* Edit Strategy Modal */}
+   {showEditStrategy && (
+    <EditStrategyModal
+     project={project}
+     themes={themes}
+     projectSlug={projectId}
+     onClose={() => setShowEditStrategy(false)}
+     onSaved={(msg) => {
+      setStrategyToast(msg);
+      // Refresh themes
+      getThemes(projectId).then(setThemes).catch(() => {});
+      setTimeout(() => setStrategyToast(null), 5000);
+     }}
+    />
+   )}
+
+   {/* Toast */}
+   {strategyToast && (
+    <div className="fixed bottom-6 right-6 z-50 px-4 py-3 rounded-[6px] border border-emerald-500/30 bg-emerald-500/10 text-[14px] text-emerald-300 shadow-lg animate-in fade-in slide-in-from-bottom-2">
+     {strategyToast}
+    </div>
+   )}
   </div>
  );
 }
@@ -958,11 +993,17 @@ function ExperimentsTab({ experiments, themes = [], projectSlug, onRefresh, navi
        return (
        <div key={exp.dir} onClick={() => navigate("experiment-detail", { slug: projectSlug, dir: exp.dir })} className="bg-card border border-border rounded-[2px] shadow-sm p-[20px] flex flex-col h-full gap-4 cursor-pointer hover:bg-zinc-800/30 transition-colors">
         <div className="space-y-2.5">
-         {exp.status && exp.status !== "unknown" && (
-          <div>
-           <StatusBadge status={exp.status} />
-          </div>
-         )}
+         <div className="flex items-center gap-2">
+          {exp.status && exp.status !== "unknown" && <StatusBadge status={exp.status} />}
+          {(() => {
+           const isAutoloop = (exp.mode || "autoloop") === "autoloop";
+           return (
+            <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium border ${isAutoloop ? "border-orange-500/20 bg-orange-500/10 text-orange-400" : "border-blue-500/20 bg-blue-500/10 text-blue-400"}`}>
+             {isAutoloop ? "autoloop" : "one-shot"}
+            </span>
+           );
+          })()}
+         </div>
          <h3 className="text-[15px] font-medium text-zinc-100">{exp.name}</h3>
 
          {/* Theme + Proxy Metric pill row */}

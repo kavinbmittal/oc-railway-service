@@ -1,5 +1,29 @@
 # TODO
 
+## 2026-03-24-edit-strategy
+
+### Backend (server.js)
+- [x] POST `/mc/api/projects/:slug/strategy/preview` — compute impact of proposed theme changes
+- [x] POST `/mc/api/projects/:slug/strategy` — apply strategy revision with crash-safe write order
+
+### Frontend API (api.js)
+- [x] `previewStrategyChanges(slug, themes)` — call preview endpoint
+- [x] `applyStrategyChanges(slug, payload)` — call apply endpoint
+
+### Frontend — EditStrategyModal component
+- [x] Step 1: Strategy editor — mission/NSM read-only, themes editable (title, description, caps, metrics)
+- [x] Add/remove metrics (min 1, max 3), add theme, retire theme
+- [x] Step 2: Impact review — affected issues/experiments with keep/discard checkboxes
+- [x] Confirm flow — calls apply endpoint, shows toast, closes modal
+
+### Integration — ProjectDetail
+- [x] "Edit Strategy" button on Overview tab header (indigo outline)
+- [x] Wire modal open/close, refresh themes after save
+- [x] Toast notification on success
+
+### Build
+- [x] Build dist
+
 ## 2026-03-22-unified-approvals
 - [x] Backend: `GET /mc/api/approvals` includes proposed issues with `_source: "issue"` and `type` field
 - [x] Backend: `GET /mc/api/approvals/:id` resolves proposed issue IDs
@@ -102,6 +126,35 @@
 ### Build dist
 - [x] Build and commit
 
+## 2026-03-23-autoloop-experiments
+
+### Server
+- [x] `parseExperimentMeta()`: extract `## Required Tools` section into `required_tools` array
+- [x] `deriveStatusFromResults()`: add `pause` decision → `paused` status
+- [x] `buildPhases()`: add `pause` as a phase node
+- [x] Inbox: `pause` decision badge color (orange)
+- [x] Approval detail enrichment: attach `required_tools` to experiment gate responses
+
+### Frontend — ApprovalDetail
+- [x] Render Required Tools card with green/red checklist
+- [x] Block Approve button when any tool is unchecked
+
+### Frontend — ExperimentDetail
+- [x] `paused` status badge with orange pulsing dot
+
+### Build
+- [x] Build dist
+
+### Protocol (Railway API)
+- [x] Update `experiments.md`: auto-execute rule, Required Tools format, pause decision, re-validate per action
+- [x] Update `autoresearch.md`: same changes
+- [x] Merge autoresearch.md into experiments.md — single canonical protocol with eval harness, never-stop rule, three-check tool validation
+- [x] autoresearch.md replaced with redirect to experiments.md
+
+### Deferred
+- [ ] ExperimentDetail page: show Required Tools section (not just approval view) — effort S
+- [ ] Per-tool `## How to Execute` / `## How to Measure` sections in `shared/tools/*.md` — Kavin owns
+
 ## 2026-03-23-issue-cost-governance
 
 ### Dashboard Build
@@ -128,8 +181,46 @@
 - [ ] Teach agents to read `shared/model-routing.json` and use model/thinking fields at spawn time — effort M
 - [ ] Teach agents to write `budget_status` + budget approval JSON when cap is hit — effort S
 
+## 2026-03-26-blocked-on-operator
+
+### Backend
+- [x] Add `blocked_on_operator` scan to inbox issues loop
+- [x] Add `blocked` to counts object + sidebar badge
+
+### Frontend
+- [x] Project grouping across all three Briefing sections
+- [x] Blocker row rendering with inline reason
+- [x] Build dist
+
+### Follow-up (separate oc-sync)
+- [ ] Protocol update: teach agents to set/clear blocker fields
+
+## 2026-03-26-dashboard-briefing
+
+### Backend
+- [x] Add `overdue_issue` item type to `/mc/api/inbox` (issues scan loop)
+- [x] Add `paused_experiment` item type to `/mc/api/inbox` (new scan loop)
+- [x] Add `overdue` and `paused` to counts object
+
+### Frontend
+- [x] Create `Briefing.jsx` — three priority-ordered sections with visual hierarchy
+- [x] Update `App.jsx` — swap route, keep `#/inbox` as alias
+- [x] Update `Sidebar.jsx` — rename to "Briefing", badge = S1+S2 only
+- [x] Update `Overview.jsx` — banner navigates to "briefing"
+- [x] Delete `Inbox.jsx`
+- [x] Build dist
+
 ## v2: One-tap model switch from Telegram
 
 When a model fallback alert fires, include an inline "Switch" button that rewrites `agents.defaults.model.primary` in `openclaw.json` via an HMAC-secured `/ops/model-switch` endpoint. Also add an "Undo" button to the confirmation message so switching back is one more tap.
 
 Deferred because it writes to `openclaw.json` on the live volume — needs careful testing for race conditions and a rollback mechanism before shipping.
+
+## 2026-04-01-clean-decisions-queue
+
+- [ ] Backend: inbox endpoint — skip `revision_requested` items from Decisions Waiting
+- [ ] Backend: inbox endpoint — skip malformed approvals (no `gate` + no `what`)
+- [ ] Backend: approvals endpoint — skip malformed approvals (no `gate` + no `what`)
+- [ ] Frontend: rebuild dist
+- [ ] Verify: confirm both filters work correctly
+

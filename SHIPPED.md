@@ -1,7 +1,35 @@
 # SHIPPED.md
 
+## 2026-04-01
+- **fix:** Decisions Waiting no longer shows items you've already requested revision on — they reappear when the agent resubmits (`d357c7b`)
+- **fix:** Ghost "Pending approval" / "unknown" entries with no content filtered out of Briefing and Approvals (`d357c7b`)
+- **fix:** Duplicate approvals no longer appear — deduplication by ID across all sources on both Briefing and Approvals (`4f744c9`)
+- **fix:** Briefing only shows untouched approvals — if you've reviewed, commented, or requested revision on something, it drops out of Decisions Waiting until the agent resubmits fresh; also fixes approved items reappearing due to filename/ID mismatch in pending files (`eee82af`)
+
+## 2026-03-30
+- **feat:** Content-publish gate support — new `content-publish` approval gate type with teal "Content" badge, "Content for Review" detail rendering, and metadata sidebar showing post count, platforms, and linked issue/experiment (`5d192c6`)
+- **fix:** Approval detail 404 when filename ≠ ID — detail endpoint now falls back to scanning files by internal ID field instead of only matching by filename (`5d192c6`)
+
+## 2026-03-26
+- **fix:** One standup per project per day — heartbeat now tells agents to check if today's file exists before writing; filename must be exactly `YYYY-MM-DD.md` (no agent name, no suffix); protocol updated on Railway
+- **fix:** Only leads post standups — strengthened heartbeat message so agents skip projects they don't lead; deleted fake `standups` project directory; all project endpoints now require PROJECT.md to exist (stray directories ignored); cleaned up non-lead standup files from lia-first-100
+- **fix:** Heartbeat cron now explicitly tells agents only leads post standups; `_org-level` filtered from all project-listing endpoints (sidebar, costs, approvals, agents — not just inbox)
+- **feat:** Blocked-on-operator detection — agents can flag when they're waiting on you (`blocked_on: "operator"`); shows in Briefing Section 1 with orange badge, inline reason text, and agent name; API scans issues for blocker fields
+- **feat:** Project-grouped Briefing — all three sections now group items by project with lightweight sub-headers; projects sorted by urgency (oldest item first); items within a project sorted oldest-first
+- **feat:** Briefing page replaces Inbox — three priority-ordered sections (Decisions Waiting, Risks, What Happened) with decreasing visual weight; elevated card with red/amber accent for decisions, standard card for risks, muted rows for context; new overdue issue and paused experiment detection in API; sidebar badge counts only actionable items (Sections 1+2); `#/inbox` aliases to `#/briefing`
+
+## 2026-03-25
+- **fix:** Only project leads post standups — protocol updated, non-lead agents skip standup writes; inbox groups standups by project+date (no more 24 duplicate rows); `_org-level` filtered from inbox
+- **feat:** Issue target dates — agents can propose a due date when creating issues, editable from the dashboard; issues list shows friendly relative text ("overdue" in red, "today"/"tomorrow" in amber, "in X days" in gray); issue detail shows target date in header metadata and sidebar; create and edit forms include a date picker field
+
+## 2026-03-24
+- **feat:** Edit Strategy modal — restructure project themes mid-flight from the Overview tab: inline edit theme titles/descriptions/caps, add/remove proxy metrics (min 1, max 3), add new themes, retire old ones; two-step flow with impact review showing affected issues/experiments with keep/discard checkboxes; crash-safe write order (notification → themes → cascade → archive → activity log); agent reconciliation via heartbeat notification
+- **feat:** Merged autoresearch + experiments into single canonical protocol — eval harness per domain, never-stop iteration rule, three-check tool validation (agent TOOLS.md + registry + tool doc), auto-execute on approval, pause/resume on tool failure
+
 ## 2026-03-23
+- **feat:** Autoloop experiments — Required Tools checklist on experiment approvals (green/red per tool), approve blocked until all tools verified; `pause` experiment decision with orange badge, pulsing dot, phase arc node, and inbox notification; Required Tools stripped from plan markdown to avoid duplication
 - **feat:** Edit Project page — edit name, mission, NSM, lead, status, budget, workdir, and approval gates; "Edit" button on project detail header
+- **feat:** Issue rows show proxy metric letter pills (a, b, c) to the left of status badges, so you can see which metrics each issue contributes to at a glance
 - **feat:** Proxy metrics on Issues page now show target values (→ target) matching the overview page
 - **feat:** Agent comments auto-format into bullet lists — flat text becomes structured with bold labels, bullets for sentences and comma lists, backticked file paths; comment timestamps now display correctly
 - **refactor:** Ship-ready cleanup — removed dead milestones code, 4 unused components, dead getDashboard endpoint, unused CSS animation, fixed variable typos, deleted stale spec docs (919 lines removed)

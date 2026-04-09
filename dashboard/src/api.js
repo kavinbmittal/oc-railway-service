@@ -163,11 +163,11 @@ export async function getIssue(id, projectSlug) {
   return fetchJSON(`${BASE}/issues/${encodeURIComponent(id)}?project=${encodeURIComponent(projectSlug)}`);
 }
 
-export async function createIssue({ project, title, description, priority, assignee, labels, theme, proxy_metrics, complexity, budget }) {
+export async function createIssue({ project, title, description, priority, assignee, labels, theme, proxy_metrics, complexity, budget, target_date }) {
   const res = await fetch(`${BASE}/issues`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ project, title, description, priority, assignee, labels, theme, proxy_metrics, complexity, budget }),
+    body: JSON.stringify({ project, title, description, priority, assignee, labels, theme, proxy_metrics, complexity, budget, target_date }),
   });
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
@@ -309,11 +309,11 @@ export async function getExperiments(projectSlug) {
   return data.experiments || [];
 }
 
-export async function createExperiment({ project, name, hypothesis, proxy_metric, target_value, program_md, theme }) {
+export async function createExperiment({ project, name, hypothesis, proxy_metric, target_value, program_md, theme, playbook, eval_method, decision_triggers, constraints }) {
   const res = await fetch(`${BASE}/experiments`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ project, name, hypothesis, proxy_metric, target_value, program_md, theme }),
+    body: JSON.stringify({ project, name, hypothesis, proxy_metric, target_value, program_md, theme, playbook, eval_method, decision_triggers, constraints }),
   });
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
@@ -324,6 +324,34 @@ export async function createExperiment({ project, name, hypothesis, proxy_metric
 
 export async function getExperiment(dir, projectSlug) {
   return fetchJSON(`${BASE}/experiments/${encodeURIComponent(dir)}?project=${encodeURIComponent(projectSlug)}`);
+}
+
+// --- Strategy API ---
+
+export async function previewStrategyChanges(projectSlug, themes) {
+  const res = await fetch(`${BASE}/projects/${encodeURIComponent(projectSlug)}/strategy/preview`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ themes }),
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.error || `${res.status} ${res.statusText}`);
+  }
+  return res.json();
+}
+
+export async function applyStrategyChanges(projectSlug, payload) {
+  const res = await fetch(`${BASE}/projects/${encodeURIComponent(projectSlug)}/strategy`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.error || `${res.status} ${res.statusText}`);
+  }
+  return res.json();
 }
 
 // --- Themes API ---
@@ -436,6 +464,86 @@ export async function resolveApproval({ project, id, decision, comment, requeste
     writeFile(`shared/projects/${project}/approvals/pending/${id}.json`, JSON.stringify(tombstone, null, 2)),
     writeFile(`shared/projects/${project}/notifications/${timestamp}-approval-${id}.json`, JSON.stringify(notification, null, 2)),
   ]);
+}
+
+// Resolve a content-publish gate with per-post decisions
+export async function resolveContentReview({ project, id, posts, requester, gate, what, created }) {
+  const now = new Date().toISOString();
+  const timestamp = Date.now();
+
+  // Gate is approved only when every post is approved or rejected (no revision_requested)
+  const hasRevisions = posts.some((p) => p.status === "revision_requested");
+  const decision = hasRevisions ? "revision_requested" : "approved";
+
+  if (hasRevisions) {
+    // Keep in pending with per-post feedback — nothing gets scheduled
+    const updated = {
+      id,
+      project,
+      requester,
+      gate,
+      what,
+      created,
+      status: "revision_requested",
+      posts,
+      revision_requested_at: now,
+      revision_requested_by: "kavin",
+    };
+
+    const notification = {
+      type: "approval-revision-requested",
+      to: requester,
+      project,
+      approval_id: id,
+      feedback: posts.filter((p) => p.status === "revision_requested").map((p) => `${p.title}: ${p.comment}`).join("\n"),
+      created: now,
+      read: false,
+    };
+
+    await Promise.all([
+      writeFile(`shared/projects/${project}/approvals/pending/${id}.json`, JSON.stringify(updated, null, 2)),
+      writeFile(`shared/projects/${project}/notifications/${timestamp}-revision-${id}.json`, JSON.stringify(notification, null, 2)),
+    ]);
+  } else {
+    // All posts approved/rejected — resolve the gate
+    const resolved = {
+      id,
+      project,
+      requester,
+      gate,
+      what,
+      created,
+      status: decision,
+      resolved_at: now,
+      resolved_by: "kavin",
+      decision,
+      posts,
+    };
+
+    const tombstone = {
+      id,
+      status: "resolved",
+      resolved_at: now,
+      see: `approvals/resolved/${id}.json`,
+    };
+
+    const notification = {
+      type: "approval-resolved",
+      to: requester,
+      project,
+      approval_id: id,
+      decision,
+      comment: null,
+      created: now,
+      read: false,
+    };
+
+    await Promise.all([
+      writeFile(`shared/projects/${project}/approvals/resolved/${id}.json`, JSON.stringify(resolved, null, 2)),
+      writeFile(`shared/projects/${project}/approvals/pending/${id}.json`, JSON.stringify(tombstone, null, 2)),
+      writeFile(`shared/projects/${project}/notifications/${timestamp}-approval-${id}.json`, JSON.stringify(notification, null, 2)),
+    ]);
+  }
 }
 
 export async function requestRevision({ project, id, feedback, requester, gate, what, why, created, isIssue }) {

@@ -43,7 +43,7 @@ const WORKSPACE_DIR =
 // Canonical heartbeat message — source of truth is shared/protocols/projects.md
 const DASHBOARD_URL = "https://dash.belowthesurface.studio/mc";
 
-const HEARTBEAT_MESSAGE = `Project heartbeat (scan only — do NOT do actual work): Read shared/protocols/projects.md. Check shared/projects/ for projects where you are lead. (1) Check notifications/ — process and delete. (2) Check issues/ — update statuses, propose new issues if needed (status: proposed). (3) Post daily standup if not done today. (4) If .budget-exceeded exists, message Kavin you are paused. Do NOT execute work items in this turn. When referencing the dashboard, always include a direct link: ${DASHBOARD_URL}#/projects/{project-slug}/issues for issues, ${DASHBOARD_URL}#/projects/{project-slug} for project overview.`;
+const HEARTBEAT_MESSAGE = `Project heartbeat (scan only — do NOT do actual work): Read shared/protocols/projects.md. Check shared/projects/ — ONLY process projects where **Lead:** matches YOUR name in PROJECT.md. Skip ALL other projects entirely. For each project you lead: (1) Check notifications/ — process and delete. (2) Check issues/ — update statuses, propose new issues if needed (status: proposed, include target_date). (3) Standup: list files in standups/. If ANY file starting with today's date (YYYY-MM-DD) exists, skip — do NOT write another. If none exists, write exactly one file named YYYY-MM-DD.md (no agent name, no suffix, no timestamp). (4) If .budget-exceeded exists, message Kavin you are paused. NEVER write standups or any files to projects you do not lead. Do NOT execute work items in this turn. When referencing the dashboard, always include a direct link: ${DASHBOARD_URL}#/projects/{project-slug}/issues for issues, ${DASHBOARD_URL}#/projects/{project-slug} for project overview.`;
 
 // Protect /setup with a user-provided password.
 const SETUP_PASSWORD = process.env.SETUP_PASSWORD?.trim();
@@ -1528,7 +1528,7 @@ app.delete("/mc/api/files", requireSetupAuth, (req, res) => {
 function parseExperimentMeta(programMd) {
   const meta = {};
   // Extract theme ID from "## Theme\ntheme-xxx" or "## Theme\ntheme-xxx (Title)"
-  const themeMatch = programMd.match(/## Theme\s*\n\s*(theme-[\w-]+)/);
+  const themeMatch = programMd.match(/## Theme\s*\n\s*([\w-]+)/);
   if (themeMatch) meta.theme = themeMatch[1];
   // Extract hypothesis
   const hypoMatch = programMd.match(/## Hypothesis\s*\n([\s\S]*?)(?=\n##|$)/);
@@ -1544,6 +1544,31 @@ function parseExperimentMeta(programMd) {
       return idOnly ? { id: idOnly[1], contribution: null } : null;
     }).filter(Boolean);
   }
+  // Extract required tools: "- [x] tool desc" or "- [ ] tool desc"
+  const toolsSection = programMd.match(/## Required Tools\s*\n([\s\S]*?)(?=\n##|$)/);
+  if (toolsSection) {
+    const toolLines = toolsSection[1].trim().split("\n").filter((l) => /^- \[[ x]\]/.test(l));
+    meta.required_tools = toolLines.map((line) => {
+      const checked = line.startsWith("- [x]");
+      const description = line.replace(/^- \[[ x]\]\s*/, "").trim();
+      return { checked, description };
+    });
+  }
+  // Extract playbook section
+  const playbookMatch = programMd.match(/## Playbook\s*\n([\s\S]*?)(?=\n##|$)/);
+  if (playbookMatch) meta.playbook = playbookMatch[1].trim();
+  // Extract eval method section
+  const evalMatch = programMd.match(/## Eval Method\s*\n([\s\S]*?)(?=\n##|$)/);
+  if (evalMatch) meta.eval_method = evalMatch[1].trim();
+  // Extract decision triggers section
+  const triggersMatch = programMd.match(/## Decision Triggers\s*\n([\s\S]*?)(?=\n##|$)/);
+  if (triggersMatch) meta.decision_triggers = triggersMatch[1].trim();
+  // Extract constraints section
+  const constraintsMatch = programMd.match(/## Constraints\s*\n([\s\S]*?)(?=\n##|$)/);
+  if (constraintsMatch) meta.constraints = constraintsMatch[1].trim();
+  // Extract mode: "one-shot" or "autoloop", default autoloop
+  const modeMatch = programMd.match(/## Mode\s*\n\s*(.+)/);
+  meta.mode = modeMatch ? modeMatch[1].trim().toLowerCase() : "autoloop";
   return meta;
 }
 
@@ -1560,10 +1585,19 @@ function findExperimentProgram(projectsDir, projectName, approvalData) {
     }
   }
 
-  // Otherwise, find the most recent experiment directory (highest exp-NNN)
+  // Try to extract experiment ID from approval ID (e.g. "experiment-start-exp-003" → "exp-003")
+  const expMatch = (approvalData.id || "").match(/(exp-\d+)/);
+  if (expMatch) {
+    const programPath = path.join(expDir, expMatch[1], "program.md");
+    if (fs.existsSync(programPath)) {
+      try { return fs.readFileSync(programPath, "utf8"); } catch { /* skip */ }
+    }
+  }
+
+  // Fallback: find the most recent experiment directory (highest exp-NNN)
   try {
     const entries = fs.readdirSync(expDir, { withFileTypes: true })
-      .filter((e) => e.isDirectory())
+      .filter((e) => e.isDirectory() && !e.name.startsWith("_"))
       .sort((a, b) => b.name.localeCompare(a.name)); // descending — most recent first
     for (const entry of entries) {
       const programPath = path.join(expDir, entry.name, "program.md");
@@ -1582,21 +1616,66 @@ app.get("/mc/api/approvals/:id", requireSetupAuth, (req, res) => {
   // Search project-format approvals (pending + resolved)
   const projectsDir = path.join(STATE_DIR, "shared", "projects");
   if (fs.existsSync(projectsDir)) {
-    const projects = fs.readdirSync(projectsDir, { withFileTypes: true }).filter((e) => e.isDirectory());
+    const projects = fs.readdirSync(projectsDir, { withFileTypes: true }).filter((e) => e.isDirectory() && !e.name.startsWith("_"));
+    // Helper: find a pending approval by id — first try direct filename, then scan all files
+    function findPendingApproval(projectsDir, projName, id) {
+      const pendingDir = path.join(projectsDir, projName, "approvals", "pending");
+      if (!fs.existsSync(pendingDir)) return null;
+      // Fast path: filename matches id
+      const directPath = path.join(pendingDir, `${id}.json`);
+      if (fs.existsSync(directPath)) {
+        try {
+          return { data: JSON.parse(fs.readFileSync(directPath, "utf8")), file: `${id}.json` };
+        } catch { /* fall through to scan */ }
+      }
+      // Slow path: scan all files and match on internal id field
+      try {
+        const files = fs.readdirSync(pendingDir).filter((f) => f.endsWith(".json"));
+        for (const file of files) {
+          try {
+            const raw = fs.readFileSync(path.join(pendingDir, file), "utf8");
+            const data = JSON.parse(raw);
+            if (data.id === id) return { data, file };
+          } catch { /* skip malformed */ }
+        }
+      } catch { /* skip */ }
+      return null;
+    }
+
+    // Helper: find a resolved approval by id — first try direct filename, then scan all files
+    function findResolvedApproval(projectsDir, projName, id) {
+      const resolvedDir = path.join(projectsDir, projName, "approvals", "resolved");
+      if (!fs.existsSync(resolvedDir)) return null;
+      const directPath = path.join(resolvedDir, `${id}.json`);
+      if (fs.existsSync(directPath)) {
+        try {
+          return { data: JSON.parse(fs.readFileSync(directPath, "utf8")), file: `${id}.json` };
+        } catch { /* fall through to scan */ }
+      }
+      try {
+        const files = fs.readdirSync(resolvedDir).filter((f) => f.endsWith(".json"));
+        for (const file of files) {
+          try {
+            const raw = fs.readFileSync(path.join(resolvedDir, file), "utf8");
+            const data = JSON.parse(raw);
+            if (data.id === id) return { data, file };
+          } catch { /* skip malformed */ }
+        }
+      } catch { /* skip */ }
+      return null;
+    }
+
     for (const proj of projects) {
       // Check pending
-      const pendingPath = path.join(projectsDir, proj.name, "approvals", "pending", `${id}.json`);
-      if (fs.existsSync(pendingPath)) {
+      const pendingResult = findPendingApproval(projectsDir, proj.name, id);
+      if (pendingResult) {
         try {
-          const raw = fs.readFileSync(pendingPath, "utf8");
-          const data = JSON.parse(raw);
+          const data = pendingResult.data;
           if (data.status === "resolved") {
             // It's a tombstone — look in resolved
-            const resolvedPath = path.join(projectsDir, proj.name, "approvals", "resolved", `${id}.json`);
-            if (fs.existsSync(resolvedPath)) {
-              const resolvedRaw = fs.readFileSync(resolvedPath, "utf8");
-              const resolvedData = JSON.parse(resolvedRaw);
-              return res.json({ ...resolvedData, _project: proj.name });
+            const resolvedResult = findResolvedApproval(projectsDir, proj.name, id);
+            if (resolvedResult) {
+              return res.json({ ...resolvedResult.data, _project: proj.name });
             }
           }
           const enriched = { ...data, _project: proj.name };
@@ -1605,13 +1684,17 @@ app.get("/mc/api/approvals/:id", requireSetupAuth, (req, res) => {
             const programMd = findExperimentProgram(projectsDir, proj.name, data);
             if (programMd) {
               enriched.programMd = programMd;
-              // Parse theme/hypothesis/proxy_metrics from program.md when gate is thin
-              if (!data.hypothesis || !data.theme) {
-                const meta = parseExperimentMeta(programMd);
-                if (!data.hypothesis && meta.hypothesis) enriched.hypothesis = meta.hypothesis;
-                if (!data.theme && meta.theme) { data.theme = meta.theme; enriched.theme = meta.theme; }
-                if (!data.proxy_metrics && meta.proxy_metrics) { data.proxy_metrics = meta.proxy_metrics; enriched.proxy_metrics = meta.proxy_metrics; }
-              }
+              // Always parse for required_tools; also parse theme/hypothesis when gate is thin
+              const meta = parseExperimentMeta(programMd);
+              if (meta.required_tools) enriched.required_tools = meta.required_tools;
+              if (!data.hypothesis && meta.hypothesis) enriched.hypothesis = meta.hypothesis;
+              if (!data.theme && meta.theme) { data.theme = meta.theme; enriched.theme = meta.theme; }
+              if (!data.proxy_metrics && meta.proxy_metrics) { data.proxy_metrics = meta.proxy_metrics; enriched.proxy_metrics = meta.proxy_metrics; }
+              if (meta.playbook) enriched.playbook = meta.playbook;
+              if (meta.eval_method) enriched.eval_method = meta.eval_method;
+              if (meta.decision_triggers) enriched.decision_triggers = meta.decision_triggers;
+              if (meta.constraints) enriched.constraints = meta.constraints;
+              enriched.mode = meta.mode || "autoloop";
             }
             // Resolve theme title and proxy metric names
             if (data.theme) {
@@ -1640,22 +1723,25 @@ app.get("/mc/api/approvals/:id", requireSetupAuth, (req, res) => {
         } catch { /* skip */ }
       }
       // Check resolved
-      const resolvedPath = path.join(projectsDir, proj.name, "approvals", "resolved", `${id}.json`);
-      if (fs.existsSync(resolvedPath)) {
+      const resolvedResult = findResolvedApproval(projectsDir, proj.name, id);
+      if (resolvedResult) {
         try {
-          const raw = fs.readFileSync(resolvedPath, "utf8");
-          const data = JSON.parse(raw);
+          const data = resolvedResult.data;
           const enriched = { ...data, _project: proj.name };
           if (data.gate === "experiment-start" || data.gate === "autoresearch-start") {
             const programMd = findExperimentProgram(projectsDir, proj.name, data);
             if (programMd) {
               enriched.programMd = programMd;
-              if (!data.hypothesis || !data.theme) {
-                const meta = parseExperimentMeta(programMd);
-                if (!data.hypothesis && meta.hypothesis) enriched.hypothesis = meta.hypothesis;
-                if (!data.theme && meta.theme) { data.theme = meta.theme; enriched.theme = meta.theme; }
-                if (!data.proxy_metrics && meta.proxy_metrics) { data.proxy_metrics = meta.proxy_metrics; enriched.proxy_metrics = meta.proxy_metrics; }
-              }
+              const meta = parseExperimentMeta(programMd);
+              if (meta.required_tools) enriched.required_tools = meta.required_tools;
+              if (!data.hypothesis && meta.hypothesis) enriched.hypothesis = meta.hypothesis;
+              if (!data.theme && meta.theme) { data.theme = meta.theme; enriched.theme = meta.theme; }
+              if (!data.proxy_metrics && meta.proxy_metrics) { data.proxy_metrics = meta.proxy_metrics; enriched.proxy_metrics = meta.proxy_metrics; }
+              if (meta.playbook) enriched.playbook = meta.playbook;
+              if (meta.eval_method) enriched.eval_method = meta.eval_method;
+              if (meta.decision_triggers) enriched.decision_triggers = meta.decision_triggers;
+              if (meta.constraints) enriched.constraints = meta.constraints;
+              enriched.mode = meta.mode || "autoloop";
             }
             if (data.theme) {
               const themePath = path.join(projectsDir, proj.name, "themes", `${data.theme}.json`);
@@ -1719,7 +1805,7 @@ app.get("/mc/api/approvals/:id", requireSetupAuth, (req, res) => {
 
   // Check proposed issues (shared/projects/*/issues/*.json with status "proposed")
   if (fs.existsSync(projectsDir)) {
-    const projects = fs.readdirSync(projectsDir, { withFileTypes: true }).filter((e) => e.isDirectory());
+    const projects = fs.readdirSync(projectsDir, { withFileTypes: true }).filter((e) => e.isDirectory() && !e.name.startsWith("_"));
     for (const proj of projects) {
       const issuesDir = path.join(projectsDir, proj.name, "issues");
       if (!fs.existsSync(issuesDir)) continue;
@@ -1728,7 +1814,7 @@ app.get("/mc/api/approvals/:id", requireSetupAuth, (req, res) => {
         try {
           const raw = fs.readFileSync(path.join(issuesDir, file), "utf8");
           const issue = JSON.parse(raw);
-          const issueId = issue.id || file.replace(".json", "");
+          const issueId = String(issue.id || file.replace(".json", ""));
           if (issueId !== id) continue;
           // Resolve theme ID to title and proxy metric IDs to names
           let issueThemeTitle = issue.theme || null;
@@ -1775,7 +1861,7 @@ app.get("/mc/api/approvals/:id", requireSetupAuth, (req, res) => {
 
   // Check proposed themes (shared/projects/*/themes/*.json)
   if (fs.existsSync(projectsDir)) {
-    const projects = fs.readdirSync(projectsDir, { withFileTypes: true }).filter((e) => e.isDirectory());
+    const projects = fs.readdirSync(projectsDir, { withFileTypes: true }).filter((e) => e.isDirectory() && !e.name.startsWith("_"));
     for (const proj of projects) {
       const themesDir = path.join(projectsDir, proj.name, "themes");
       if (!fs.existsSync(themesDir)) continue;
@@ -1815,26 +1901,69 @@ app.get("/mc/api/approvals", requireSetupAuth, (req, res) => {
 
   const projectsDir = path.join(STATE_DIR, "shared", "projects");
   if (fs.existsSync(projectsDir)) {
-    const projects = fs.readdirSync(projectsDir, { withFileTypes: true }).filter((e) => e.isDirectory());
+    const projects = fs.readdirSync(projectsDir, { withFileTypes: true }).filter((e) => e.isDirectory() && !e.name.startsWith("_"));
     for (const proj of projects) {
       if (filterProject && proj.name !== filterProject) continue;
 
       // Source 1: Project-format approvals (shared/projects/*/approvals/pending/*.json)
       const pendingDir = path.join(projectsDir, proj.name, "approvals", "pending");
       if (fs.existsSync(pendingDir)) {
+        // Build set of resolved IDs to catch filename/ID mismatches
+        const resolvedDir = path.join(projectsDir, proj.name, "approvals", "resolved");
+        const resolvedIds = new Set();
+        if (fs.existsSync(resolvedDir)) {
+          for (const rf of fs.readdirSync(resolvedDir).filter((f) => f.endsWith(".json"))) {
+            resolvedIds.add(rf.replace(".json", ""));
+            try {
+              const rd = JSON.parse(fs.readFileSync(path.join(resolvedDir, rf), "utf8"));
+              if (rd.id) resolvedIds.add(rd.id);
+            } catch { /* skip */ }
+          }
+        }
         const files = fs.readdirSync(pendingDir).filter((f) => f.endsWith(".json"));
         for (const file of files) {
           try {
             const raw = fs.readFileSync(path.join(pendingDir, file), "utf8");
             const data = JSON.parse(raw);
             if (data.status === "resolved") continue; // skip tombstones
-            approvals.push({
+            // Skip if resolved file exists (catches filename/ID mismatches)
+            const approvalId = data.id || file.replace(".json", "");
+            if (resolvedIds.has(approvalId)) continue;
+            // Skip malformed entries — no gate and no description means nothing actionable
+            if (!data.gate && !data.what) continue;
+            const entry = {
               ...data,
               type: data.gate || "unknown",
               _project: proj.name,
               _file: file,
               _source: "gate",
-            });
+            };
+            // Enrich experiment approvals with theme/proxy from program.md
+            if (data.gate === "experiment-start" || data.gate === "autoresearch-start") {
+              const programMd = findExperimentProgram(projectsDir, proj.name, data);
+              if (programMd) {
+                const meta = parseExperimentMeta(programMd);
+                entry.mode = meta.mode || "autoloop";
+                if (meta.theme) {
+                  entry.theme = meta.theme;
+                  // Resolve theme title and proxy metric names
+                  const themePath = path.join(projectsDir, proj.name, "themes", `${meta.theme}.json`);
+                  if (fs.existsSync(themePath)) {
+                    try {
+                      const themeData = JSON.parse(fs.readFileSync(themePath, "utf8"));
+                      entry.theme_title = themeData.title || meta.theme;
+                      if (Array.isArray(meta.proxy_metrics) && Array.isArray(themeData.proxy_metrics)) {
+                        entry.proxy_metric_names = meta.proxy_metrics.map((pm) => {
+                          const found = themeData.proxy_metrics.find((t) => t.id === pm.id);
+                          return found ? found.name : pm.id;
+                        });
+                      }
+                    } catch { /* skip theme resolution */ }
+                  }
+                }
+              }
+            }
+            approvals.push(entry);
           } catch { /* skip malformed files */ }
         }
       }
@@ -1950,8 +2079,17 @@ app.get("/mc/api/approvals", requireSetupAuth, (req, res) => {
     }
   }
 
-  approvals.sort((a, b) => (b.created || "").localeCompare(a.created || ""));
-  return res.json({ approvals });
+  // Deduplicate by id — prefer gate source over deliverables
+  const seen = new Map();
+  for (const a of approvals) {
+    const key = a.id;
+    if (!key || !seen.has(key)) {
+      seen.set(key, a);
+    }
+  }
+  const deduped = [...seen.values()];
+  deduped.sort((a, b) => (b.created || "").localeCompare(a.created || ""));
+  return res.json({ approvals: deduped });
 });
 
 // List all projects
@@ -1962,7 +2100,11 @@ app.get("/mc/api/projects", requireSetupAuth, (_req, res) => {
   }
   const entries = fs.readdirSync(projectsDir, { withFileTypes: true });
   const projects = entries
-    .filter((e) => e.isDirectory() && !e.name.startsWith("_"))
+    .filter((e) => {
+      if (!e.isDirectory() || e.name.startsWith("_")) return false;
+      // Only real projects have a PROJECT.md — skip stray directories
+      return fs.existsSync(path.join(projectsDir, e.name, "PROJECT.md"));
+    })
     .map((e) => {
       const projectPath = path.join(projectsDir, e.name, "PROJECT.md");
       let meta = { id: e.name };
@@ -2015,6 +2157,432 @@ app.get("/mc/api/themes", requireSetupAuth, (req, res) => {
   return res.json({ themes });
 });
 
+// --- Strategy Edit API ---
+// Preview impact of proposed strategy changes
+app.post("/mc/api/projects/:slug/strategy/preview", requireSetupAuth, (req, res) => {
+  const slug = req.params.slug;
+  const { themes: proposedThemes } = req.body;
+  if (!proposedThemes || !Array.isArray(proposedThemes)) {
+    return res.status(400).json({ error: "themes array required" });
+  }
+
+  const projectDir = path.join(STATE_DIR, "shared", "projects", slug);
+  if (!fs.existsSync(projectDir)) {
+    return res.status(404).json({ error: "Project not found" });
+  }
+
+  // Validation: duplicate theme IDs
+  const ids = proposedThemes.map((t) => t.id);
+  const dupes = ids.filter((id, i) => ids.indexOf(id) !== i);
+  if (dupes.length > 0) {
+    return res.status(400).json({ error: `Duplicate theme IDs: ${[...new Set(dupes)].join(", ")}` });
+  }
+
+  // Validation: active themes must have at least 1 metric
+  for (const theme of proposedThemes) {
+    if (theme.status !== "retired" && (!theme.proxy_metrics || theme.proxy_metrics.length === 0)) {
+      return res.status(400).json({ error: `Active theme "${theme.id}" must have at least 1 proxy metric` });
+    }
+  }
+
+  // Read current themes to detect renames, retirements, metric removals
+  const themesDir = path.join(projectDir, "themes");
+  const currentThemes = new Map();
+  if (fs.existsSync(themesDir)) {
+    for (const file of fs.readdirSync(themesDir).filter((f) => f.endsWith(".json"))) {
+      try {
+        const t = JSON.parse(fs.readFileSync(path.join(themesDir, file), "utf8"));
+        currentThemes.set(t.id, t);
+      } catch { /* skip */ }
+    }
+  }
+
+  // Build change sets
+  const renamed = []; // { from, to }
+  const retired = []; // theme IDs
+  const added = []; // theme IDs
+  const metricsRemoved = []; // { theme, metric }
+  const metricsAdded = []; // { theme, metric }
+
+  for (const proposed of proposedThemes) {
+    if (proposed.previous_id && proposed.previous_id !== proposed.id) {
+      renamed.push({ from: proposed.previous_id, to: proposed.id });
+    }
+    if (proposed.status === "retired") {
+      const current = currentThemes.get(proposed.id) || currentThemes.get(proposed.previous_id);
+      if (current && current.status !== "retired") {
+        retired.push(proposed.previous_id || proposed.id);
+      }
+    }
+    if (!currentThemes.has(proposed.id) && !proposed.previous_id) {
+      added.push(proposed.id);
+    }
+
+    // Metric changes — compare against current theme (using previous_id for renames)
+    const currentId = proposed.previous_id || proposed.id;
+    const current = currentThemes.get(currentId);
+    if (current) {
+      const currentMetricIds = (current.proxy_metrics || []).map((m) => m.id);
+      const proposedMetricIds = (proposed.proxy_metrics || []).map((m) => m.id);
+      for (const mid of currentMetricIds) {
+        if (!proposedMetricIds.includes(mid)) {
+          metricsRemoved.push({ theme: proposed.id, metric: mid });
+        }
+      }
+      for (const mid of proposedMetricIds) {
+        if (!currentMetricIds.includes(mid)) {
+          metricsAdded.push({ theme: proposed.id, metric: mid });
+        }
+      }
+    }
+  }
+
+  // Compute affected issues
+  const issuesPath = path.join(projectDir, "issues");
+  const affectedIssues = [];
+  if (fs.existsSync(issuesPath)) {
+    for (const file of fs.readdirSync(issuesPath).filter((f) => f.endsWith(".json"))) {
+      try {
+        const issue = JSON.parse(fs.readFileSync(path.join(issuesPath, file), "utf8"));
+        if (!issue.theme) continue;
+
+        // Check rename
+        const rename = renamed.find((r) => r.from === issue.theme);
+        if (rename) {
+          affectedIssues.push({ ...issue, change_type: "renamed", from_theme: rename.from, to_theme: rename.to });
+          continue;
+        }
+
+        // Check retirement
+        if (retired.includes(issue.theme)) {
+          affectedIssues.push({ ...issue, change_type: "retired" });
+          continue;
+        }
+
+        // Check metric removal
+        if (issue.proxy_metrics && issue.proxy_metrics.length > 0) {
+          const removedMetrics = metricsRemoved
+            .filter((mr) => {
+              // Match theme: issue references old theme ID (before rename) or current ID
+              const themeRename = renamed.find((r) => r.to === mr.theme);
+              const issueThemeId = themeRename ? themeRename.from : mr.theme;
+              return issue.theme === issueThemeId || issue.theme === mr.theme;
+            })
+            .filter((mr) => issue.proxy_metrics.includes(mr.metric));
+          if (removedMetrics.length > 0) {
+            affectedIssues.push({ ...issue, change_type: "metric_removed", removed_metrics: removedMetrics.map((m) => m.metric) });
+            continue;
+          }
+        }
+      } catch { /* skip */ }
+    }
+  }
+
+  // Compute affected experiments
+  const expDir = path.join(projectDir, "experiments");
+  const affectedExperiments = [];
+  if (fs.existsSync(expDir)) {
+    for (const entry of fs.readdirSync(expDir, { withFileTypes: true })) {
+      if (!entry.isDirectory()) continue;
+      const programPath = path.join(expDir, entry.name, "program.md");
+      if (!fs.existsSync(programPath)) continue;
+      try {
+        const md = fs.readFileSync(programPath, "utf8");
+        const themeMatch = md.match(/## Theme\s*\n\s*(.+)/);
+        if (!themeMatch) continue;
+        const expTheme = themeMatch[1].trim();
+        const titleMatch = md.match(/^#\s+(.+)/m);
+
+        // Check rename
+        const rename = renamed.find((r) => r.from === expTheme);
+        if (rename) {
+          affectedExperiments.push({ dir: entry.name, name: titleMatch?.[1] || entry.name, theme: expTheme, change_type: "renamed", from_theme: rename.from, to_theme: rename.to });
+          continue;
+        }
+
+        // Check retirement
+        if (retired.includes(expTheme)) {
+          affectedExperiments.push({ dir: entry.name, name: titleMatch?.[1] || entry.name, theme: expTheme, change_type: "retired" });
+          continue;
+        }
+      } catch { /* skip */ }
+    }
+  }
+
+  return res.json({
+    changes: { renamed, retired, added, metrics_removed: metricsRemoved, metrics_added: metricsAdded },
+    affected_issues: affectedIssues,
+    affected_experiments: affectedExperiments,
+  });
+});
+
+// Apply strategy revision — write order: notification → themes → cascade → activity
+app.post("/mc/api/projects/:slug/strategy", requireSetupAuth, (req, res) => {
+  const slug = req.params.slug;
+  const { themes: proposedThemes, issue_decisions, experiment_decisions } = req.body;
+  if (!proposedThemes || !Array.isArray(proposedThemes)) {
+    return res.status(400).json({ error: "themes array required" });
+  }
+
+  const projectDir = path.join(STATE_DIR, "shared", "projects", slug);
+  if (!fs.existsSync(projectDir)) {
+    return res.status(404).json({ error: "Project not found" });
+  }
+
+  // Validation: duplicate theme IDs
+  const ids = proposedThemes.map((t) => t.id);
+  const dupes = ids.filter((id, i) => ids.indexOf(id) !== i);
+  if (dupes.length > 0) {
+    return res.status(400).json({ error: `Duplicate theme IDs: ${[...new Set(dupes)].join(", ")}` });
+  }
+
+  // Validation: active themes must have at least 1 metric
+  for (const theme of proposedThemes) {
+    if (theme.status !== "retired" && (!theme.proxy_metrics || theme.proxy_metrics.length === 0)) {
+      return res.status(400).json({ error: `Active theme "${theme.id}" must have at least 1 proxy metric` });
+    }
+  }
+
+  const themesDir = path.join(projectDir, "themes");
+  const issuesPath = path.join(projectDir, "issues");
+  const expDir = path.join(projectDir, "experiments");
+  const notifDir = path.join(projectDir, "notifications");
+  const activityPath = path.join(projectDir, "activity.log");
+
+  // Read current themes for detecting renames
+  const currentThemes = new Map();
+  if (fs.existsSync(themesDir)) {
+    for (const file of fs.readdirSync(themesDir).filter((f) => f.endsWith(".json"))) {
+      try {
+        const t = JSON.parse(fs.readFileSync(path.join(themesDir, file), "utf8"));
+        currentThemes.set(t.id, t);
+      } catch { /* skip */ }
+    }
+  }
+
+  // Build change manifest
+  const renamed = [];
+  const retired = [];
+  const addedIds = [];
+  const metricsRemoved = [];
+  const metricsAdded = [];
+
+  for (const proposed of proposedThemes) {
+    if (proposed.previous_id && proposed.previous_id !== proposed.id) {
+      renamed.push({ from: proposed.previous_id, to: proposed.id });
+    }
+    if (proposed.status === "retired") {
+      const current = currentThemes.get(proposed.id) || currentThemes.get(proposed.previous_id);
+      if (current && current.status !== "retired") {
+        retired.push(proposed.previous_id || proposed.id);
+      }
+    }
+    if (!currentThemes.has(proposed.id) && !proposed.previous_id) {
+      addedIds.push(proposed.id);
+    }
+    const currentId = proposed.previous_id || proposed.id;
+    const current = currentThemes.get(currentId);
+    if (current) {
+      const currentMetricIds = (current.proxy_metrics || []).map((m) => m.id);
+      const proposedMetricIds = (proposed.proxy_metrics || []).map((m) => m.id);
+      for (const mid of currentMetricIds) {
+        if (!proposedMetricIds.includes(mid)) metricsRemoved.push({ theme: proposed.id, metric: mid });
+      }
+      for (const mid of proposedMetricIds) {
+        if (!currentMetricIds.includes(mid)) metricsAdded.push({ theme: proposed.id, metric: mid });
+      }
+    }
+  }
+
+  const keepIssues = issue_decisions?.keep || [];
+  const discardIssues = issue_decisions?.discard || [];
+  const keepExperiments = experiment_decisions?.keep || [];
+  const discardExperiments = experiment_decisions?.discard || [];
+  const now = new Date().toISOString();
+  const today = now.split("T")[0];
+  const timestamp = Date.now();
+
+  // Read project lead for notification
+  let lead = "unknown";
+  const projectMdPath = path.join(projectDir, "PROJECT.md");
+  if (fs.existsSync(projectMdPath)) {
+    const raw = fs.readFileSync(projectMdPath, "utf8");
+    const m = raw.match(/\*\*Lead:\*\*\s*(\S+)/);
+    if (m) lead = m[1];
+  }
+
+  try {
+    // 1. Write notification FIRST (crash recovery signal)
+    fs.mkdirSync(notifDir, { recursive: true });
+    const notification = {
+      type: "strategy-change",
+      to: lead,
+      project: slug,
+      timestamp: now,
+      changes: {
+        renamed,
+        retired,
+        added: addedIds,
+        metrics_removed: metricsRemoved,
+        metrics_added: metricsAdded,
+      },
+      kept_issues: keepIssues,
+      discarded_issues: discardIssues,
+      discarded_experiments: discardExperiments,
+    };
+    fs.writeFileSync(
+      path.join(notifDir, `strategy-change-${timestamp}.json`),
+      JSON.stringify(notification, null, 2),
+      "utf8"
+    );
+
+    // 2. Update theme JSONs
+    fs.mkdirSync(themesDir, { recursive: true });
+    // Delete old files for renamed themes
+    for (const r of renamed) {
+      const oldFile = path.join(themesDir, `${r.from}.json`);
+      if (fs.existsSync(oldFile)) fs.unlinkSync(oldFile);
+    }
+    // Write all proposed themes
+    for (const theme of proposedThemes) {
+      const themeData = {
+        id: theme.id,
+        title: theme.title,
+        description: theme.description || "",
+        status: theme.status,
+        max_active_issues: theme.max_active_issues ?? 5,
+        max_active_experiments: theme.max_active_experiments ?? 2,
+        order: theme.order,
+        proxy_metrics: theme.proxy_metrics || [],
+        // Preserve original proposal metadata if it existed
+        proposed_by: currentThemes.get(theme.previous_id || theme.id)?.proposed_by || "kavin",
+        proposed_at: currentThemes.get(theme.previous_id || theme.id)?.proposed_at || now,
+        resolved_by: "kavin",
+        resolved_at: now,
+      };
+      fs.writeFileSync(
+        path.join(themesDir, `${theme.id}.json`),
+        JSON.stringify(themeData, null, 2),
+        "utf8"
+      );
+    }
+
+    // 3. Cascade to kept issues — re-tag theme ID, strip removed metric refs
+    if (fs.existsSync(issuesPath)) {
+      for (const file of fs.readdirSync(issuesPath).filter((f) => f.endsWith(".json"))) {
+        try {
+          const filePath = path.join(issuesPath, file);
+          const issue = JSON.parse(fs.readFileSync(filePath, "utf8"));
+          if (!issue.theme) continue;
+
+          const rename = renamed.find((r) => r.from === issue.theme);
+          const isKept = keepIssues.includes(issue.id);
+          const isDiscarded = discardIssues.includes(issue.id);
+
+          if (isDiscarded) {
+            // 4. Archive discarded issues
+            issue.status = "cancelled";
+            issue.comments = issue.comments || [];
+            issue.comments.push({
+              author: "system",
+              text: `Cancelled — strategy revision on ${today}`,
+              created: now,
+            });
+            issue.updated = now;
+            fs.writeFileSync(filePath, JSON.stringify(issue, null, 2), "utf8");
+            continue;
+          }
+
+          if (isKept || rename) {
+            let changed = false;
+
+            // Re-tag theme if renamed
+            if (rename) {
+              issue.theme = rename.to;
+              changed = true;
+            }
+
+            // Strip removed metric refs
+            if (issue.proxy_metrics && issue.proxy_metrics.length > 0) {
+              const removedIds = metricsRemoved.map((mr) => mr.metric);
+              const before = issue.proxy_metrics.length;
+              issue.proxy_metrics = issue.proxy_metrics.filter((m) => !removedIds.includes(m));
+              if (issue.proxy_metrics.length < before) {
+                const stripped = removedIds.filter((id) => !issue.proxy_metrics.includes(id));
+                issue.comments = issue.comments || [];
+                issue.comments.push({
+                  author: "system",
+                  text: `Proxy metric reference(s) removed during strategy revision: ${stripped.join(", ")}`,
+                  created: now,
+                });
+                changed = true;
+              }
+            }
+
+            if (changed) {
+              issue.updated = now;
+              fs.writeFileSync(filePath, JSON.stringify(issue, null, 2), "utf8");
+            }
+          }
+        } catch { /* skip malformed issues */ }
+      }
+    }
+
+    // 5. Archive discarded experiments — add cancelled row to results.tsv
+    if (fs.existsSync(expDir)) {
+      for (const expId of discardExperiments) {
+        const resultsPath = path.join(expDir, expId, "results.tsv");
+        try {
+          if (fs.existsSync(resultsPath)) {
+            let content = fs.readFileSync(resultsPath, "utf8").trimEnd();
+            // Append a cancelled row
+            const headers = content.split("\n")[0].split("\t").map((h) => h.trim());
+            const row = headers.map((h) => {
+              if (h === "date") return today;
+              if (h === "decision") return "cancelled";
+              if (h === "reason") return `Strategy revision on ${today}`;
+              return "";
+            });
+            content += "\n" + row.join("\t");
+            fs.writeFileSync(resultsPath, content + "\n", "utf8");
+          } else if (fs.existsSync(path.join(expDir, expId))) {
+            // No results.tsv yet — create one with header + cancelled row
+            const content = `date\tmetric\tvalue\tdecision\treason\n${today}\t\t\tcancelled\tStrategy revision on ${today}\n`;
+            fs.writeFileSync(resultsPath, content, "utf8");
+          }
+        } catch { /* skip */ }
+      }
+    }
+
+    // 6. Append to activity.log
+    const changeSummary = [];
+    if (renamed.length > 0) changeSummary.push(`${renamed.length} theme(s) renamed`);
+    if (retired.length > 0) changeSummary.push(`${retired.length} theme(s) retired`);
+    if (addedIds.length > 0) changeSummary.push(`${addedIds.length} theme(s) added`);
+    if (discardIssues.length > 0) changeSummary.push(`${discardIssues.length} issue(s) discarded`);
+    if (discardExperiments.length > 0) changeSummary.push(`${discardExperiments.length} experiment(s) discarded`);
+    const summary = changeSummary.length > 0 ? changeSummary.join(", ") : "no structural changes";
+    const logLine = `${now.replace("T", " ").slice(0, 16)} | kavin | Strategy revised: ${summary}\n`;
+    fs.appendFileSync(activityPath, logLine, "utf8");
+
+    // 7. Commit to git so changes survive git pull
+    try {
+      const { execSync } = require("node:child_process");
+      const gitOpts = { cwd: STATE_DIR, stdio: "pipe", timeout: 15000 };
+      execSync(`git add shared/projects/${slug}/themes/ shared/projects/${slug}/notifications/ shared/projects/${slug}/issues/ shared/projects/${slug}/activity.log shared/projects/${slug}/PROJECT.md`, gitOpts);
+      execSync(`git commit -m "strategy: ${slug} — ${summary}" --allow-empty`, gitOpts);
+    } catch (gitErr) {
+      // Non-fatal: files are written, just not committed
+      console.error("[strategy-apply] Git commit failed (non-fatal):", gitErr.message);
+    }
+
+    return res.json({ ok: true, lead, changes: { renamed, retired, added: addedIds, metrics_removed: metricsRemoved, metrics_added: metricsAdded } });
+  } catch (err) {
+    console.error("[strategy-apply] Error:", err);
+    return res.status(500).json({ error: "Failed to apply strategy changes" });
+  }
+});
+
 // Unified inbox — aggregates approvals, budget warnings, stale tasks, recent standups
 app.get("/mc/api/inbox", requireSetupAuth, (_req, res) => {
   const projectsDir = path.join(STATE_DIR, "shared", "projects");
@@ -2023,7 +2591,7 @@ app.get("/mc/api/inbox", requireSetupAuth, (_req, res) => {
   }
 
   const items = [];
-  const projects = fs.readdirSync(projectsDir, { withFileTypes: true }).filter((e) => e.isDirectory());
+  const projects = fs.readdirSync(projectsDir, { withFileTypes: true }).filter((e) => e.isDirectory() && !e.name.startsWith("_"));
   const now = Date.now();
   const threeDays = 3 * 24 * 60 * 60 * 1000;
   const today = new Date().toISOString().split("T")[0];
@@ -2032,18 +2600,39 @@ app.get("/mc/api/inbox", requireSetupAuth, (_req, res) => {
   for (const proj of projects) {
     const projDir = path.join(projectsDir, proj.name);
 
-    // A. Pending Approvals
+    // A. Pending Approvals — only brand-new, untouched items
     const pendingDir = path.join(projDir, "approvals", "pending");
+    const resolvedDir = path.join(projDir, "approvals", "resolved");
     if (fs.existsSync(pendingDir)) {
+      // Build set of resolved IDs to catch filename/ID mismatches
+      const resolvedIds = new Set();
+      if (fs.existsSync(resolvedDir)) {
+        for (const rf of fs.readdirSync(resolvedDir).filter((f) => f.endsWith(".json"))) {
+          resolvedIds.add(rf.replace(".json", ""));
+          try {
+            const rd = JSON.parse(fs.readFileSync(path.join(resolvedDir, rf), "utf8"));
+            if (rd.id) resolvedIds.add(rd.id);
+          } catch { /* skip */ }
+        }
+      }
       const files = fs.readdirSync(pendingDir).filter((f) => f.endsWith(".json"));
       for (const file of files) {
         try {
           const data = JSON.parse(fs.readFileSync(path.join(pendingDir, file), "utf8"));
-          if (data.status === "resolved") continue;
+          const approvalId = data.id || file.replace(".json", "");
+          // Skip anything already acted on — by status field or by resolved file existing
+          if (data.status === "resolved" || data.status === "revision_requested") continue;
+          if (resolvedIds.has(approvalId)) continue;
+          // Skip malformed entries — no gate and no description means nothing actionable
+          if (!data.gate && !data.what) continue;
+          // Skip if any interaction has occurred (partial review, revision, etc.)
+          if (data.resolved_by || data.revision_requested_at) continue;
+          // For content-publish gates, skip if any post has been reviewed
+          if (data.posts && Array.isArray(data.posts) && data.posts.some((p) => p.status && p.status !== "pending")) continue;
           items.push({
             type: "approval",
             project: proj.name,
-            id: data.id || file,
+            id: approvalId,
             title: data.what || "Pending approval",
             subtitle: data.why || null,
             requester: data.requester || "unknown",
@@ -2093,48 +2682,96 @@ app.get("/mc/api/inbox", requireSetupAuth, (_req, res) => {
       } catch { /* skip */ }
     }
 
-    // C. Stale Tasks — issues in_progress > 3 days
+    // C. Stale Tasks + Overdue Issues — single pass over issues
     const issuesDir = path.join(projDir, "issues");
     if (fs.existsSync(issuesDir)) {
       const issueFiles = fs.readdirSync(issuesDir).filter((f) => f.endsWith(".json"));
       for (const issueFile of issueFiles) {
         try {
           const issue = JSON.parse(fs.readFileSync(path.join(issuesDir, issueFile), "utf8"));
-          if (issue.status !== "in_progress") continue;
-          const updated = issue.updated || issue.created || issue.started;
-          if (!updated) continue;
-          const elapsed = now - new Date(updated).getTime();
-          if (elapsed > threeDays) {
-            const daysStale = Math.floor(elapsed / (24 * 60 * 60 * 1000));
+          const skipStatuses = ["done", "cancelled", "proposed"];
+
+          // C1. Stale tasks — in_progress > 3 days since last update
+          if (issue.status === "in_progress") {
+            const updated = issue.updated || issue.created || issue.started;
+            if (updated) {
+              const elapsed = now - new Date(updated).getTime();
+              if (elapsed > threeDays) {
+                const daysStale = Math.floor(elapsed / (24 * 60 * 60 * 1000));
+                items.push({
+                  type: "stale_task",
+                  project: proj.name,
+                  id: issue.id || issueFile,
+                  title: issue.title || issueFile.replace(".json", ""),
+                  subtitle: `Assigned to ${issue.assignee || "unassigned"} — in progress for ${daysStale} days`,
+                  assignee: issue.assignee || null,
+                  daysStale,
+                  timestamp: updated,
+                });
+              }
+            }
+          }
+
+          // C2. Overdue issues — target_date is before today, issue still active
+          if (issue.target_date && !skipStatuses.includes(issue.status)) {
+            const targetDate = new Date(issue.target_date + "T00:00:00Z");
+            const todayDate = new Date(today + "T00:00:00Z");
+            if (targetDate < todayDate) {
+              const daysOverdue = Math.floor((todayDate - targetDate) / (24 * 60 * 60 * 1000));
+              items.push({
+                type: "overdue_issue",
+                project: proj.name,
+                id: issue.id || issueFile.replace(".json", ""),
+                title: issue.title || issueFile.replace(".json", ""),
+                assignee: issue.assignee || null,
+                target_date: issue.target_date,
+                days_overdue: daysOverdue,
+                timestamp: issue.target_date + "T00:00:00Z",
+              });
+            }
+          }
+
+          // C3. Blocked on operator — agent is waiting for Kavin's input
+          if (issue.blocked_on === "operator" && !skipStatuses.includes(issue.status)) {
+            const blockedAt = issue.blocked_at || issue.updated || new Date().toISOString();
+            const elapsed = now - new Date(blockedAt).getTime();
+            const daysBlocked = Math.floor(elapsed / (24 * 60 * 60 * 1000));
             items.push({
-              type: "stale_task",
+              type: "blocked_on_operator",
               project: proj.name,
-              id: issue.id || issueFile,
+              id: issue.id || issueFile.replace(".json", ""),
               title: issue.title || issueFile.replace(".json", ""),
-              subtitle: `Assigned to ${issue.assignee || "unassigned"} — in progress for ${daysStale} days`,
+              blocked_reason: issue.blocked_reason || "Waiting on input",
+              blocked_at: blockedAt,
               assignee: issue.assignee || null,
-              daysStale,
-              timestamp: updated,
+              days_blocked: daysBlocked,
+              timestamp: blockedAt,
             });
           }
         } catch { /* skip */ }
       }
     }
 
-    // D. Recent Standups — today/yesterday
+    // D. Recent Standups — today/yesterday, grouped by date (one item per project per day)
     const standupsDir = path.join(projDir, "standups");
     if (fs.existsSync(standupsDir)) {
       const standupFiles = fs.readdirSync(standupsDir).filter((f) => f.endsWith(".md"));
+      // Group files by date
+      const byDate = {};
       for (const sf of standupFiles) {
         const dateMatch = sf.match(/(\d{4}-\d{2}-\d{2})/);
         if (!dateMatch) continue;
         const fileDate = dateMatch[1];
         if (fileDate !== today && fileDate !== yesterday) continue;
+        if (!byDate[fileDate]) byDate[fileDate] = [];
+        byDate[fileDate].push(sf);
+      }
+      // One inbox item per date
+      for (const [fileDate, files] of Object.entries(byDate)) {
         try {
-          const content = fs.readFileSync(path.join(standupsDir, sf), "utf8");
-          const lines = content.split("\n").filter((l) => l.trim());
+          const firstContent = fs.readFileSync(path.join(standupsDir, files[0]), "utf8");
+          const lines = firstContent.split("\n").filter((l) => l.trim());
           const preview = lines.slice(0, 2).join(" ").slice(0, 120);
-          // Try to extract lead from PROJECT.md
           let lead = null;
           if (fs.existsSync(projectMdPath)) {
             const raw = fs.readFileSync(projectMdPath, "utf8");
@@ -2149,6 +2786,7 @@ app.get("/mc/api/inbox", requireSetupAuth, (_req, res) => {
             subtitle: preview,
             lead,
             date: fileDate,
+            fileCount: files.length,
             timestamp: new Date(fileDate + "T09:00:00Z").toISOString(),
           });
         } catch { /* skip */ }
@@ -2165,7 +2803,6 @@ app.get("/mc/api/inbox", requireSetupAuth, (_req, res) => {
       const entries = Array.isArray(index) ? index : (index.deliverables || index.entries || []);
       for (const entry of entries) {
         if (entry.status !== "needs-feedback") continue;
-        // Read deliverable content if file exists
         let deliverableContent = null;
         if (entry.deliverable) {
           const delivPath = path.join(STATE_DIR, entry.deliverable);
@@ -2190,7 +2827,7 @@ app.get("/mc/api/inbox", requireSetupAuth, (_req, res) => {
     } catch { /* skip malformed index.json */ }
   }
 
-  // E. Proposed Issues — issues with status "proposed" awaiting Kavin's review
+  // F. Proposed Issues — issues with status "proposed" awaiting Kavin's review
   for (const proj of projects) {
     const issuesDir = path.join(projectsDir, proj.name, "issues");
     if (!fs.existsSync(issuesDir)) continue;
@@ -2237,20 +2874,90 @@ app.get("/mc/api/inbox", requireSetupAuth, (_req, res) => {
     }
   }
 
+  // G. Paused Experiments — experiments with latest decision "pause"
+  for (const proj of projects) {
+    const expDir = path.join(projectsDir, proj.name, "experiments");
+    if (!fs.existsSync(expDir)) continue;
+    const expEntries = fs.readdirSync(expDir, { withFileTypes: true }).filter((e) => e.isDirectory());
+    for (const entry of expEntries) {
+      try {
+        const programPath = path.join(expDir, entry.name, "program.md");
+        const resultsPath = path.join(expDir, entry.name, "results.tsv");
+
+        // Parse experiment name from program.md
+        let expName = entry.name;
+        let mdStatus = "unknown";
+        if (fs.existsSync(programPath)) {
+          const programMd = fs.readFileSync(programPath, "utf8");
+          const titleMatch = programMd.match(/^#\s+(.+)/m);
+          if (titleMatch) expName = titleMatch[1];
+          const statusMatch = programMd.match(/## Status\s*\n\s*(\S+)/);
+          if (statusMatch) mdStatus = statusMatch[1];
+        }
+
+        // Parse results.tsv to derive status
+        const results = [];
+        if (fs.existsSync(resultsPath)) {
+          const raw = fs.readFileSync(resultsPath, "utf8");
+          const lines = raw.trim().split("\n");
+          if (lines.length > 1) {
+            const headers = lines[0].split("\t").map((h) => h.trim());
+            for (let i = 1; i < lines.length; i++) {
+              const cols = lines[i].split("\t").map((c) => c.trim());
+              const row = {};
+              for (let j = 0; j < headers.length; j++) {
+                row[headers[j]] = cols[j] || "";
+              }
+              results.push(row);
+            }
+          }
+        }
+
+        const status = deriveStatusFromResults(results, mdStatus);
+        if (status !== "paused") continue;
+
+        // Use the last result's date as timestamp, fall back to now
+        const lastResult = results[results.length - 1];
+        const ts = lastResult?.date || new Date().toISOString();
+
+        items.push({
+          type: "paused_experiment",
+          project: proj.name,
+          id: entry.name,
+          title: expName,
+          experiment_dir: entry.name,
+          timestamp: ts.includes("T") ? ts : ts + "T00:00:00Z",
+        });
+      } catch { /* skip */ }
+    }
+  }
+
+  // Deduplicate by id — same item can appear from multiple sources
+  const seenIds = new Set();
+  const dedupedItems = [];
+  for (const item of items) {
+    if (item.id && seenIds.has(item.id)) continue;
+    if (item.id) seenIds.add(item.id);
+    dedupedItems.push(item);
+  }
+
   // Sort by recency
-  items.sort((a, b) => (b.timestamp || "").localeCompare(a.timestamp || ""));
+  dedupedItems.sort((a, b) => (b.timestamp || "").localeCompare(a.timestamp || ""));
 
   const counts = {
-    approvals: items.filter((i) => i.type === "approval").length,
-    budget: items.filter((i) => i.type === "budget").length,
-    tasks: items.filter((i) => i.type === "stale_task").length,
-    standups: items.filter((i) => i.type === "standup").length,
-    proposed: items.filter((i) => i.type === "proposed_issue").length,
-    updates: items.filter((i) => i.type === "experiment_update").length,
+    approvals: dedupedItems.filter((i) => i.type === "approval").length,
+    budget: dedupedItems.filter((i) => i.type === "budget").length,
+    tasks: dedupedItems.filter((i) => i.type === "stale_task").length,
+    standups: dedupedItems.filter((i) => i.type === "standup").length,
+    proposed: dedupedItems.filter((i) => i.type === "proposed_issue").length,
+    updates: dedupedItems.filter((i) => i.type === "experiment_update").length,
+    overdue: dedupedItems.filter((i) => i.type === "overdue_issue").length,
+    paused: dedupedItems.filter((i) => i.type === "paused_experiment").length,
+    blocked: dedupedItems.filter((i) => i.type === "blocked_on_operator").length,
   };
-  counts.total = counts.approvals + counts.budget + counts.tasks + counts.standups + counts.proposed + counts.updates;
+  counts.total = counts.approvals + counts.budget + counts.tasks + counts.standups + counts.proposed + counts.updates + counts.overdue + counts.paused + counts.blocked;
 
-  return res.json({ items, counts });
+  return res.json({ items: dedupedItems, counts });
 });
 
 // Global activity feed — aggregates activity across all projects
@@ -2265,7 +2972,7 @@ app.get("/mc/api/activity", requireSetupAuth, (req, res) => {
   const filterAgent = req.query.agent || null;
 
   const events = [];
-  const projects = fs.readdirSync(projectsDir, { withFileTypes: true }).filter((e) => e.isDirectory());
+  const projects = fs.readdirSync(projectsDir, { withFileTypes: true }).filter((e) => e.isDirectory() && !e.name.startsWith("_"));
 
   for (const proj of projects) {
     if (filterProject && proj.name !== filterProject) continue;
@@ -2508,7 +3215,7 @@ app.get("/mc/api/agents/:id", requireSetupAuth, (req, res) => {
   agent.projects = [];
   const projectsDir = path.join(STATE_DIR, "shared", "projects");
   if (fs.existsSync(projectsDir)) {
-    const projEntries = fs.readdirSync(projectsDir, { withFileTypes: true }).filter((e) => e.isDirectory());
+    const projEntries = fs.readdirSync(projectsDir, { withFileTypes: true }).filter((e) => e.isDirectory() && !e.name.startsWith("_"));
     for (const proj of projEntries) {
       const projectPath = path.join(projectsDir, proj.name, "PROJECT.md");
       if (fs.existsSync(projectPath)) {
@@ -2688,7 +3395,7 @@ app.get("/mc/api/issues/:id", requireSetupAuth, (req, res) => {
 
 // Create issue
 app.post("/mc/api/issues", requireSetupAuth, (req, res) => {
-  const { project, title, description, priority, assignee, labels, theme, proxy_metrics, model_override, thinking_override, complexity } = req.body;
+  const { project, title, description, priority, assignee, labels, theme, proxy_metrics, model_override, thinking_override, complexity, target_date } = req.body;
   if (!project || !title) {
     return res.status(400).json({ error: "Missing project or title" });
   }
@@ -2756,6 +3463,7 @@ app.post("/mc/api/issues", requireSetupAuth, (req, res) => {
     model_override: model_override || null,
     thinking_override: thinking_override || null,
     complexity: complexity || "complex",
+    target_date: target_date || null,
     escalation_count: 0,
     created: now,
     updated: now,
@@ -2827,7 +3535,7 @@ app.post("/mc/api/issues/:id/comments", requireSetupAuth, (req, res) => {
 // Derive experiment status from the decision column in results.tsv rows.
 // Falls back to the old ## Status markdown parse if no decision columns exist.
 function deriveStatusFromResults(results, mdStatus) {
-  const validDecisions = ["keep", "pivot", "scale", "kill"];
+  const validDecisions = ["keep", "pivot", "scale", "kill", "pause"];
   const decisions = results
     .map((r) => (r.decision || "").toLowerCase().trim())
     .filter((d) => validDecisions.includes(d));
@@ -2839,6 +3547,7 @@ function deriveStatusFromResults(results, mdStatus) {
   const latest = decisions[decisions.length - 1];
   if (latest === "kill") return "killed";
   if (latest === "scale") return "completed";
+  if (latest === "pause") return "paused";
   // keep, pivot → still running
   return "running";
 }
@@ -2847,7 +3556,7 @@ function deriveStatusFromResults(results, mdStatus) {
 // Each run period between decisions is a "run" node; each decision is its own node.
 function buildPhases(results, created) {
   const phases = [{ type: "design", date: created || null }];
-  const validDecisions = ["keep", "pivot", "scale", "kill"];
+  const validDecisions = ["keep", "pivot", "scale", "kill", "pause"];
   let runNumber = 1;
   let inRun = false;
 
@@ -2859,10 +3568,12 @@ function buildPhases(results, created) {
       inRun = true;
     }
     if (validDecisions.includes(decision)) {
-      // Decision node
+      // Decision node — pause doesn't increment run number (resumes same run)
       phases.push({ type: decision, date: row.date || null, reason: row.reason || "" });
-      inRun = false;
-      runNumber++;
+      if (decision !== "pause") {
+        inRun = false;
+        runNumber++;
+      }
     }
   }
   return phases;
@@ -2938,20 +3649,28 @@ app.get("/mc/api/experiments", requireSetupAuth, (req, res) => {
       } catch { /* skip */ }
     }
 
-    let hypothesis = null, theme = null, proxyMetric = null, targetValue = null;
+    let hypothesis = null, theme = null, proxyMetric = null, targetValue = null, proxyMetricIds = [], mode = "autoloop";
     if (programMd) {
       const hypoMatch = programMd.match(/## Hypothesis\s*\n([\s\S]*?)(?=\n##|$)/);
       if (hypoMatch) hypothesis = hypoMatch[1].trim();
       const themeMatch = programMd.match(/## Theme\s*\n\s*(.+)/);
       if (themeMatch) theme = themeMatch[1].trim();
+      const modeMatch = programMd.match(/## Mode\s*\n\s*(.+)/);
+      if (modeMatch) mode = modeMatch[1].trim().toLowerCase();
       const pmSection = programMd.match(/## Proxy Metrics\s*\n([\s\S]*?)(?=\n##|$)/);
       if (pmSection) {
         const pmLines = pmSection[1].trim().split("\n").filter((l) => l.startsWith("- "));
+        // Parse all proxy metric IDs
+        proxyMetricIds = pmLines.map((line) => {
+          const m = line.match(/^- ([\w-]+)/);
+          return m ? m[1] : null;
+        }).filter(Boolean);
         const m = pmLines[0] && pmLines[0].match(/^- ([\w-]+)\s*[—–-]\s*contribution:\s*(.+)/i);
         if (m) { proxyMetric = m[1]; targetValue = m[2].trim(); }
       }
     }
     // Resolve theme title and proxy metric name
+    const themeId = theme; // preserve raw ID for grouping
     let themeTitle = theme;
     if (theme) {
       const themePath = path.join(STATE_DIR, "shared", "projects", slug, "themes", `${theme}.json`);
@@ -2972,9 +3691,12 @@ app.get("/mc/api/experiments", requireSetupAuth, (req, res) => {
       dir: entry.name,
       program_md: programMd,
       hypothesis,
-      theme: themeTitle,
+      theme: themeId,
+      theme_title: themeTitle,
       proxy_metric: proxyMetric,
+      proxy_metrics: proxyMetricIds.map((id) => ({ id })),
       target_value: targetValue,
+      mode,
       results,
       result_count: results.length,
       best_metric: bestMetric,
@@ -3075,11 +3797,23 @@ app.get("/mc/api/experiments/:dir", requireSetupAuth, (req, res) => {
     } catch {}
   }
 
-  // Extract just the ## Program section for the detail page
+  // Extract just the ## Program section for the detail page (legacy fallback)
   let programSection = programMd;
   if (programMd) {
     const progMatch = programMd.match(/## Program\s*\n([\s\S]*?)$/);
     if (progMatch) programSection = progMatch[1].trim();
+  }
+
+  // Parse structured sections from program.md
+  let playbook = null, evalMethod = null, decisionTriggers = null, constraints = null, requiredTools = null, mode = "autoloop";
+  if (programMd) {
+    const meta = parseExperimentMeta(programMd);
+    mode = meta.mode || "autoloop";
+    if (meta.playbook) playbook = meta.playbook;
+    if (meta.eval_method) evalMethod = meta.eval_method;
+    if (meta.decision_triggers) decisionTriggers = meta.decision_triggers;
+    if (meta.constraints) constraints = meta.constraints;
+    if (meta.required_tools) requiredTools = meta.required_tools;
   }
 
   // Resolve proxy metric names from theme data
@@ -3108,12 +3842,12 @@ app.get("/mc/api/experiments/:dir", requireSetupAuth, (req, res) => {
   try { createdDate = fs.statSync(expPath).birthtime.toISOString().split("T")[0]; } catch {}
   const phases = buildPhases(results, createdDate);
 
-  res.json({ name, dir, status, hypothesis, proxy_metric: proxyMetric, target_value: targetValue, theme: themeTitle, program_md: programMd, program: programSection, proxy_metrics: resolvedPMs, results, result_count: results.length, best_metric: bestMetric, phases });
+  res.json({ name, dir, status, hypothesis, proxy_metric: proxyMetric, target_value: targetValue, theme: themeTitle, program_md: programMd, program: programSection, proxy_metrics: resolvedPMs, mode, results, result_count: results.length, best_metric: bestMetric, phases, playbook, eval_method: evalMethod, decision_triggers: decisionTriggers, constraints, required_tools: requiredTools });
 });
 
 // Create experiment
 app.post("/mc/api/experiments", requireSetupAuth, (req, res) => {
-  const { project, name, hypothesis, proxy_metric, target_value, program_md, theme } = req.body;
+  const { project, name, hypothesis, proxy_metric, target_value, program_md, theme, playbook, eval_method, decision_triggers, constraints } = req.body;
   if (!project || !name) {
     return res.status(400).json({ error: "Missing project or name" });
   }
@@ -3143,20 +3877,32 @@ app.post("/mc/api/experiments", requireSetupAuth, (req, res) => {
   const newExpDir = path.join(expDir, dirName);
   fs.mkdirSync(newExpDir, { recursive: true });
 
-  // Build program.md content
+  // Build program.md content — structured format
   const lines = [`# ${name}`, ""];
-  lines.push("## Status", "planned", "");
+  if (theme) {
+    lines.push("## Theme", theme, "");
+  }
   if (hypothesis) {
     lines.push("## Hypothesis", hypothesis, "");
   }
   if (proxy_metric) {
-    const targetPart = target_value ? `: ${target_value}` : "";
-    lines.push("## Proxy Metric", `${proxy_metric}${targetPart}`, "");
+    const targetPart = target_value ? ` — contribution: ${target_value}` : "";
+    lines.push("## Proxy Metrics", `- ${proxy_metric}${targetPart}`, "");
   }
-  if (theme) {
-    lines.push("## Theme", theme, "");
+  if (playbook) {
+    lines.push("## Playbook", playbook, "");
   }
-  if (program_md) {
+  if (eval_method) {
+    lines.push("## Eval Method", eval_method, "");
+  }
+  if (decision_triggers) {
+    lines.push("## Decision Triggers", decision_triggers, "");
+  }
+  if (constraints) {
+    lines.push("## Constraints", constraints, "");
+  }
+  // Legacy fallback: if program_md was sent instead of structured fields
+  if (program_md && !playbook && !eval_method) {
     lines.push("## Program", program_md, "");
   }
 
@@ -3301,7 +4047,9 @@ app.get("/mc/api/costs/overview", requireSetupAuth, (_req, res) => {
   let totalBudget = 0;
 
   for (const entry of dirs) {
-    if (!entry.isDirectory()) continue;
+    if (!entry.isDirectory() || entry.name.startsWith("_")) continue;
+    // Only real projects have a PROJECT.md
+    if (!fs.existsSync(path.join(projectsDir, entry.name, "PROJECT.md"))) continue;
     const slug = entry.name;
     const costData = loadProjectCosts(slug);
     const policy = loadBudgetPolicy(slug);
@@ -3469,7 +4217,7 @@ app.get("/mc/api/projects/summary", requireSetupAuth, (_req, res) => {
   try {
     const entries = fs.readdirSync(projectsDir, { withFileTypes: true });
     const projects = entries
-      .filter((e) => e.isDirectory())
+      .filter((e) => e.isDirectory() && !e.name.startsWith("_"))
       .map((e) => {
         const projDir = path.join(projectsDir, e.name);
         const projectPath = path.join(projDir, "PROJECT.md");
@@ -3589,7 +4337,7 @@ app.get("/mc/api/org-chart", requireSetupAuth, (_req, res) => {
     const projectLeads = {};
     if (fs.existsSync(projectsDir)) {
       for (const entry of fs.readdirSync(projectsDir, { withFileTypes: true })) {
-        if (!entry.isDirectory()) continue;
+        if (!entry.isDirectory() || entry.name.startsWith("_")) continue;
         const projMd = path.join(projectsDir, entry.name, "PROJECT.md");
         if (fs.existsSync(projMd)) {
           const raw = fs.readFileSync(projMd, "utf8");
@@ -3894,7 +4642,7 @@ function buildAgentProjectMap() {
   try {
     const entries = fs.readdirSync(projectsDir, { withFileTypes: true });
     for (const entry of entries) {
-      if (!entry.isDirectory()) continue;
+      if (!entry.isDirectory() || entry.name.startsWith("_")) continue;
       const slug = entry.name;
       const projectPath = path.join(projectsDir, slug, "PROJECT.md");
       if (!fs.existsSync(projectPath)) continue;
@@ -3930,7 +4678,7 @@ function runCostCompiler() {
 
     const agentProjectMap = buildAgentProjectMap();
     const agentDirs = fs.readdirSync(agentsDir, { withFileTypes: true })
-      .filter((e) => e.isDirectory())
+      .filter((e) => e.isDirectory() && !e.name.startsWith("_"))
       .map((e) => e.name);
 
     const currentMonday = getMondayOfWeek(new Date());
