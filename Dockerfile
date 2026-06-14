@@ -61,6 +61,13 @@ RUN apt-get update \
 # `openclaw update` expects pnpm. Provide it in the runtime image.
 RUN corepack enable && corepack prepare pnpm@10.23.0 --activate
 
+# See DECISIONS.md — OpenClaw npm runtime entrypoint.
+# The upstream source tag can carry stale package metadata, so the wrapper runs the
+# released npm runtime by default while keeping the source build as a fallback.
+RUN npm install -g --prefix /opt/openclaw-npm openclaw@2026.6.6 \
+  && npm cache clean --force
+ENV OPENCLAW_ENTRY=/opt/openclaw-npm/lib/node_modules/openclaw/dist/entry.js
+
 # Persist user-installed tools by default by targeting the Railway volume.
 # - npm global installs -> /data/npm
 # - pnpm global installs -> /data/pnpm (binaries) + /data/pnpm-store (store)
@@ -68,7 +75,7 @@ ENV NPM_CONFIG_PREFIX=/data/npm
 ENV NPM_CONFIG_CACHE=/data/npm-cache
 ENV PNPM_HOME=/data/pnpm
 ENV PNPM_STORE_DIR=/data/pnpm-store
-ENV PATH="/data/npm/bin:/data/pnpm:${PATH}"
+ENV PATH="/opt/openclaw-npm/bin:/data/npm/bin:/data/pnpm:${PATH}"
 
 WORKDIR /app
 
@@ -80,7 +87,7 @@ RUN npm install --omit=dev && npm cache clean --force
 COPY --from=openclaw-build /openclaw /openclaw
 
 # Provide an openclaw executable
-RUN printf '%s\n' '#!/usr/bin/env bash' 'exec node /openclaw/dist/entry.js "$@"' > /usr/local/bin/openclaw \
+RUN printf '%s\n' '#!/usr/bin/env bash' 'exec node "${OPENCLAW_ENTRY:-/openclaw/dist/entry.js}" "$@"' > /usr/local/bin/openclaw \
   && chmod +x /usr/local/bin/openclaw
 
 COPY src ./src
