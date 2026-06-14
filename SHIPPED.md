@@ -1,5 +1,8 @@
 # SHIPPED.md
 
+## 2026-06-14
+- **fix:** Railway image now builds OpenClaw `v2026.6.6`, keeping the dashboard label and gateway runtime in sync (`88daa73`)
+
 ## 2026-04-01
 - **fix:** Decisions Waiting no longer shows items you've already requested revision on — they reappear when the agent resubmits (`d357c7b`)
 - **fix:** Ghost "Pending approval" / "unknown" entries with no content filtered out of Briefing and Approvals (`d357c7b`)
@@ -67,4 +70,4 @@
 - **feat:** Aura-ported design overhaul — metric cards, tables, status badges, sidebar, and scrollbar all use Aura HTML classes directly (`d285ea9`)
 
 ## 2026-03-21
-- **fix:** Agent heartbeat messages now include direct dashboard links when proposing issues (`pending`)
+- **fix:** Agent heartbeat messages now include direct dashboard links when proposing issues (`2614ba7`)
