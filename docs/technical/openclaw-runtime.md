@@ -1,0 +1,17 @@
+# OpenClaw Runtime
+
+The Railway service runs a wrapper web server and a baked OpenClaw gateway from the Docker image.
+
+Current image pin: `OPENCLAW_GIT_REF=v2026.6.6`.
+
+Runtime order:
+
+```text
+Railway starts wrapper on $PORT
+  -> wrapper reads /data/.openclaw/openclaw.json
+  -> wrapper syncs gateway auth tokens
+  -> wrapper starts the baked OpenClaw gateway on 127.0.0.1:18789
+  -> wrapper proxies /, /openclaw, and WebSocket traffic to the gateway
+```
+
+The `/data` volume can contain user-installed CLI packages, but production gateway behavior comes from the baked image. A volume-level `openclaw update` is not enough to upgrade the running gateway; bump the Docker image pin and redeploy.
