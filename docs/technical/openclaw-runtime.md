@@ -22,4 +22,6 @@ Railway starts wrapper on $PORT
 
 Gateway startup is allowed up to 240 seconds because OpenClaw may migrate durable SQLite state before opening its listener. During that window HTTP proxy requests return 503 and WebSocket upgrades are rejected, preventing a reconnecting browser from starting a second gateway against the same state. A configured `/setup/healthz` also returns 503 until the gateway is reachable.
 
+For migrations that cannot finish inside Railway's deployment health window, set `OPENCLAW_MAINTENANCE=1`. The wrapper stays healthy but does not launch or proxy to the gateway, allowing one operator-run `openclaw doctor --fix --non-interactive` process to own the mounted state. Remove the variable and redeploy after the migration completes.
+
 The `/data` volume can contain user-installed CLI packages, but production gateway behavior comes from the baked image default entrypoint. A volume-level `openclaw update` is not enough to upgrade the running gateway; bump the Docker image runtime package and redeploy.
