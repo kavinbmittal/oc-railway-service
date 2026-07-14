@@ -24,14 +24,14 @@ async function gh(path) {
 }
 
 function readCurrentTag(dockerfile) {
-  const m = dockerfile.match(/\nARG OPENCLAW_GIT_REF=([^\n]+)\n/);
+  const m = dockerfile.match(/\nARG OPENCLAW_SOURCE_REF=([^\n]+)\n/);
   return m ? m[1].trim() : null;
 }
 
 function replaceTag(dockerfile, next) {
-  const re = /\nARG OPENCLAW_GIT_REF=([^\n]+)\n/;
-  if (!re.test(dockerfile)) throw new Error("Could not find OPENCLAW_GIT_REF line");
-  return dockerfile.replace(re, `\nARG OPENCLAW_GIT_REF=${next}\n`);
+  const re = /\nARG OPENCLAW_SOURCE_REF=([^\n]+)\n/;
+  if (!re.test(dockerfile)) throw new Error("Could not find OPENCLAW_SOURCE_REF line");
+  return dockerfile.replace(re, `\nARG OPENCLAW_SOURCE_REF=${next}\n`);
 }
 
 const latest = await gh(`/repos/${owner}/${repo}/releases/latest`);
@@ -41,7 +41,7 @@ if (!latestTag) throw new Error("No tag_name in latest release response");
 const dockerPath = "Dockerfile";
 const docker = fs.readFileSync(dockerPath, "utf8");
 const currentTag = readCurrentTag(docker);
-if (!currentTag) throw new Error("Could not parse current OPENCLAW_GIT_REF");
+if (!currentTag) throw new Error("Could not parse current OPENCLAW_SOURCE_REF");
 
 console.log(`current=${currentTag} latest=${latestTag}`);
 
