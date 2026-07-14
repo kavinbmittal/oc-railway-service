@@ -3,6 +3,7 @@
 ## 2026-07-14-openclaw-2026-7-1
 - [x] Pin the OpenClaw npm runtime to v2026.7.1
 - [x] Remove the unused source build after its release-age policy blocked the hosted build
+- [x] Serialize startup migrations and gate Railway readiness on the gateway
 - [x] Rebuild Mission Control with the current runtime label
 - [x] Update runtime, feature, release, and decision documentation
 - [ ] Verify the full Railway image build
