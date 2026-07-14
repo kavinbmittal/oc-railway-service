@@ -1,7 +1,7 @@
 # SHIPPED.md
 
 ## 2026-07-14
-- **feat:** Upgrade Railway to OpenClaw `v2026.7.1` on its required Node 24 runtime (pending)
+- **feat:** Upgrade Railway to OpenClaw `v2026.7.1` on its required Node 24 runtime (`e2f577d`)
 
 ## 2026-06-14
 - **fix:** Railway image defaults to the npm `openclaw@2026.6.6` runtime entrypoint so the gateway and CLI speak the same protocol (pending)
