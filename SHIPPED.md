@@ -1,7 +1,7 @@
 # SHIPPED.md
 
 ## 2026-07-14
-- **fix:** Make the v2026.7.1 source fallback and its updater immune to Railway's obsolete v2026.3.13 build override (pending)
+- **fix:** Make the v2026.7.1 source fallback and its updater immune to Railway's obsolete v2026.3.13 build override (`0351421`)
 - **feat:** Upgrade Railway to OpenClaw `v2026.7.1` on its required Node 24 runtime (`e2f577d`)
 
 ## 2026-06-14
