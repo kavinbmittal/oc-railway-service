@@ -1,8 +1,8 @@
 # TODO
 
 ## 2026-07-14-openclaw-2026-7-1
-- [x] Pin the OpenClaw source fallback and npm runtime to v2026.7.1
-- [x] Bypass the stale Railway source-ref override discovered by the hosted build
+- [x] Pin the OpenClaw npm runtime to v2026.7.1
+- [x] Remove the unused source build after its release-age policy blocked the hosted build
 - [x] Rebuild Mission Control with the current runtime label
 - [x] Update runtime, feature, release, and decision documentation
 - [ ] Verify the full Railway image build
