@@ -24,31 +24,32 @@ async function gh(path) {
 }
 
 function readCurrentTag(dockerfile) {
-  const m = dockerfile.match(/\nARG OPENCLAW_SOURCE_REF=([^\n]+)\n/);
+  const m = dockerfile.match(/\nARG OPENCLAW_NPM_VERSION=([^\n]+)\n/);
   return m ? m[1].trim() : null;
 }
 
 function replaceTag(dockerfile, next) {
-  const re = /\nARG OPENCLAW_SOURCE_REF=([^\n]+)\n/;
-  if (!re.test(dockerfile)) throw new Error("Could not find OPENCLAW_SOURCE_REF line");
-  return dockerfile.replace(re, `\nARG OPENCLAW_SOURCE_REF=${next}\n`);
+  const re = /\nARG OPENCLAW_NPM_VERSION=([^\n]+)\n/;
+  if (!re.test(dockerfile)) throw new Error("Could not find OPENCLAW_NPM_VERSION line");
+  return dockerfile.replace(re, `\nARG OPENCLAW_NPM_VERSION=${next}\n`);
 }
 
 const latest = await gh(`/repos/${owner}/${repo}/releases/latest`);
 const latestTag = latest.tag_name;
 if (!latestTag) throw new Error("No tag_name in latest release response");
+const latestVersion = latestTag.replace(/^v/, "");
 
 const dockerPath = "Dockerfile";
 const docker = fs.readFileSync(dockerPath, "utf8");
 const currentTag = readCurrentTag(docker);
-if (!currentTag) throw new Error("Could not parse current OPENCLAW_SOURCE_REF");
+if (!currentTag) throw new Error("Could not parse current OPENCLAW_NPM_VERSION");
 
-console.log(`current=${currentTag} latest=${latestTag}`);
+console.log(`current=${currentTag} latest=${latestVersion}`);
 
-if (currentTag === latestTag) {
+if (currentTag === latestVersion) {
   console.log("No update needed.");
   process.exit(0);
 }
 
-fs.writeFileSync(dockerPath, replaceTag(docker, latestTag));
-console.log(`Updated ${dockerPath} to ${latestTag}`);
+fs.writeFileSync(dockerPath, replaceTag(docker, latestVersion));
+console.log(`Updated ${dockerPath} to ${latestVersion}`);
