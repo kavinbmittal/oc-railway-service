@@ -1,5 +1,12 @@
 # TODO
 
+## 2026-07-14-openclaw-2026-7-1
+- [x] Pin the OpenClaw source fallback and npm runtime to v2026.7.1
+- [x] Rebuild Mission Control with the current runtime label
+- [x] Update runtime, feature, release, and decision documentation
+- [ ] Verify the full Railway image build
+- [ ] Verify production gateway, channels, tasks, sessions, crons, and Mission Control
+
 ## 2026-03-24-edit-strategy
 
 ### Backend (server.js)
@@ -223,4 +230,3 @@ Deferred because it writes to `openclaw.json` on the live volume — needs caref
 - [ ] Backend: approvals endpoint — skip malformed approvals (no `gate` + no `what`)
 - [ ] Frontend: rebuild dist
 - [ ] Verify: confirm both filters work correctly
-

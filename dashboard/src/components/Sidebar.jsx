@@ -290,7 +290,7 @@ export default function Sidebar({ page, selectedProject, navigate, refreshKey })
      </div>
      <div className="flex-1 overflow-hidden">
       <div className="text-[15px] font-medium text-foreground truncate">Kavin</div>
-      <div className="text-[11px] text-muted-foreground truncate">OpenClaw v2026.6.6</div>
+      <div className="text-[11px] text-muted-foreground truncate">OpenClaw v2026.7.1</div>
      </div>
     </div>
    </div>
