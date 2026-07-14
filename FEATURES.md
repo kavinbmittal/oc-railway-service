@@ -3,6 +3,7 @@
 ## Mission Control Dashboard
 - View project overview, issues, costs, and agent activity
 - Mission Control runs on the OpenClaw `v2026.7.1` Railway image and shows the current runtime version in the sidebar
+- Railway promotes Mission Control only after the configured OpenClaw gateway is reachable, so a live dashboard cannot mask a failed agent runtime
 - Briefing page: priority-ordered view of everything that needs attention, grouped by project — Decisions Waiting (new approvals, proposed issues, budget alerts, blocked agents) at the top with elevated card, Risks (stale tasks, overdue issues, paused experiments) in the middle, What Happened (standups, experiment updates) at the bottom with muted styling; agents waiting on you show inline reason text so you can triage at a glance; approvals you've already interacted with (reviewed, commented, revision requested) automatically drop out until the agent resubmits
 - Unified Approvals page: proposed issues, experiment gates, and deliverable reviews in one view, grouped by project
 - Approve, reject, or request revision on any pending item (proposed issue, gate request, or content-publish gate) from the Approvals page or per-project Approvals tab

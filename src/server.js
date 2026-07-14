@@ -7,6 +7,7 @@ import path from "node:path";
 import express from "express";
 import httpProxy from "http-proxy";
 import * as tar from "tar";
+import { gatewayTokenUpdates } from "./gateway-config.js";
 
 // Migrate deprecated CLAWDBOT_* env vars → OPENCLAW_* so existing Railway deployments
 // keep working. Users should update their Railway Variables to use the new names.
@@ -80,9 +81,12 @@ const INTERNAL_GATEWAY_PORT = Number.parseInt(process.env.INTERNAL_GATEWAY_PORT 
 const INTERNAL_GATEWAY_HOST = process.env.INTERNAL_GATEWAY_HOST ?? "127.0.0.1";
 const GATEWAY_TARGET = `http://${INTERNAL_GATEWAY_HOST}:${INTERNAL_GATEWAY_PORT}`;
 
-// Always run the built-from-source CLI entry directly to avoid PATH/global-install mismatches.
+// Always run the pinned npm CLI entry directly to avoid PATH/global-install mismatches.
 const OPENCLAW_ENTRY = process.env.OPENCLAW_ENTRY?.trim() || "/openclaw/dist/entry.js";
 const OPENCLAW_NODE = process.env.OPENCLAW_NODE?.trim() || "node";
+
+// See DECISIONS.md — Gateway startup readiness timeout.
+const GATEWAY_STARTUP_TIMEOUT_MS = 240_000;
 
 function clawArgs(args) {
   return [OPENCLAW_ENTRY, ...args];
@@ -141,6 +145,7 @@ function isConfigured() {
 
 let gatewayProc = null;
 let gatewayStarting = null;
+let gatewayBootState = "starting";
 
 // Debug breadcrumbs for common Railway failures (502 / "Application failed to respond").
 let lastGatewayError = null;
@@ -357,16 +362,19 @@ async function ensureGatewayRunning() {
     gatewayStarting = (async () => {
       try {
         lastGatewayError = null;
+        lastGatewayExit = null;
         await startGateway();
-        const ready = await waitForGatewayReady({ timeoutMs: 20_000 });
+        const ready = await waitForGatewayReady({ timeoutMs: GATEWAY_STARTUP_TIMEOUT_MS });
         if (!ready) {
+          try { gatewayProc?.kill("SIGTERM"); } catch {}
+          gatewayProc = null;
           throw new Error("Gateway did not become ready in time");
         }
       } catch (err) {
         const msg = `[gateway] start failure: ${String(err)}`;
         lastGatewayError = msg;
-        // Collect extra diagnostics to help users file issues.
-        await runDoctorBestEffort();
+        // Only diagnose after the failed gateway has released state locks.
+        if (!gatewayProc && lastGatewayExit) await runDoctorBestEffort();
         throw err;
       }
     })().finally(() => {
@@ -419,8 +427,17 @@ const app = express();
 app.disable("x-powered-by");
 app.use(express.json({ limit: "1mb" }));
 
-// Minimal health endpoint for Railway.
-app.get("/setup/healthz", (_req, res) => res.json({ ok: true }));
+// Railway should only promote a configured container after the real gateway is reachable.
+app.get("/setup/healthz", async (_req, res) => {
+  if (!isConfigured()) return res.json({ ok: true, configured: false });
+
+  const reachable = gatewayBootState === "ready" && await probeGateway();
+  return res.status(reachable ? 200 : 503).json({
+    ok: reachable,
+    configured: true,
+    gateway: { reachable, bootState: gatewayBootState },
+  });
+});
 
 async function probeGateway() {
   // Don't assume HTTP — the gateway primarily speaks WebSocket.
@@ -457,8 +474,9 @@ app.get("/healthz", async (_req, res) => {
     }
   }
 
-  res.json({
-    ok: true,
+  const ok = !isConfigured() || gatewayReachable;
+  res.status(ok ? 200 : 503).json({
+    ok,
     wrapper: {
       configured: isConfigured(),
       stateDir: STATE_DIR,
@@ -4603,8 +4621,12 @@ app.use(requireDashboardAuth, async (req, res) => {
   }
 
   if (isConfigured()) {
+    if (gatewayBootState === "starting") {
+      return res.status(503).set("Retry-After", "5").type("text/plain").send("Gateway startup is still in progress.\n");
+    }
     try {
       await ensureGatewayRunning();
+      gatewayBootState = "ready";
     } catch (err) {
       const hint = [
         "Gateway not ready.",
@@ -4949,10 +4971,13 @@ const server = app.listen(PORT, "0.0.0.0", async () => {
   if (isConfigured() && OPENCLAW_GATEWAY_TOKEN) {
     console.log("[wrapper] syncing gateway tokens in config...");
     try {
-      await runCmd(OPENCLAW_NODE, clawArgs(["config", "set", "gateway.auth.mode", "token"]));
-      await runCmd(OPENCLAW_NODE, clawArgs(["config", "set", "gateway.auth.token", OPENCLAW_GATEWAY_TOKEN]));
-      await runCmd(OPENCLAW_NODE, clawArgs(["config", "set", "gateway.remote.token", OPENCLAW_GATEWAY_TOKEN]));
-      console.log("[wrapper] gateway tokens synced");
+      let config = null;
+      try { config = JSON.parse(fs.readFileSync(configPath(), "utf8")); } catch {}
+      const updates = gatewayTokenUpdates(config, OPENCLAW_GATEWAY_TOKEN);
+      for (const [key, value] of updates) {
+        await runCmd(OPENCLAW_NODE, clawArgs(["config", "set", key, value]));
+      }
+      console.log(updates.length > 0 ? "[wrapper] gateway tokens synced" : "[wrapper] gateway tokens already current");
     } catch (err) {
       console.warn(`[wrapper] failed to sync gateway tokens: ${String(err)}`);
     }
@@ -4964,10 +4989,14 @@ const server = app.listen(PORT, "0.0.0.0", async () => {
     console.log("[wrapper] config detected; starting gateway...");
     try {
       await ensureGatewayRunning();
+      gatewayBootState = "ready";
       console.log("[wrapper] gateway ready");
     } catch (err) {
+      gatewayBootState = "failed";
       console.error(`[wrapper] gateway failed to start at boot: ${String(err)}`);
     }
+  } else {
+    gatewayBootState = "ready";
   }
 });
 
@@ -4980,8 +5009,13 @@ server.on("upgrade", async (req, socket, head) => {
     socket.destroy();
     return;
   }
+  if (gatewayBootState === "starting") {
+    socket.destroy();
+    return;
+  }
   try {
     await ensureGatewayRunning();
+    gatewayBootState = "ready";
   } catch {
     socket.destroy();
     return;

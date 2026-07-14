@@ -13,9 +13,13 @@ Runtime order:
 ```text
 Railway starts wrapper on $PORT
   -> wrapper reads /data/.openclaw/openclaw.json
-  -> wrapper syncs gateway auth tokens
+  -> wrapper compares gateway auth tokens and writes only stale values
   -> wrapper starts the pinned OpenClaw npm gateway on 127.0.0.1:18789
+  -> wrapper blocks proxied traffic while startup migrations run
+  -> Railway health turns green only after the gateway port is reachable
   -> wrapper proxies /, /openclaw, and WebSocket traffic to the gateway
 ```
+
+Gateway startup is allowed up to 240 seconds because OpenClaw may migrate durable SQLite state before opening its listener. During that window HTTP proxy requests return 503 and WebSocket upgrades are rejected, preventing a reconnecting browser from starting a second gateway against the same state. A configured `/setup/healthz` also returns 503 until the gateway is reachable.
 
 The `/data` volume can contain user-installed CLI packages, but production gateway behavior comes from the baked image default entrypoint. A volume-level `openclaw update` is not enough to upgrade the running gateway; bump the Docker image runtime package and redeploy.
