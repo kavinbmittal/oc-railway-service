@@ -1,6 +1,7 @@
 # SHIPPED.md
 
 ## 2026-07-14
+- **fix:** Add an explicit maintenance boot mode for exclusive long-running OpenClaw migrations (pending)
 - **fix:** Serialize OpenClaw startup migrations and make Railway readiness depend on the real gateway (`859d9dd`)
 - **fix:** Remove the unused source-build fallback that blocked same-day stable OpenClaw releases (`c360e37`)
 - **fix:** Make the v2026.7.1 source fallback and its updater immune to Railway's obsolete v2026.3.13 build override (`0351421`)

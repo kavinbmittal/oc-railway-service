@@ -48,6 +48,7 @@ const HEARTBEAT_MESSAGE = `Project heartbeat (scan only — do NOT do actual wor
 
 // Protect /setup with a user-provided password.
 const SETUP_PASSWORD = process.env.SETUP_PASSWORD?.trim();
+const OPENCLAW_MAINTENANCE = process.env.OPENCLAW_MAINTENANCE === "1";
 
 // Gateway admin token (protects OpenClaw gateway + Control UI).
 // Must be stable across restarts. If not provided via env, persist it in the state dir.
@@ -429,6 +430,7 @@ app.use(express.json({ limit: "1mb" }));
 
 // Railway should only promote a configured container after the real gateway is reachable.
 app.get("/setup/healthz", async (_req, res) => {
+  if (OPENCLAW_MAINTENANCE) return res.json({ ok: true, maintenance: true });
   if (!isConfigured()) return res.json({ ok: true, configured: false });
 
   const reachable = gatewayBootState === "ready" && await probeGateway();
@@ -465,6 +467,9 @@ async function probeGateway() {
 // Public health endpoint (no auth) so Railway can probe without /setup.
 // Keep this free of secrets.
 app.get("/healthz", async (_req, res) => {
+  if (OPENCLAW_MAINTENANCE) {
+    return res.json({ ok: true, maintenance: true, gateway: { reachable: false } });
+  }
   let gatewayReachable = false;
   if (isConfigured()) {
     try {
@@ -4620,6 +4625,10 @@ app.use(requireDashboardAuth, async (req, res) => {
     return res.redirect("/setup");
   }
 
+  if (OPENCLAW_MAINTENANCE) {
+    return res.status(503).set("Retry-After", "30").type("text/plain").send("OpenClaw gateway maintenance is in progress.\n");
+  }
+
   if (isConfigured()) {
     if (gatewayBootState === "starting") {
       return res.status(503).set("Retry-After", "5").type("text/plain").send("Gateway startup is still in progress.\n");
@@ -4944,6 +4953,12 @@ const server = app.listen(PORT, "0.0.0.0", async () => {
     console.warn("[wrapper] WARNING: SETUP_PASSWORD is not set; /setup will error.");
   }
 
+  if (OPENCLAW_MAINTENANCE) {
+    gatewayBootState = "ready";
+    console.warn("[wrapper] maintenance mode enabled; gateway startup skipped");
+    return;
+  }
+
   // Optional operator hook to install/persist extra tools under /data.
   // This is intentionally best-effort and should be used to set up persistent
   // prefixes (npm/pnpm/python venv), not to mutate the base image.
@@ -5006,6 +5021,10 @@ server.on("upgrade", async (req, socket, head) => {
   // The gateway authenticates at the protocol layer and we inject the gateway token below.
 
   if (!isConfigured()) {
+    socket.destroy();
+    return;
+  }
+  if (OPENCLAW_MAINTENANCE) {
     socket.destroy();
     return;
   }

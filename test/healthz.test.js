@@ -11,4 +11,5 @@ test("server exposes /healthz endpoint", () => {
   assert.match(src, /app\.get\("\/setup\/healthz"/);
   assert.match(src, /gatewayBootState === "ready"/);
   assert.match(src, /res\.status\(reachable \? 200 : 503\)/);
+  assert.match(src, /OPENCLAW_MAINTENANCE/);
 });
