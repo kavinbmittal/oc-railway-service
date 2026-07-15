@@ -1,40 +1,30 @@
-# CLAUDE.md — Mission Control (Cuzco)
-Follows the global guidelines in `~/.claude/CLAUDE.md`.
+# CLAUDE.md — OpenClaw Railway Runtime
+Follows the repository rules in `../../CLAUDE.md` and the global guidelines in `~/.claude/CLAUDE.md`.
 
-## Project Overview
-Mission Control is an ops dashboard for managing AI agent teams. It tracks projects, budgets, approvals, agent activity, costs, and organizational structure. Single operator (Kavin), desktop-first, dark mode only.
+## Purpose
 
-## Architecture
+This directory contains the deployable Railway service: the pinned OpenClaw runtime, wrapper server, setup flow, plugins, and Mission Control.
 
-Mission Control is **separate from the OpenClaw gateway's built-in control UI.** They are two different apps:
+It never owns agent workspaces or durable project data. Those live at the repository root and on the `/data/.openclaw` production volume.
 
-- **Gateway control UI:** Built into the gateway at `/openclaw/dist/control-ui/`. Admin panel for the OpenClaw platform. Not ours.
-- **Mission Control:** Vite + React SPA in `dashboard/`. Served by `src/server.js` at `/mc/`.
+## Components
 
-### How it deploys
+| Area | Location | Production path |
+|---|---|---|
+| Wrapper and Mission Control API | `src/` | Baked into the Railway image |
+| Mission Control frontend | `dashboard/` | Built to `dashboard/dist` and baked into the image |
+| OpenClaw runtime and plugins | `Dockerfile`, `plugins/` | Baked into the Railway image |
+| Deployment configuration | `railway.toml` | Read by Railway from `/platform/railway/railway.toml` |
+| Durable agent state | `/data/.openclaw` | Existing Railway volume; never copied into this directory |
 
-The dashboard is **baked into the Docker image**. No manual SSH copying.
+## Required workflow
 
-1. `dashboard/` contains the Vite + React source
-2. `Dockerfile` copies `dashboard/dist` into the image
-3. `src/server.js` serves it via `express.static(DASHBOARD_DIR)` at `/mc/`
-4. Railway auto-deploys from this GitHub repo on every push to main
+Run `../../scripts/oc check` before opening a PR. Changes here deploy only after merge to `main`, and Railway must be configured with root directory `/platform/railway` and watch path `/platform/railway/**`.
 
-**DASHBOARD_DIR** (server.js line 1436): resolves to `../dashboard/dist` relative to server.js (inside Docker), falls back to `STATE_DIR/dashboard/dist` (Railway volume).
+For changes that also alter agent configuration, deploy and verify backward-compatible runtime support before syncing the agent files.
 
-**NEVER copy dist files to Railway via SSH.** Push to main → Railway rebuilds → dashboard deploys automatically.
+Never copy dashboard assets to Railway over SSH. Never add `shared/`, `agents/`, or `workspace*/` fixtures here; test fixtures belong under `test/fixtures/`.
 
-### What lives where
+## Design
 
-| Component | Location | Deploys via |
-|-----------|----------|-------------|
-| Dashboard frontend | `dashboard/dist` in Docker image | Push to main → Railway auto-deploy |
-| API endpoints | `src/server.js` in Docker image | Push to main → Railway auto-deploy |
-| Agent data (projects, issues, standups) | `/data/.openclaw/` Railway volume | Agents write directly; `oc-sync` for protocol updates |
-| Agent protocols | `/data/.openclaw/shared/protocols/` | `oc-sync` (pulls from `kbm-oc-workspace` repo) |
-
-## Design System
-Always read DESIGN.md before making any visual or UI decisions.
-All font choices, colors, spacing, and aesthetic direction are defined there.
-Do not deviate without explicit user approval.
-In review mode, flag any code that doesn't match DESIGN.md.
+Read `DESIGN.md` before visual changes. Mission Control is a Vite + React SPA served by the wrapper at `/mc/`; it is separate from OpenClaw's built-in control UI.

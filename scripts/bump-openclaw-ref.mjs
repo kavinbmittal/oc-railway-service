@@ -1,4 +1,5 @@
 import fs from "node:fs";
+import { fileURLToPath } from "node:url";
 
 const owner = "openclaw";
 const repo = "openclaw";
@@ -39,7 +40,7 @@ const latestTag = latest.tag_name;
 if (!latestTag) throw new Error("No tag_name in latest release response");
 const latestVersion = latestTag.replace(/^v/, "");
 
-const dockerPath = "Dockerfile";
+const dockerPath = fileURLToPath(new URL("../Dockerfile", import.meta.url));
 const docker = fs.readFileSync(dockerPath, "utf8");
 const currentTag = readCurrentTag(docker);
 if (!currentTag) throw new Error("Could not parse current OPENCLAW_NPM_VERSION");
@@ -52,4 +53,4 @@ if (currentTag === latestVersion) {
 }
 
 fs.writeFileSync(dockerPath, replaceTag(docker, latestVersion));
-console.log(`Updated ${dockerPath} to ${latestVersion}`);
+console.log(`Updated platform/railway/Dockerfile to ${latestVersion}`);

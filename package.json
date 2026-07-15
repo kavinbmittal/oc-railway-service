@@ -1,5 +1,5 @@
 {
-  "name": "clawdbot-railway-template",
+  "name": "kbm-openclaw-railway",
   "private": true,
   "type": "module",
   "engines": {
@@ -25,13 +25,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/kavinbmittal/openclaw-railway-template.git"
+    "url": "git+https://github.com/kavinbmittal/kbm-oc-workspace.git",
+    "directory": "platform/railway"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/kavinbmittal/openclaw-railway-template/issues"
+    "url": "https://github.com/kavinbmittal/kbm-oc-workspace/issues"
   },
-  "homepage": "https://github.com/kavinbmittal/openclaw-railway-template#readme"
+  "homepage": "https://github.com/kavinbmittal/kbm-oc-workspace/tree/main/platform/railway#readme"
 }

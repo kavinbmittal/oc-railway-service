@@ -1,5 +1,6 @@
 [build]
 builder = "dockerfile"
+watchPatterns = ["/platform/railway/**"]
 
 [deploy]
 healthcheckPath = "/setup/healthz"
